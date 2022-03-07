@@ -87,7 +87,7 @@ std::uint8_t *mnemotic2entropy(char const *const mnemotic,char const diccionary[
 
     if(word_bin!=nullptr && word_bin_length_array%3==0 && entropy_length_bytes!=nullptr){
         *entropy_length_bytes=((word_bin_length_array)*(static_cast<std::uint16_t>(352)))/static_cast<std::uint16_t>(264); //se pasan la cantidad de bytes que tiene la entropy
-        entropy=new std::uint8_t[*entropy_length_bytes];
+        entropy=new std::uint8_t[*entropy_length_bytes+1]; ///Se agrega un espacio extra para evitar desbordamiento de memoria 
         std::uint8_t pbw=6; //posicion bit (a leer) word
         std::uint8_t pbe=1; //posicion bit (a escribir) entropy
         std::uint8_t pae=0; //posicion array entropy
