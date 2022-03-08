@@ -100,14 +100,14 @@ std::uint8_t *mnemotic2entropy(char const *const mnemotic,char const diccionary[
                 if((static_cast<std::uint8_t>(9)-pbe)<(static_cast<std::uint8_t>(17)-pbw))
                 {
                     buff_e= buff_e >> (static_cast<std::uint8_t>(8)+pbe-pbw);
-                    entropy[pae]=buff_e | entropy[pae];
+                    entropy[pae]=static_cast<std::uint8_t>(buff_e) | entropy[pae];
                     pbw+=(static_cast<std::uint8_t>(9)-pbe); //verificar esta parte
                     pbe+=(static_cast<std::uint8_t>(9)-pbe);
                 }
                 else if((static_cast<std::uint8_t>(9)-pbe)>=(static_cast<std::uint8_t>(17)-pbw))
                 {
                     buff_e=buff_e <<(pbw-(static_cast<std::uint8_t>(8)+pbe));
-                    entropy[pae]=buff_e | entropy[pae];
+                    entropy[pae]=static_cast<std::uint8_t>(buff_e) | entropy[pae];
                     pbe+=static_cast<std::uint8_t>(17)-pbw;
                     pbw+=static_cast<std::uint8_t>(17)-pbw;
                 }
