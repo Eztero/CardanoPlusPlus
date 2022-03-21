@@ -88,12 +88,13 @@ std::uint8_t *mnemotic2entropy(char const *const mnemotic,char const diccionary[
         *entropy_length_bytes=((word_bin_length_array)*(static_cast<std::uint8_t>(44)))/static_cast<std::uint8_t>(33); //se pasan la cantidad de bytes que tiene la entropy
         entropy=new std::uint8_t[*entropy_length_bytes];
         std::uint8_t cbe=8; //conteo bit entropia
+        std::uint8_t cbw=11; //conteo bit word_bin
         std::uint8_t entropy_count=0;
         for(std::uint8_t i=0; i<word_bin_length_array;i++){
-            std::uint8_t cbw=11; //conteo bit word_bin
+            cbw=11;
             if(entropy_count<*entropy_length_bytes){ //para evitar desbordamiento de memoria en entropy[]
-            while(cbw!=0){
-                if(cbe<=cbw){
+                while(cbw!=0){
+                    if(cbe<=cbw){
                         cbw-=cbe; //se resta de cbw la cantidad de bits a tomar para completar entropy[]
                         entropy[entropy_count] = (static_cast<std::uint8_t>(word_bin[i] >> (cbw)) & (0xff >> (static_cast<std::uint8_t>(8)- cbe))) | entropy[entropy_count];
                         cbe=8; //como todos los bits en entropy[] son completados, se vuleve a indicar que tiene 8 bit disponibles a llenar
@@ -102,16 +103,16 @@ std::uint8_t *mnemotic2entropy(char const *const mnemotic,char const diccionary[
                             cbw=0; //se pone a cero para que no entre en el while{}
                             break; //se sale del while
                         }
-                }
-                if(cbe > cbw){
+                    }
+                    if(cbe > cbw){
                         cbe-=cbw; //se resta de cbe la cantidad de bits a tomar de word_bin[] , para completar entropy[]
                         entropy[entropy_count] = static_cast<std::uint8_t>(word_bin[i] << (cbe)) | (entropy[entropy_count]);
-                    cbw=0; //como todos los bits de word_bin[] entra en entropy[] entonces este queda en cero
+                        cbw=0; //como todos los bits de word_bin[] entra en entropy[] entonces este queda en cero
+                    }
                 }
             }
-            }
         }
-    std::free (word_bin);  ///ASIGNAR UN BORRADO SEGURO AQUÍ
+        std::free (word_bin);  ///ASIGNAR UN BORRADO SEGURO AQUÍ
     }
     return entropy;
 }
