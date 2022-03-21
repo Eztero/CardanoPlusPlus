@@ -79,52 +79,42 @@ static std::uint16_t *word2bits(char const *const mnemotic,char const diccionary
     return word2bits_out;
 };
 
-std::uint8_t *mnemotic2entropy(char const *const mnemotic,char const diccionary[][2048], std::uint8_t *const entropy_length_bytes)  //returns its entropy and its length in bytes ; if there is an error it returns a nullptr
-{
+
+std::uint8_t *mnemotic2entropy(char const *const mnemotic,char const diccionary[][2048], std::uint8_t *const entropy_length_bytes) {
     std::uint8_t word_bin_length_array;
     std::uint16_t *word_bin=word2bits(mnemotic,diccionary, &word_bin_length_array);
     std::uint8_t *entropy=nullptr;
-
     if(word_bin!=nullptr && word_bin_length_array%3==0 && entropy_length_bytes!=nullptr){
-        *entropy_length_bytes=((word_bin_length_array)*(static_cast<std::uint16_t>(352)))/static_cast<std::uint16_t>(264); //se pasan la cantidad de bytes que tiene la entropy
-        entropy=new std::uint8_t[*entropy_length_bytes+1]; ///Se agrega un espacio extra para evitar desbordamiento de memoria 
-        std::uint8_t pbw=6; //posicion bit (a leer) word
-        std::uint8_t pbe=1; //posicion bit (a escribir) entropy
-        std::uint8_t pae=0; //posicion array entropy
-        std::uint16_t buff_e=0;
-        for(std::uint8_t a=0; a<word_bin_length_array; a++)
-        {
-            while(pbw < static_cast<std::uint8_t>(17))
-            {
-                buff_e=(0xffff >> (pbw-static_cast<std::uint8_t>(1))) & word_bin[a];
-                if((static_cast<std::uint8_t>(9)-pbe)<(static_cast<std::uint8_t>(17)-pbw))
-                {
-                    buff_e= buff_e >> (static_cast<std::uint8_t>(8)+pbe-pbw);
-                    entropy[pae]=static_cast<std::uint8_t>(buff_e) | entropy[pae];
-                    pbw+=(static_cast<std::uint8_t>(9)-pbe); //verificar esta parte
-                    pbe+=(static_cast<std::uint8_t>(9)-pbe);
+        *entropy_length_bytes=((word_bin_length_array)*(static_cast<std::uint8_t>(44)))/static_cast<std::uint8_t>(33); //se pasan la cantidad de bytes que tiene la entropy
+        entropy=new std::uint8_t[*entropy_length_bytes];
+        std::uint8_t cbe=8; //conteo bit entropia
+        std::uint8_t entropy_count=0;
+        for(std::uint8_t i=0; i<word_bin_length_array;i++){
+            std::uint8_t cbw=11; //conteo bit word_bin
+            if(entropy_count<*entropy_length_bytes){ //para evitar desbordamiento de memoria en entropy[]
+            while(cbw!=0){
+                if(cbe<=cbw){
+                        cbw-=cbe; //se resta de cbw la cantidad de bits a tomar para completar entropy[]
+                        entropy[entropy_count] = (static_cast<std::uint8_t>(word_bin[i] >> (cbw)) & (0xff >> (static_cast<std::uint8_t>(8)- cbe))) | entropy[entropy_count];
+                        cbe=8; //como todos los bits en entropy[] son completados, se vuleve a indicar que tiene 8 bit disponibles a llenar
+                        entropy_count++; //se pasa al siguente espacio en el array de entropy[]
+                        if(entropy_count>=*entropy_length_bytes){ //se activa en caso de que entropy_count se salga de los limites de entropy[]
+                            cbw=0; //se pone a cero para que no entre en el while{}
+                            break; //se sale del while
+                        }
                 }
-                else if((static_cast<std::uint8_t>(9)-pbe)>=(static_cast<std::uint8_t>(17)-pbw))
-                {
-                    buff_e=buff_e <<(pbw-(static_cast<std::uint8_t>(8)+pbe));
-                    entropy[pae]=static_cast<std::uint8_t>(buff_e) | entropy[pae];
-                    pbe+=static_cast<std::uint8_t>(17)-pbw;
-                    pbw+=static_cast<std::uint8_t>(17)-pbw;
-                }
-                if(pbe>static_cast<std::uint8_t>(8))
-                {
-                    pbe=1;
-                    pae++;
+                if(cbe > cbw){
+                        cbe-=cbw; //se resta de cbe la cantidad de bits a tomar de word_bin[] , para completar entropy[]
+                        entropy[entropy_count] = static_cast<std::uint8_t>(word_bin[i] << (cbe)) | (entropy[entropy_count]);
+                    cbw=0; //como todos los bits de word_bin[] entra en entropy[] entonces este queda en cero
                 }
             }
-            pbw=6;
+            }
         }
-        buff_e=0;
-        std::free (word_bin);  ///ASIGNAR UN BORRADO SEGURO AQUÍ
+    std::free (word_bin);  ///ASIGNAR UN BORRADO SEGURO AQUÍ
     }
     return entropy;
 }
-
 //-------In construction-----------------
 //char *entropy2mnemotic(std::uint8_t const *const entropy,std::uint8_t const *const entropy_length_bytes,std::uint8_t *const mnemotic_length)
 //{}
