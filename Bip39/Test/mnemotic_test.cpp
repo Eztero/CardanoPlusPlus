@@ -14,11 +14,10 @@ int main(int argc, char *argv[]){
             std::cout<<std::hex <<std::setfill('0')<<std::setw(2) <<static_cast<int>(entropy[a]);
         }
         std::cout<<std::endl;
-        delete[] entropy;
+        free(entropy);
     }
     else{
         std::cout<<"invalid mnemotic"<<std::endl;
     }
-    
     return 0;
 }
