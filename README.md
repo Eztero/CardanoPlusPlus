@@ -8,7 +8,7 @@ It is a library that aims to facilitate the development of projects based on the
 This library is written under the C++11 version and incorporates programming close to C, for the base libraries, to allow better compatibility and portability.
 
 ### :construction: In development :construction:
-- [ ] Bip39 standard implementation
+- [x] Bip39 standard implementation (branch bip39)
 - [ ] Bip32-ed25519 standard implementation
 - [ ] Bip44-ed25519 standard implementation
 - [ ] Address serialization and deserialization
