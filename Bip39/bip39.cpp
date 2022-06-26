@@ -54,7 +54,7 @@ static std::uint16_t *word2bits(char const *const mnemotic, char const diccionar
                     }
                     if((fin - inicio) < 9){ //para que no se genere un desbordamiento en el buffer buffer_word
                         std::strncpy (buffer_word, &mnemotic[inicio], (fin - inicio)); //se copia la palabra al buffer_word
-                        buffer_word[fin-inicio] = '\0'; //se agrega el caracter null manualmente
+                        buffer_word[fin-inicio] = '\0'; //se agrega el caracter null al final, para que cumpla con las caracteristicas de un string
                         for(std::uint16_t bits = 0; bits < 2047; bits++) //se busca el nombre en el diccionario dado
                         {
                             if(std::strcmp(buffer_word, diccionary[bits]) == 0){
@@ -66,7 +66,8 @@ static std::uint16_t *word2bits(char const *const mnemotic, char const diccionar
                         }
                     }
                     if(word_is_found == false){ //en caso de que no encuentre la palabra en el diccionario borra el puntero se le asigna una direccion null y se sale del while;
-                        std::free(word2bits_out); ///FALTA BORRADO SEGURO AQUI
+                        sodium_memzero(word2bits_out, word_amount);/// Pone a Cero la Memoria antes de liberarla
+                        std::free(word2bits_out);
                         word2bits_out = nullptr;
                         word_amount = 0;
                         while_true = false;
@@ -75,8 +76,9 @@ static std::uint16_t *word2bits(char const *const mnemotic, char const diccionar
             }
             mnemotic_length += 1;
         }
+    sodium_memzero(buffer_word, 10);/// Pone a Cero la Memoria antes de liberarla
     }
-    ///ASIGNAR BORRADO SEGURO A buffer_word
+
     *word_bin_length_array = word_amount;
     return word2bits_out;
 };
@@ -117,7 +119,8 @@ std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary
                 }
             }
         }
-        std::free (word_bin);  ///ASIGNAR UN BORRADO SEGURO AQUÍ
+        sodium_memzero(word_bin, word_bin_length_array);/// Pone a Cero la Memoria antes de liberarla
+        std::free (word_bin);
     }
     return entropy;
 }
@@ -175,17 +178,18 @@ char *entropy2mnemotic(std::uint8_t const *const entropy, std::uint8_t const *co
     if(mnemotic_length != nullptr){
         *mnemotic_length = words_length;
     }
-    //char *words = static_cast<char*>(std::malloc(words_length * sizeof(char))); //Crea un array dinamico para almacenar las paladras
     char *words = static_cast<char*>(std::calloc (words_length, sizeof(char))); //Crea un array dinamico iniciado en ceros para almacenar las paladras
-    if(ms == nullptr){ ///si no puede reservar memoria
-        std::free (ms);  ///ASIGNAR UN BORRADO SEGURO AQUÍ
+    if(words == nullptr){ ///si no puede reservar memoria
+        sodium_memzero(ms, ms_length);/// Pone a Cero la Memoria antes de liberarla
+        std::free (ms);
         return nullptr;
     }
     for(std::uint8_t i = 0; i< ms_length; i++){
-        std::strcat(words, diccionary[ms[i]]);
+        std::strcat(words, diccionary[ms[i]]);// concatena las palabras del diccionario en la variable word
         std::strcat(words, " ");
     }
-    std::free (ms);  ///ASIGNAR UN BORRADO SEGURO AQUÍ
+    sodium_memzero(ms, ms_length);/// Pone a Cero la Memoria antes de liberarla
+    std::free (ms);
     return words;
 }
 
