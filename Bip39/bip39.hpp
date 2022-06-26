@@ -25,7 +25,7 @@ SOFTWARE.
 
 #ifndef BIP39_HPP
 #define BIP39_HPP
-#include <sodium.h> ///library libsodium ,iniciar antes con sodium_init()
+#include <sodium.h> ///library libsodium ,init with sodium_init()
 #include <cstring>
 #include <cstdint>
 #include <cstdlib>
