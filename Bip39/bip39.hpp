@@ -1,3 +1,4 @@
+/**
 MIT License
 
 Copyright (c) 2022 Eztero
@@ -19,3 +20,27 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Documentation:
+https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
+**/
+
+
+#ifndef BIP39_HPP
+#define BIP39_HPP
+#include <sodium.h> ///library libsodium ,init with sodium_init()
+#include <cstring>
+#include <cstdint>
+#include <cstdlib>
+#include "diccionary.hpp"
+
+#include <iostream>
+
+///Returns its entropy and its length in bytes ; if there is an error it returns a nullptr; free memory with free()
+std::uint8_t *mnemotic2entropy(char const *const mnemotic,char const diccionary[][2048],std::uint8_t *const entropy_length_bytes);
+
+///Returns its mnemotics and its length in bytes, valid entropy range 128 - 256 bits ; if there is an error it returns a nullptr; free memory with free()
+char *entropy2mnemotic(std::uint8_t const *const entropy, std::uint8_t const *const entropy_length_bytes, char const diccionary[][2048], std::uint8_t *const mnemotic_length);
+
+
+#endif
