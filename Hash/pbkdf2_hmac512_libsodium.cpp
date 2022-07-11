@@ -32,6 +32,7 @@ bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::uint8_t const
     std::uint8_t T[64];               // el Bloque, T = U_1 ^ U_2 ^ ... U_(n-1)
     std::uint8_t bytes_len = 0;       // indica la cantidad de bytes que se tomaran del bloque
     std::uint32_t c = 0;              // indica las iteraciones
+    std::uint8_t x = 0;
 
     crypto_auth_hmacsha512_init(&init_hctx, key, key_len);          // se inicia init_hctx con el key  //(llave)
     crypto_auth_hmacsha512_update(&init_hctx, salt, salt_len);      // se agrega el fragmento del salt  //(mensaje o dato)
@@ -50,7 +51,7 @@ bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::uint8_t const
             crypto_auth_hmacsha512_update(&hctx, U, 64);                  // se agrega el fragmento U
             crypto_auth_hmacsha512_final(&hctx, U);                       // se genera U_(c), PRF( HmacSha512(key, U_(c-1)) )
 
-            for(std::uint8_t x = 0; x < 64; x++) {                        // (Ciclo XOR) va del byte 0 al 63, sha512
+            for(x = 0; x < 64; x++) {                                     // (Ciclo XOR) va del byte 0 al 63, sha512
                 T[x] ^= U[x];                                             // realiza un xor en paralelo por cada byte T[k]=T[k] ^ U[K] , si T=U_1 ; T= U_(j-1) ^ U_(j)
             }
         }
