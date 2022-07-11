@@ -31,20 +31,21 @@ bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::uint8_t const
     std::uint8_t U[64];               // el PRF, U_1 = hmac512(key, salt || T_index) y U_(n-1) = hmac512(key, U_(n-1))
     std::uint8_t T[64];               // el Bloque, T = U_1 ^ U_2 ^ ... U_(n-1)
     std::uint8_t bytes_len = 0;       // indica la cantidad de bytes que se tomaran del bloque
+    std::uint32_t c = 0;              // indica las iteraciones
 
     crypto_auth_hmacsha512_init(&init_hctx, key, key_len);          // se inicia init_hctx con el key  //(llave)
     crypto_auth_hmacsha512_update(&init_hctx, salt, salt_len);      // se agrega el fragmento del salt  //(mensaje o dato)
 
 
     for (std::uint8_t i = 0; i < T_max; i++) {                            // (Ciclo Bloques) ; T_(i)
-        store32_be(T_index, static_cast<std::uint32_t>(i + 1));    // i=1 pasa a ivec[4]; T_index[0]=MSB...T_index[3]=LSB
+        store32_be(T_index, static_cast<std::uint32_t>(i + 1));           // i=1 pasa a ivec[4]; T_index[0]=MSB...T_index[3]=LSB
         std::memcpy(&hctx, &init_hctx, sizeof(init_hctx));                // se pasa a el contenido de init_hctx a hctx
         crypto_auth_hmacsha512_update(&hctx, T_index, 4);                 // se concatena T_i a salt (salt || T_i )
         crypto_auth_hmacsha512_final(&hctx, U);                           // se genera un U_1
 
         memcpy(T, U, 64);                                                 // se copia U a T
 
-        for(std::uint32_t c = 2; c <= iterations; c++) {                  // (Ciclo PRF), inicia con c=2 , c < iteraciones
+        for(c = 2; c <= iterations; c++) {                                // (Ciclo PRF), inicia con c=2 , c < iteraciones
             crypto_auth_hmacsha512_init(&hctx, key, key_len);             // se inicia hctx con el key
             crypto_auth_hmacsha512_update(&hctx, U, 64);                  // se agrega el fragmento U
             crypto_auth_hmacsha512_final(&hctx, U);                       // se genera U_(c), PRF( HmacSha512(key, U_(c-1)) )
@@ -54,14 +55,14 @@ bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::uint8_t const
             }
         }
 
-        if(i != (T_max - 1)){
+        if(i != (T_max - 1)){                                             // si es el ultimo byte, se copia la cantidad indicada en T_last_bytes
             bytes_len = 64;
         }
         else{
             bytes_len = T_last_bytes;
         }
-        std::memcpy(&out[i * 64], T, static_cast<size_t>(bytes_len));                    //  Los byte de cada nuevo bloque los concatenan al anterior hasta completar los bytes requeridos (outlen),
-                                                                                         //  asi un out[96] = T_1[64] || T_2[32]
+        std::memcpy(&out[i * 64], T, static_cast<size_t>(bytes_len));          //  Los byte de cada nuevo bloque los concatenan al anterior hasta completar los bytes requeridos (outlen),
+                                                                               //  asi un out[96] = T_1[64] || T_2[32]
     }
     sodium_memzero(&init_hctx, sizeof(init_hctx));
     return true;
