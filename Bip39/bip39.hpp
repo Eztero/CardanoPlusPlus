@@ -37,10 +37,10 @@ https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
 #include <iostream>
 
 ///Returns its entropy and its length in bytes ; if there is an error it returns a nullptr; free memory with free()
-std::uint8_t *mnemotic2entropy(char const *const mnemotic,char const diccionary[][2048],std::uint8_t *const entropy_length_bytes);
+std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary[][2048], std::size_t *const entropy_length_bytes);
 
 ///Returns its mnemotics and its length in bytes, valid entropy range 128 - 256 bits ; if there is an error it returns a nullptr; free memory with free()
-char *entropy2mnemotic(std::uint8_t const *const entropy, std::uint8_t const *const entropy_length_bytes, char const diccionary[][2048], std::uint8_t *const mnemotic_length);
+char *entropy2mnemotic(std::uint8_t const *const entropy, std::size_t const *const entropy_length_bytes, char const diccionary[][2048], std::size_t *const mnemotic_length);
 
 
 #endif
