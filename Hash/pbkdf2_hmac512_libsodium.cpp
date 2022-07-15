@@ -1,19 +1,19 @@
 #include "pbkdf2_hmac512_libsodium.hpp"
 
-inline void store32_be( std::uint8_t *const dst, std::uint32_t w ) // store32 bigendian
+inline void store32_be( std::uint32_t const index, std::uint8_t *const out) // store32 bigendian
 {
-    dst[3] = static_cast<std::uint8_t>(w);
-    dst[2] = static_cast<std::uint8_t>(w >> 8);
-    dst[1] = static_cast<std::uint8_t>(w >> 16);
-    dst[0] = static_cast<std::uint8_t>(w >> 24);
+    out[3] = static_cast<std::uint8_t>(index);
+    out[2] = static_cast<std::uint8_t>(index >> 8);
+    out[1] = static_cast<std::uint8_t>(index >> 16);
+    out[0] = static_cast<std::uint8_t>(index >> 24);
 }
 
-bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::uint8_t const key_len,
-                               std::uint8_t const *const salt, std::uint8_t const salt_len,
-                               std::uint32_t const iterations,
-                               std::uint32_t const out_len , std::uint8_t *const out ){
+bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::size_t key_len,
+                               std::uint8_t const *const salt, std::size_t salt_len,
+                               std::uint64_t const iterations,
+                               std::size_t out_len , std::uint8_t *const out ){
 
-    sodium_memzero(out, out_len);
+    std::memset(out, 0, out_len);
 
     if(out_len > 0xfffffe) {  //se limita a una longitud de 16777214 bytes, pero su limite real es, out_len < (2^32 - 1) * 64
         return false;
@@ -31,7 +31,7 @@ bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::uint8_t const
     std::uint8_t U[64];               // el PRF, U_1 = hmac512(key, salt || T_index) y U_(n-1) = hmac512(key, U_(n-1))
     std::uint8_t T[64];               // el Bloque, T = U_1 ^ U_2 ^ ... U_(n-1)
     std::uint8_t bytes_len = 0;       // indica la cantidad de bytes que se tomaran del bloque
-    std::uint32_t c = 0;              // indica las iteraciones
+    std::uint64_t c = 0;              // indica las iteraciones
     std::uint8_t x = 0;
 
     crypto_auth_hmacsha512_init(&init_hctx, key, key_len);          // se inicia init_hctx con el key  //(llave)
@@ -39,7 +39,7 @@ bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::uint8_t const
 
 
     for (std::uint8_t i = 0; i < T_max; i++) {                            // (Ciclo Bloques) ; T_(i)
-        store32_be(T_index, static_cast<std::uint32_t>(i + 1));           // i=1 pasa a ivec[4]; T_index[0]=MSB...T_index[3]=LSB
+        store32_be(static_cast<std::uint32_t>(i + 1), T_index);           // i=1 pasa a ivec[4]; T_index[0]=MSB...T_index[3]=LSB
         std::memcpy(&hctx, &init_hctx, sizeof(init_hctx));                // se pasa a el contenido de init_hctx a hctx
         crypto_auth_hmacsha512_update(&hctx, T_index, 4);                 // se concatena T_i a salt (salt || T_i )
         crypto_auth_hmacsha512_final(&hctx, U);                           // se genera un U_1
