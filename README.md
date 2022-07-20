@@ -10,7 +10,7 @@ This library is written under the C++11 version and incorporates programming clo
 ### :construction: In development :construction:
 - [x] Bip39 standard implementation (branch bip39)
 - [x] Bip32-ed25519 standard implementation (branch bip32-ed25519)
-- [ ] Bip44-ed25519 standard implementation
+- [x] Bip44-ed25519 standard implementation (branch bip44-ed25519)
 - [ ] Address serialization and deserialization
 - [ ] Serialization and deserialization phase of data structures that allow interaction with the blockchain
     - [ ] implement send, receive, delegation and withdrawal of delegation in ADA
