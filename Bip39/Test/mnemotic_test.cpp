@@ -10,8 +10,8 @@ int main(int argc, char *argv[]){
     }
     
     std::string mnemotic = "blanket pistol rough habit hockey virus protect page bread buffalo duty canoe six clarify scare arrive december device page silly attend defense elder icon";
-    std::uint8_t entropy_length_bytes = 0;
-    std::uint8_t mnemotic_length = 0;
+    std::size_t entropy_length_bytes = 0;
+    std::size_t mnemotic_length = 0;
     
     ///----- Mnemotic to entropy -----
     std::uint8_t *entropy = mnemotic2entropy(mnemotic.c_str(),Diccionary::English, &entropy_length_bytes);
