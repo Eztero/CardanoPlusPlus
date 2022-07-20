@@ -30,8 +30,8 @@ https://libsodium.gitbook.io/doc/advanced/point-arithmetic
 **/
 
 
-#ifndef BIP32_ED25519_HPP_INCLUDED
-#define BIP32_ED25519_HPP_INCLUDED
+#ifndef BIP32_ED25519_HPP
+#define BIP32_ED25519_HPP
 
                                                        // || = concatenar
 #define XSK_LENGTH 96U                                 // Extended Private Key (64 bytes) || Chain Code (32 bytes)
@@ -58,4 +58,4 @@ bool signature( uint8_t const *const raw_privatekey_xsk, uint8_t const *const me
 
 bool verify( std::uint8_t const *const raw_publickey, std::uint8_t const *const message, const std::uint8_t message_len, std::uint8_t const *const signature );
 
-#endif // BIP32_ED25519_HPP_INCLUDED
+#endif // BIP32_ED25519_HPP
