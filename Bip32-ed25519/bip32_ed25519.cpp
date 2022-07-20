@@ -9,6 +9,7 @@ static void hmac512_sodium( std::uint8_t const *const key, std::size_t const key
     crypto_auth_hmacsha512_final(&hctx, out);
 };
 
+
 inline void normalize_bytes_icarusmethod( std::uint8_t *const kl ){
     kl[0] &= 0xf8;  //0b1111_1000;
     kl[31] &= 0x1f; //0b0001_1111;
@@ -16,7 +17,8 @@ inline void normalize_bytes_icarusmethod( std::uint8_t *const kl ){
 
 }
 
-inline void store32_le( std::uint32_t const index, std::uint8_t *const out ){ //store32 litleendian
+///store32 litleendian
+inline void store32_le( std::uint32_t const index, std::uint8_t *const out ){
     out[0] = static_cast<std::uint8_t>(index);
     out[1] = static_cast<std::uint8_t>(index >> 8);
     out[2] = static_cast<std::uint8_t>(index >> 16);
@@ -54,30 +56,34 @@ static void add_256bits( std::uint8_t const *const kparentr, std::uint8_t const 
 }
 
 /// ai_out = aparent + (8*trunc28(zl))*B
-static bool point_plus( std::uint8_t const *const aparent, std::uint8_t const *const zl, std::uint8_t *const ai_out ){
+static bool point_plus( std::uint8_t const *const aparent, std::uint8_t *const zl, std::uint8_t *const ai_out ){
     std::uint8_t cero[32]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     std::uint8_t zl_8[32];
     std::uint8_t azl_8[32];
 
-
     //8 * trunc28(zl) -> zl_8
     add_28_mul8(cero, zl, zl_8);
+    sodium_memzero(zl, 64);
 
     //zl_8(private key) ; verifica si ultimo byte
     if(zl_8[31] > 127){
         return false;
     }
 
-    //         azl_8 = zl_8 * B
+    //azl_8 = zl_8 * B
     if(crypto_scalarmult_ed25519_base_noclamp(azl_8, zl_8) != 0 ){
         return false;
     }
+
     //ai_out = aparent + azl_8
     if(crypto_core_ed25519_add(ai_out, azl_8, aparent) != 0 ){
         return false;
     }
 
-    //ai_out[31] ^= 0x80; //0b10000000
+    if(crypto_core_ed25519_is_valid_point(ai_out) == 0){
+        return false;
+    }
+
     return true;
 }
 
@@ -86,8 +92,6 @@ static bool point_plus( std::uint8_t const *const aparent, std::uint8_t const *c
 
 /// root_privatekey/extended_mastersecretkey[96] = pbkdf2_hmac512(entropy)
 bool raw_masterkeys_generation( std::uint8_t const *const entropy, std::size_t entropy_len, std::uint8_t const *const password, std::size_t password_len, std::uint8_t *const extended_mastersecretkey ){
-
-    std::memset(extended_mastersecretkey, 0, EXTENDED_MASTERSECRETKEY_LENGTH);
 
     pbkdf2_hmac512_libsodium( password, password_len, entropy, entropy_len, 4096, EXTENDED_MASTERSECRETKEY_LENGTH, extended_mastersecretkey );
 
@@ -98,6 +102,8 @@ bool raw_masterkeys_generation( std::uint8_t const *const entropy, std::size_t e
 
 /// (A/extended_publickey)[64] = kl[32] * B || k_chaincode[32]
 bool raw_privatekey_to_publickey( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t *const raw_publickey_xvk ){
+
+    std::memset(raw_publickey_xvk, 0 ,XVK_LENGTH);
 
     if(raw_privatekey_xsk[31] > 127){ //si su primer bits mas alto es 1 entonces no es valido
         return false;
@@ -114,18 +120,15 @@ bool raw_privatekey_to_publickey( std::uint8_t const *const raw_privatekey_xsk, 
     return true;
 }
 
-///IMPLEMENTAR un sistema para que compruebe el valor maximo de uint32_t index o lo limite a su valor maximo
-
 /// extended_privatekey_child[96] = kli || kri || Ci
 bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, std::uint64_t const index, std::uint8_t *const raw_child_privatekey_xsk ){
 
     std::uint8_t buffer_xvk[XVK_LENGTH]; // buffer de 64bytes (almacena sha512 y llaves xvk)
+    std::uint8_t data_ci[64];
+    std::uint8_t data_raw[69];
 
     if(index < 0x80000000){//de 0x00000000 a 0x7fffffff; de 0 a (2^31)-1
-
-        std::uint8_t data_raw[37]; //1byte(0x02)+32byte(raw_public_key_littleendian)+4byte(index)
-        std::uint8_t data_ci[64];
-
+        ///data_raw[37]; //1byte(0x02)+32byte(parent publickey)+4byte(index)
 
         //parent public key (Big-endian)
         raw_privatekey_to_publickey(raw_parent_privatekey_xsk,buffer_xvk);
@@ -147,14 +150,9 @@ bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, 
         for(std::uint8_t i = 32; i < 64; i++){
             raw_child_privatekey_xsk[64 + (i - 32)] = data_ci[i];
         }
-
-        sodium_memzero(data_raw, 37);
-        sodium_memzero(data_ci, 64);
-
     }
     else if(index >= 0x80000000 && index <= 0xffffffff){ //de 0x80000000 a 0xffffffff ; de 2^31 a (2^32)-1
-        std::uint8_t data_raw[69]; //1byte(0x00)+64byte(kparent_littleendian)+4byte(index)
-        std::uint8_t data_ci[64];
+        ///data_raw[69]; //1byte(0x00)+64byte(parent extended privatekey)+4byte(index)
 
         //raw_parent_privatekey_xsk[64] = k = kparent_l + kparent_r
         for(std::uint8_t i = 0; i < 64; i++){
@@ -174,12 +172,9 @@ bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, 
         for(std::uint8_t i = 32; i<64; i++){
             raw_child_privatekey_xsk[64 + (i - 32)] = data_ci[i];
         }
-
-        sodium_memzero(data_raw, 69);
-        sodium_memzero(data_ci, 64);
-
     }
     else{
+        std::memset(raw_child_privatekey_xsk, 0 ,XSK_LENGTH);
         return false;
     }
 
@@ -195,6 +190,8 @@ bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, 
         raw_child_privatekey_xsk[32 + i] = kr[i];
     }
 
+    sodium_memzero(data_raw, 69);
+    sodium_memzero(data_ci, 64);
     sodium_memzero(kl, 32);
     sodium_memzero(kr, 32);
     sodium_memzero(buffer_xvk, XVK_LENGTH);
@@ -204,6 +201,7 @@ bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, 
 
 /// extended_publickey_child[64] = Ai[32] || Ci[32]
 bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, std::uint64_t const index, std::uint8_t *const raw_child_public_key_xvk ){
+
     if(index < 0x80000000){//de 0x00000000 a 0x7fffffff; de 0 a (2^31)-1
         std::uint8_t data_raw[37]; //1byte(0x02)+32byte(raw_public_key_littleendian)+4byte(index)
         std::uint8_t data_ci[64];
@@ -218,7 +216,7 @@ bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, s
 
         //Z = hmac512( parent chaincode, 0x02 || parent publickey || index )
         data_raw[0] = 0x02;
-        hmac512_sodium(&raw_parent_public_key_xvk[32], 32, data_raw, 37, data_z); //ahora Z=data_z
+        hmac512_sodium(&raw_parent_public_key_xvk[32], 32, data_raw, 37, data_z); // Z = data_z
 
         //Ci = hmac512( parent chaincode, 0x03 || parent publickey || index )
         data_raw[0] = 0x03;
@@ -228,14 +226,15 @@ bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, s
         }
         sodium_memzero(data_raw, 37);
         sodium_memzero(data_ci, 64);
+
         //Ai = parent publickey + trunc28(Zl)B
         if(point_plus(raw_parent_public_key_xvk, data_z, raw_child_public_key_xvk) == false) {
-            sodium_memzero(data_z, 64);
+            std::memset(raw_child_public_key_xvk, 0 ,XVK_LENGTH);
             return false;
         }
-        sodium_memzero(data_z, 64);
     }
     else{
+        std::memset(raw_child_public_key_xvk, 0 ,XVK_LENGTH);
         return false;
     }
 
@@ -243,7 +242,7 @@ bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, s
 }
 
 /// signature_extended[64] = R[32] || S[32]
-bool signature( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t const *const message, const size_t message_len, std::uint8_t *const signature ){
+bool signature( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t const *const message, const size_t message_len, std::uint8_t *const out ){
 
     std::uint8_t nonce[64];
     std::uint8_t hram[64];
@@ -272,25 +271,25 @@ bool signature( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t const
         return false;
     }
 
-    if(crypto_scalarmult_ed25519_base_noclamp(signature, nonce) != 0){ // R = signature[0..32] = nonce[32]*B
+    if(crypto_scalarmult_ed25519_base_noclamp(out, nonce) != 0){ // R = out[0..32] = nonce[32]*B
         sodium_memzero(nonce,64);
         return false;
     }
 
-    for(std::uint8_t i = 32; i<64; i++){      // public key[0..32] -> signature[32..64]
-        signature[i] = raw_publickey[i - 32];
+    for(std::uint8_t i = 32; i<64; i++){      // public key[0..32] -> out[32..64]
+        out[i] = raw_publickey[i - 32];
     }
 
     // Hram
     crypto_hash_sha512_init(&sha512_);
-    crypto_hash_sha512_update(&sha512_, signature, 64);
+    crypto_hash_sha512_update(&sha512_, out, 64);
     crypto_hash_sha512_update(&sha512_, message, message_len);
     crypto_hash_sha512_final(&sha512_, hram);
     crypto_core_ed25519_scalar_reduce(hram, hram); //reduce hram de 64 a 32 bytes
 
-    // sc_muladd = (nonce + hram * raw_privatekey_xsk[0..32])mod l = S = signature[32..64]
-    crypto_core_ed25519_scalar_mul(&signature[32], hram, raw_privatekey_xsk); // &signature[32] = ( hram * raw_privatekey_xsk )mod l
-    crypto_core_ed25519_scalar_add(&signature[32], &signature[32], nonce); // S = signature[32..64] = ( &signature[32] + nonce )mod l , esta funcion guarda previamente las variables a sumar en un buffer
+    // sc_muladd = (nonce + hram * raw_privatekey_xsk[0..32])mod l = S = out[32..64]
+    crypto_core_ed25519_scalar_mul(&out[32], hram, raw_privatekey_xsk); // &out[32] = ( hram * raw_privatekey_xsk )mod l
+    crypto_core_ed25519_scalar_add(&out[32], &out[32], nonce); // S = out[32..64] = ( &out[32] + nonce )mod l ;esta funcion guarda previamente las variables a sumar en un buffer
 
     // signature = R || S
 

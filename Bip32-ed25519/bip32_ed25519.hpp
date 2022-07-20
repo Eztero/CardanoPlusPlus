@@ -37,6 +37,7 @@ https://libsodium.gitbook.io/doc/advanced/point-arithmetic
 #define XSK_LENGTH 96U                                 // Extended Private Key (64 bytes) || Chain Code (32 bytes)
 #define XVK_LENGTH 64U                                 // Public Key (32 bytes) || Chain Code (32 bytes)
 #define EXTENDED_MASTERSECRETKEY_LENGTH 96U            // Extended Private Key (64 bytes) || Chain Code (32 bytes)
+#define SIGNATURE_LENGTH 64U
 
 #include <cstdint>
 #include <cstring>
@@ -53,7 +54,7 @@ bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, 
 
 bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, std::uint64_t const index, std::uint8_t *const raw_child_public_key_xvk );
 
-bool signature( uint8_t const *const raw_privatekey_xsk, uint8_t const *const message,const size_t message_len, uint8_t *const signature );
+bool signature( uint8_t const *const raw_privatekey_xsk, uint8_t const *const message,const size_t message_len, uint8_t *const out );
 
 bool verify( std::uint8_t const *const raw_publickey, std::uint8_t const *const message, const std::uint8_t message_len, std::uint8_t const *const signature );
 
