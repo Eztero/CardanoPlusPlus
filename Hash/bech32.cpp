@@ -1,6 +1,17 @@
 #include "bech32.hpp"
 
-std::string const B32Chars_set = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+char const B32Chars_encode[33] = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+
+std::int8_t const B32Chars_decode[128] = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    15, -1, 10, 17, 21, 20, 26, 30,  7,  5, -1, -1, -1, -1, -1, -1,
+    -1, 29, -1, 24, 13, 25,  9,  8, 23, -1, 18, 22, 31, 27, 19, -1,
+     1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1,
+    -1, 29, -1, 24, 13, 25,  9,  8, 23, -1, 18, 22, 31, 27, 19, -1,
+     1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1
+};
 
 ///concat_data= data1 || data2
 static std::uint8_t *concat_data(std::uint8_t const *const data1,std::uint16_t const *const data1_len, std::uint8_t const *const data2,std::uint16_t const *const data2_len, std::uint16_t *const data_out_len){
@@ -18,6 +29,7 @@ static std::uint8_t *concat_data(std::uint8_t const *const data1,std::uint16_t c
     }
     return data_out;
 }
+
 /// Encode
 static std::uint8_t *convert_bits(std::uint8_t const *const data,std::uint16_t const *const data_len , std::uint16_t const fromBits, std::uint16_t const toBits, std::uint16_t *const convert_bits_len){
     std::uint16_t acc = 0;
@@ -295,7 +307,7 @@ bool bech32_encode(char const *const hrp, std::uint8_t const *const data, std::u
     encode_out.reserve(encode_out.length() + cdata_len);
 
     for (std::uint16_t i = 0; i<cdata_len; i++) {
-        encode_out += B32Chars_set.at(cdata[i]); //hrp + separador + data
+        encode_out += B32Chars_encode[ cdata[i] ]; //hrp + separador + data
     }
 
     //Borrar cdata
@@ -325,9 +337,9 @@ bool bech32_decode_cardanoaddr(char const *const bech32_code,std::uint8_t *const
     std::uint8_t c_bit[c_bit_len];
     std::memset(c_bit,0,c_bit_len);
 
-    for (int i = 0; i < c_bit_len; i++)
+    for (std::uint16_t i = 0; i < c_bit_len; i++)
     {
-        c_bit[i] = static_cast<std::uint8_t>(B32Chars_set.find(bech32_code[(pos_separator + 1) + i]));
+        c_bit[i] = B32Chars_decode[ static_cast<std::uint8_t>( bech32_code[ (pos_separator + 1) + i] ) ];
     }
 
     if (!bech32_verify_checksum(hrp, &hrp_len, c_bit, c_bit_len)){
