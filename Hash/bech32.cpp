@@ -13,9 +13,9 @@ std::int8_t const B32Chars_decode[128] = {
      1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1
 };
 
-///concat_data= data1 || data2
-static std::uint8_t *concat_data(std::uint8_t const *const data1,std::uint16_t const *const data1_len, std::uint8_t const *const data2,std::uint16_t const *const data2_len, std::uint16_t *const data_out_len){
-    *data_out_len = (*data2_len) + (*data1_len);  // se espera que el valor no supere los 65535 bytes de largo
+///concat_data= data1 || data2 || add_bytes
+static std::uint8_t *concat_data(std::uint8_t const *const data1,std::uint16_t const *const data1_len, std::uint8_t const *const data2, std::uint16_t const *const data2_len, uint16_t const add_bytes, std::uint16_t *const data_out_len){
+    *data_out_len = (*data2_len) + (*data1_len) + add_bytes;  // se espera que el valor no supere los 65535 bytes de largo
     std::uint8_t *data_out = static_cast<std::uint8_t*>(std::calloc(*data_out_len, sizeof(std::uint8_t)));
     if(data_out != nullptr){
         for(std::uint16_t i = 0; i < (*data_out_len); i++){
@@ -205,7 +205,7 @@ static bool bech32_verify_checksum(char const *const hrp, std::uint8_t const *co
     if(hrp_expand == nullptr){
         return false;
     }
-    std::uint8_t *v = concat_data(hrp_expand, &hrp_expand_len, data, &data_len, &v_len);
+    std::uint8_t *v = concat_data(hrp_expand, &hrp_expand_len, data, &data_len, 0, &v_len);
     if(v == nullptr){
         std::free(hrp_expand);
         return false;
@@ -214,8 +214,8 @@ static bool bech32_verify_checksum(char const *const hrp, std::uint8_t const *co
     bech32_polymod(v, &v_len, &pmod);
 
     //se borra v[] y hrp_expand[]
-    std::free(hrp_expand);
     std::memset(v, 0, v_len);
+    std::free(hrp_expand);
     std::free(v);
 
     if(pmod == 1){
@@ -228,24 +228,23 @@ static bool bech32_verify_checksum(char const *const hrp, std::uint8_t const *co
 static bool bech32_create_checksum(char const *const hrp, std::uint8_t const *const hrp_len, std::uint8_t const *const data, std::uint16_t const *const data_len,std::uint8_t *const checksum) {
     std::uint16_t hrp_expand_len;
     std::uint16_t v_len = 0;
-    std::uint16_t enc_len = 0;
+    //std::uint16_t enc_len = 0;
     std::uint32_t polymod;
 
     std::uint8_t *hrp_expand=bech32_hrp_expand(hrp, hrp_len, &hrp_expand_len);
     if(hrp_expand == nullptr){
         return false;
     }
-    std::uint8_t *v = concat_data(hrp_expand, &hrp_expand_len, data, data_len, &v_len);
+    std::uint8_t *v = concat_data(hrp_expand, &hrp_expand_len, data, data_len, 6, &v_len); //se agregan 6 bytes adicionales al array para el calculo del checksum en bech32_polymod
     if(v == nullptr){
         std::free(hrp_expand);
         return false;
     }
-    enc_len = v_len + 6;
-    std::uint8_t enc[enc_len];
-    std::memset(&enc[v_len], 0, 6);
 
-    for(std::uint16_t i = 0; i < v_len; i++){
-        enc[i] = v[i];
+    bech32_polymod(v, &v_len, &polymod);
+    polymod = polymod ^ 1;
+    for(std::uint8_t i = 0; i < 6; i++){
+        checksum[i] = (polymod >> (5 * (5 - i))) & 0x1f;
     }
 
     //borrar hrp_expand[] y v[]
@@ -253,17 +252,7 @@ static bool bech32_create_checksum(char const *const hrp, std::uint8_t const *co
     std::free(hrp_expand);
     std::free(v);
 
-    bech32_polymod(enc, &enc_len, &polymod);
-    polymod = polymod ^ 1;
-    for(std::uint8_t i = 0; i < 6; i++){
-        checksum[i] = (polymod >> (5 * (5 - i))) & 0x1f;
-    }
-
-    //poner a cero enc
-    std::memset(enc,0,enc_len);
-
     return true;
-
 }
 
 bool bech32_encode(char const *const hrp, std::uint8_t const *const data, std::uint16_t const data_len, std::string &encode_out){
@@ -291,16 +280,13 @@ bool bech32_encode(char const *const hrp, std::uint8_t const *const data, std::u
         return false;
     }
 
-    std::uint8_t *cdata=concat_data(c_bit,&c_bit_len, chk, &chk_len, &cdata_len);
+    std::uint8_t *cdata=concat_data(c_bit,&c_bit_len, chk, &chk_len, 0, &cdata_len);
     if(cdata == nullptr){
         std::memset(c_bit, 0, c_bit_len);
         std::free(c_bit);
         return false;
     }
 
-    //Borrar chk y c_bit
-    std::memset(c_bit, 0, c_bit_len);
-    std::free(c_bit);
 
     encode_out += hrp; //hrp
     encode_out += SEPARATOR_BECH32; //hrp + separador
@@ -310,13 +296,16 @@ bool bech32_encode(char const *const hrp, std::uint8_t const *const data, std::u
         encode_out += B32Chars_encode[ cdata[i] ]; //hrp + separador + data
     }
 
-    //Borrar cdata
+    //Borrar cdata c_bit
+    std::memset(c_bit, 0, c_bit_len);
     std::memset(cdata, 0, cdata_len);
     std::free(cdata);
+    std::free(c_bit);
+
     return true;
 }
 
-bool bech32_decode_cardanoaddr(char const *const bech32_code,std::uint8_t *const data,std::uint16_t *const data_len){
+bool bech32_decode(char const *const bech32_code,std::uint8_t *const data,std::uint16_t *const data_len){
     std::uint16_t bech32_code_lenght = 0;
     std::uint16_t pos_separator = 0;
     std::uint8_t hrp_len = 0;
