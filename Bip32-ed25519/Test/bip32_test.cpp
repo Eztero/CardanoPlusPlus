@@ -17,12 +17,12 @@ int main(int argc, char *argv[]){
     std::uint8_t skey_out[XSK_LENGTH];
     std::uint8_t vkey_out[XVK_LENGTH];
     std::uint8_t vkey_out1[XVK_LENGTH];
-    std::uint64_t index_n = 2147483647;
+    std::uint32_t index_n = 2147483647;
 
 
     /// ROOT KEY(PRIVATE KEY)
 
-    raw_masterkeys_generation( entropiaword15, 20, nullptr, 0, extended_mastersecretkey );
+    raw_masterkeys_generation( entropiaword15, sizeof(entropiaword15), nullptr, 0, extended_mastersecretkey );
     std::cout<<"\nmasterkeys(privatekey): \n";
     for(uint8_t i=0;i<EXTENDED_MASTERSECRETKEY_LENGTH;i++){
         std::cout << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(extended_mastersecretkey[i]);
