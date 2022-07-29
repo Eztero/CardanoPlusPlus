@@ -26,6 +26,7 @@ https://cips.cardano.org/cips/cip5/
 https://cips.cardano.org/cips/cip11/
 https://cips.cardano.org/cips/cip21/
 https://cips.cardano.org/cips/cip1852/
+https://cips.cardano.org/cips/cip1854/
 https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
 https://input-output-hk.github.io/adrestia/cardano-wallet/concepts/hierarchical-deterministic-wallets
 **/
@@ -33,42 +34,29 @@ https://input-output-hk.github.io/adrestia/cardano-wallet/concepts/hierarchical-
 /**
 --------------------   Bip44_ed25519 https://cips.cardano.org/cips/cip1852/  ------------------------
 
-     m       /    1852'  /    1815'     /    0'..(2^31)'-1     /       0..2         /    0...(2^31)-1 (only 0 for role=2)
-     :             :            :                :                      :                      :
-(master key)   (purpose)   (coin type)       (account)                (role)               (index address)
-               (constant)  (constant)
-------------------------------------------------------------------------------------------------------
+     m        /    1852' or 1854'     /    1815'     /    0'..(2^31)'-1     /      0..2       /    0...(2^31)-1 (only 0 for Role=2)
+     :                :                      :                :                     :                      :
+(master key)     (purpose/Wallet)        (coin type)       (account)              (Role)              (index address)
+Array(uint8_t)    0=HD (1852)            (constant)        Number(uint32)         0=Extern             Number(uint32)
+                  1=MultiSignHD (1854)                                            1=Intern
+                                                                                  2=Staking
+                                                                                  3=Only_Account
+-------------------------------------  Library functions  ---------------------------------------------------
+
+    derive_key(master key, Wallet::HD,  Key::Private,  account, Role::Extern, index_addr, child_key_out)
+raw_derive_key(master key, Wallet::HD,  Key::Private,  account, Role::Extern, index_addr, child_key_out)
+                                             :
+                                        0=Private(xsk)
+                                        1=Public (xvk)
 
 ---------------------  Format Keys https://cips.cardano.org/cips/cip16/  -----------------------------
 
-    xsk(extended signing key) = Extended Private Key (64 bytes) || Chain Code (32 bytes) = 96bytes
-    xvk(extended verification key) = Public Key (32 bytes) || Chain Code (32 bytes) = 64bytes
+    xsk(extended signing key)      =  Extended Private Key (64 bytes) || Chain Code (32 bytes) = 96 bytes (XSK_LENGTH)
+    xvk(extended verification key) =  Public Key (32 bytes) || Chain Code (32 bytes)           = 64 bytes (XVK_LENGTH)
 
-    sk(signing key) = Private Key (32 bytes)
-    vk(verification key) = Public Key (32 bytes)
+    sk(signing key)      =   Private Key  = 32 bytes
+    vk(verification key) =   Public Key   = 32 bytes
 ------------------------------------------------------------------------------------------------------
-
-
-----------------------  References of this library  --------------------------------------------------
-
-
- key_type -> 0=child private key  or  1=child public key
-
- address_type -> 0=payment normal, 1=payment enterprise ,stake =0;
-
- path ->    account_path   /       role_path   /      address_index_path
-                :                      :                      :
-            0=account 0         0=extern chain          0=address 0 (only 0 for staking key)
-            1=account 1         1=intern chain          1=address 1
-            ...                 2=staking key           .....
-            nullptr=error       3=only account               nullptr=disable
-
-
- child_key_out  ->  keys xsk (if Key::Private) = Extended Private Key (64 bytes) || Chain Code (32 bytes) = 96bytes = XPUB_LENGTH (macro)
-                                            or
-                    keys xvk (if Key::Public) = Public Key (32 bytes) || Chain Code (32 bytes) = 64bytes = XPRV_LENGTH (macro)
-
-
 **/
 
 #ifndef BIP44_ED25519_HPP
@@ -80,6 +68,7 @@ https://input-output-hk.github.io/adrestia/cardano-wallet/concepts/hierarchical-
 #define H0 2147483648U
 
 #include "../Bip32-ed25519/bip32_ed25519.hpp"
+#include "../Hash/bech32.hpp"
 #include <string>
 
 enum class Wallet{
@@ -94,28 +83,19 @@ Staking,
 Only_Account
 };
 
-enum class Network{
-Testnet,
-Mainnet
-};
-
 enum class Key{
 Private,
 Public
 };
 
-enum class Address{
-Base,
-Change_Base,
-Enterprise,
-Change_Enterprise,
-Stake
-};
-
 ///Keys XSK(Private) or XVK(Public) <-- /m/H1852/H1815/account_path/role_path/address_index_path
 bool raw_derive_key(uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
-                       uint32_t const *const account_path, Role role_path, uint32_t const *const address_index_path,
+                       uint32_t const account_path, Role role_path, uint32_t const address_index_path,
                        uint8_t *const child_key_out);
 
+///Keys XSK(Private) or XVK(Public) <-- bech32(/m/H1852/H1815/account_path/role_path/address_index_path)
+bool derive_key(std::uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
+                    std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
+                    std::string& child_key_address_out);
 
 #endif // BIP44_ED25519_HPP
