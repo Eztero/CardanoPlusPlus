@@ -88,7 +88,14 @@ static bool point_plus( std::uint8_t const *const aparent, std::uint8_t *const z
 }
 
 
+bool valid_ed25519_sk(std::uint8_t const *const raw_privatekey_sk){ //si en a[0] sus tres bit mas bajos no son cero y a[31] su bit mas alto no es cero entonces la llave no es valida
 
+if(raw_privatekey_sk[31] <= 127 && ( (raw_privatekey_sk[0] & 0x07) == 0x00 ) ){
+        return true;
+    }
+
+return false;
+}
 
 /// root_privatekey/extended_mastersecretkey[96] = pbkdf2_hmac512(entropy)
 bool raw_masterkeys_generation( std::uint8_t const *const entropy, std::size_t entropy_len, std::uint8_t const *const password, std::size_t password_len, std::uint8_t *const extended_mastersecretkey ){
@@ -103,13 +110,8 @@ bool raw_masterkeys_generation( std::uint8_t const *const entropy, std::size_t e
 /// (A/extended_publickey)[64] = kl[32] * B || k_chaincode[32]
 bool raw_privatekey_to_publickey( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t *const raw_publickey_xvk ){
 
-    std::memset(raw_publickey_xvk, 0 ,XVK_LENGTH);
-
-    if(raw_privatekey_xsk[31] > 127){ //si su primer bits mas alto es 1 entonces no es valido
-        return false;
-    }
-
-    if(crypto_scalarmult_ed25519_base_noclamp(raw_publickey_xvk, raw_privatekey_xsk) != 0){ // se obtiene la llave publica
+    if(!valid_ed25519_sk(raw_privatekey_xsk) || crypto_scalarmult_ed25519_base_noclamp(raw_publickey_xvk, raw_privatekey_xsk) != 0){
+        std::memset(raw_publickey_xvk, 0 ,XVK_LENGTH);
         return false;
     }
 
@@ -120,21 +122,28 @@ bool raw_privatekey_to_publickey( std::uint8_t const *const raw_privatekey_xsk, 
     return true;
 }
 
+
 /// extended_privatekey_child[96] = kli || kri || Ci
-bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, std::uint64_t const index, std::uint8_t *const raw_child_privatekey_xsk ){
+bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, std::uint32_t const index, std::uint8_t *const raw_child_privatekey_xsk ){
+
+    if(!valid_ed25519_sk(raw_parent_privatekey_xsk)){
+        std::memset(raw_child_privatekey_xsk, 0, XSK_LENGTH);
+        return false;
+    }
 
     std::uint8_t buffer_xvk[XVK_LENGTH]; // buffer de 64bytes (almacena sha512 y llaves xvk)
     std::uint8_t data_ci[64];
     std::uint8_t data_raw[69];
 
-    if(index < 0x80000000){//de 0x00000000 a 0x7fffffff; de 0 a (2^31)-1
+    if(index < 2147483648U){//de 0x00000000 a 0x7fffffff; de 0 a (2^31)-1
         ///data_raw[37]; //1byte(0x02)+32byte(parent publickey)+4byte(index)
 
         //parent public key (Big-endian)
-        raw_privatekey_to_publickey(raw_parent_privatekey_xsk,buffer_xvk);
-        for(std::uint8_t i = 0; i < 32; i++){
-            data_raw[i+1] = buffer_xvk[i];
+        if(crypto_scalarmult_ed25519_base_noclamp(&data_raw[1], raw_parent_privatekey_xsk) != 0){ // se obtiene la llave publica
+            std::memset(raw_child_privatekey_xsk, 0, XSK_LENGTH);
+            return false;
         }
+
         //index (Little-endian)
         store32_le(index, &data_raw[33]);
 
@@ -151,7 +160,7 @@ bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, 
             raw_child_privatekey_xsk[64 + (i - 32)] = data_ci[i];
         }
     }
-    else if(index >= 0x80000000 && index <= 0xffffffff){ //de 0x80000000 a 0xffffffff ; de 2^31 a (2^32)-1
+    else{ // de 0x80000000 a 0xffffffff ; de 2^31 a (2^32)-1; como el uint32 es igual al maximo, no se usa condicion para delimitar a index
         ///data_raw[69]; //1byte(0x00)+64byte(parent extended privatekey)+4byte(index)
 
         //raw_parent_privatekey_xsk[64] = k = kparent_l + kparent_r
@@ -172,10 +181,6 @@ bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, 
         for(std::uint8_t i = 32; i<64; i++){
             raw_child_privatekey_xsk[64 + (i - 32)] = data_ci[i];
         }
-    }
-    else{
-        std::memset(raw_child_privatekey_xsk, 0 ,XSK_LENGTH);
-        return false;
     }
 
     std::uint8_t kl[32];
@@ -200,9 +205,9 @@ bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, 
 };
 
 /// extended_publickey_child[64] = Ai[32] || Ci[32]
-bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, std::uint64_t const index, std::uint8_t *const raw_child_public_key_xvk ){
+bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, std::uint32_t const index, std::uint8_t *const raw_child_public_key_xvk ){
 
-    if(index < 0x80000000){//de 0x00000000 a 0x7fffffff; de 0 a (2^31)-1
+    if(index < 2147483648U){//de 0x00000000 a 0x7fffffff; de 0 a (2^31)-1
         std::uint8_t data_raw[37]; //1byte(0x02)+32byte(raw_public_key_littleendian)+4byte(index)
         std::uint8_t data_ci[64];
         std::uint8_t data_z[64];
@@ -244,20 +249,19 @@ bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, s
 /// signature_extended[64] = R[32] || S[32]
 bool signature( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t const *const message, const size_t message_len, std::uint8_t *const out ){
 
+    if(!valid_ed25519_sk(raw_privatekey_xsk)){
+        return false;
+    }
+
     std::uint8_t nonce[64];
     std::uint8_t hram[64];
     std::uint8_t raw_publickey[32];
     crypto_hash_sha512_state sha512_;
 
-
     // Public key
-    if(raw_privatekey_xsk[31] > 127){
-        return false;
-    }
     if(crypto_scalarmult_ed25519_base_noclamp(raw_publickey, raw_privatekey_xsk) != 0){ // se obtiene la llave publica
         return false;
     }
-
 
     // Nonce
     crypto_hash_sha512_init(&sha512_);

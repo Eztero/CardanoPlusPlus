@@ -39,10 +39,11 @@ https://libsodium.gitbook.io/doc/advanced/point-arithmetic
 #define EXTENDED_MASTERSECRETKEY_LENGTH 96U            // Extended Private Key (64 bytes) || Chain Code (32 bytes)
 #define SIGNATURE_LENGTH 64U
 
+#include "../Hash/pbkdf2_hmac512_libsodium.hpp"
 #include <cstdint>
 #include <cstring>
 #include <sodium.h>
-#include "../Hash/pbkdf2_hmac512_libsodium.hpp"
+
 
 ///las llaves se codificaran ahora en el formato xsk y xvk propuesto en https://cips.cardano.org/cips/cip16/
 
@@ -50,12 +51,14 @@ bool raw_masterkeys_generation( std::uint8_t const *const entropy, std::size_t c
 
 bool raw_privatekey_to_publickey( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t *const raw_publickey_xvk );
 
-bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, std::uint64_t const index, std::uint8_t *const raw_child_privatekey_xsk );
+bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, std::uint32_t const index, std::uint8_t *const raw_child_privatekey_xsk );
 
-bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, std::uint64_t const index, std::uint8_t *const raw_child_public_key_xvk );
+bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, std::uint32_t const index, std::uint8_t *const raw_child_public_key_xvk );
 
 bool signature( uint8_t const *const raw_privatekey_xsk, uint8_t const *const message,const size_t message_len, uint8_t *const out );
 
 bool verify( std::uint8_t const *const raw_publickey, std::uint8_t const *const message, const std::uint8_t message_len, std::uint8_t const *const signature );
+
+bool valid_ed25519_sk(std::uint8_t const *const raw_privatekey_sk);
 
 #endif // BIP32_ED25519_HPP
