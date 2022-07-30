@@ -6,6 +6,7 @@
 
 It is a library that aims to facilitate the development of projects based on the C++ language, on the Cardano blockchain.
 This library is written under the C++11 version and incorporates programming close to C, for the base libraries, to allow better compatibility and portability.
+This library uses libsodium as a cryptographic library, it is a robust and cross-platform library with ISC license.
 
 ### :construction: In development :construction:
 - [x] Bip39 standard implementation (branch bip39)
