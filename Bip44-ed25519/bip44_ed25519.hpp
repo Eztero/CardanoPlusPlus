@@ -40,14 +40,21 @@ https://input-output-hk.github.io/adrestia/cardano-wallet/concepts/hierarchical-
 Array(uint8_t)    0=HD (1852)            (constant)        Number(uint32)         0=Extern             Number(uint32)
                   1=MultiSignHD (1854)                                            1=Intern
                                                                                   2=Staking
-                                                                                  3=Only_Account
+                                                                                  3=OnlyAccount (only generate account address)
 -------------------------------------  Library functions  ---------------------------------------------------
 
-    derive_key(master key, Wallet::HD,  Key::Private,  account, Role::Extern, index_addr, child_key_out)
-raw_derive_key(master key, Wallet::HD,  Key::Private,  account, Role::Extern, index_addr, child_key_out)
+    derive_master_key(master key, Wallet::HD,  Key::Private,  account, Role::Extern, index_addr, bech32_raw_child_key_out)
+raw_derive_master_key(master key, Wallet::HD,  Key::Private,  account, Role::Extern, index_addr, raw_child_key_out)
                                              :
                                         0=Private(xsk)
                                         1=Public (xvk)
+
+    derive_account_key(raw account key, AccountKeyType::Account_xvk, Wallet::HD, Key::Private, Role::Extern, index_addr, bech32_raw_child_key_out);
+raw_derive_account_key(raw account key, AccountKeyType::Account_xvk, Wallet::HD, Key::Private, Role::Extern, index_addr, raw_child_key_out);
+                                            :
+                                        0=Account_xvk
+                                        1=Account_xsk
+
 
 ---------------------  Format Keys https://cips.cardano.org/cips/cip16/  -----------------------------
 
@@ -80,7 +87,7 @@ enum class Role{
 Extern,
 Intern,
 Staking,
-Only_Account
+OnlyAccount
 };
 
 enum class Key{
@@ -88,14 +95,31 @@ Private,
 Public
 };
 
-///Keys XSK(Private) or XVK(Public) <-- /m/H1852/H1815/account_path/role_path/address_index_path
-bool raw_derive_key(uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
-                       uint32_t const account_path, Role role_path, uint32_t const address_index_path,
-                       uint8_t *const child_key_out);
+enum class AccountKeyType{
+Account_xvk,
+Account_xsk
+};
 
-///Keys XSK(Private) or XVK(Public) <-- bech32(/m/H1852/H1815/account_path/role_path/address_index_path)
-bool derive_key(std::uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
-                    std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
-                    std::string& child_key_address_out);
+///raw_derive_key(master key) --> / master key / H1852 / H1815 / account_path / role_path / index_addr Keys xsk(Private) or xvk(Public)
+///                           --> / master key / H1852 / H1815 / account_path Keys xsk(Private) or xvk(Public)
+bool raw_derive_master_key(uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
+                           uint32_t const account_path, Role role_path, uint32_t const address_index_path,
+                           uint8_t *const raw_child_key_out);
+
+///derive_key(master key) --> / master key / H1852 / H1815 / account_path / role_path / index_addr Keys xsk(Private) or xvk(Public)
+///                       --> / master key / H1852 / H1815 / account_path Keys xsk(Private) or xvk(Public)
+bool derive_master_key(std::uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
+                       std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
+                       std::string& bech32_raw_child_key_out);
+
+///raw_derive_account_key(raw account xvk/xsk)  --> / .. / .. / .. / account / role / index_addr Keys xsk(Private) or xvk(Public)
+bool raw_derive_account_key(std::uint8_t const *const account_key, AccountKeyType account_key_type ,Wallet wallet_type,
+                            Key key_type, Role role_path, std::uint32_t const address_index_path,
+                            std::uint8_t *const raw_child_key_out);
+
+///derive_account_key(raw account xvk/xsk)  --> / .. / .. / .. / account / role / index_addr Keys xsk(Private) or xvk(Public)
+bool derive_account_key(std::uint8_t const *const account_key, AccountKeyType account_key_type, Wallet wallet_type,
+                        Key key_type, Role role_path, std::uint32_t const address_index_path,
+                        std::string& bech32_raw_child_key_out);
 
 #endif // BIP44_ED25519_HPP
