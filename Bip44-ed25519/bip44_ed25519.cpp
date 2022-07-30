@@ -329,16 +329,14 @@ bool raw_derive_account_key(std::uint8_t const *const account_key, AccountKeyTyp
                             Key key_type, Role role_path, std::uint32_t const address_index_path,
                             std::uint8_t *const child_key_out){
 
-
-
     int l_key=0;
+    std::memset(child_key_out,0,XVK_LENGTH); //se deja a cero los primeros 64 bytes, asi en caso de un error su sk o xvk seran cero
     std::uint8_t buff_xsk[XSK_LENGTH];  //Se crea un buffer que pueda contener los dos tipos de llaves
 
 
     //------ Derivacion----
     if(!from_accountkey(account_key, &account_key_type, &wallet_type, &key_type, &role_path,
                         &l_key, &address_index_path, buff_xsk)){
-        std::memset(child_key_out,0,XVK_LENGTH); //se deja a cero los primeros 64 bytes, asi en caso de un error su sk o xvk seran cero
         sodium_memzero(buff_xsk, XSK_LENGTH);
         return false;
     }
