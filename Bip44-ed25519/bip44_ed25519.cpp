@@ -1,8 +1,8 @@
 #include "bip44_ed25519.hpp"
 
 static bool from_masterkey(std::uint8_t const *const extended_master_secret_key, Wallet const *const wallet_type, Key const *const key_type, Role const *const role_path,
-                    std::uint32_t const *const index_acc, int *const l_key, std::uint32_t const *const address_index_path,
-                    std::uint8_t *const buff_xsk){
+                           std::uint32_t const *const index_acc, int *const l_key, std::uint32_t const *const address_index_path,
+                           std::uint8_t *const buff_xsk){
 
     switch(*wallet_type){
     case Wallet::HD:{
@@ -46,7 +46,6 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
                         return false;
                     }
                 }else{
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
                     return false;
                 }
             };break;
@@ -56,21 +55,17 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
             if(*address_index_path < 2147483648U){
 
                 if(*role_path == Role::Staking && address_index_path > 0){ //En caso de detectar una direccion stake el index_addr=0
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
                     return false;
                 }
 
                 if(!raw_child_privatekey(buff_xsk, *address_index_path, buff_xsk)){                     /// m/1852'/1815'/account'/role_path/address
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
                     return false;
                 }
                 if(!valid_ed25519_sk(buff_xsk)){
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
                     return false;
                 }
 
             }else{
-                sodium_memzero(buff_xsk, XSK_LENGTH);
                 return false;
             }
         }
@@ -110,16 +105,13 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
             if(*address_index_path < 2147483648U){
 
                 if(*role_path == Role::Staking && *address_index_path > 0){ //En caso de detectar una direccion stake el index_addr=0
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
                     return false;
                 }
                 if(!raw_child_publickey(buff_xsk, *address_index_path, buff_xsk)){                  /// m/1852'/1815'/account'/role_path/address
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
                     return false;
                 }
 
             }else {
-                sodium_memzero(buff_xsk, XSK_LENGTH);
                 return false;
             }
         }
@@ -136,8 +128,8 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
 
 
 static bool from_accountkey(std::uint8_t const *const account_key, AccountKeyType const *const account_key_type, Wallet const *const wallet_type,Key const *const key_type, Role const *const role_path,
-                     int *const l_key, std::uint32_t const *const address_index_path,
-                     std::uint8_t *const buff_xsk){
+                            int *const l_key, std::uint32_t const *const address_index_path,
+                            std::uint8_t *const buff_xsk){
 
     switch (*key_type){
 
@@ -169,20 +161,16 @@ static bool from_accountkey(std::uint8_t const *const account_key, AccountKeyTyp
                 if(*address_index_path < 2147483648U){
 
                     if(*role_path == Role::Staking && *address_index_path > 0){ //En caso de detectar una direccion stake el index_addr=0
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
-                    return false;
+                        return false;
                     }
                     if(!raw_child_privatekey(buff_xsk, *address_index_path, buff_xsk)){                     /// m/1852'/1815'/account'/role_path/address
-                        sodium_memzero(buff_xsk, XSK_LENGTH);
                         return false;
                     }
                     if(!valid_ed25519_sk(buff_xsk)){
-                        sodium_memzero(buff_xsk, XSK_LENGTH);
                         return false;
                     }
 
                 }else{
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
                     return false;
                 }
             }else{
@@ -221,7 +209,6 @@ static bool from_accountkey(std::uint8_t const *const account_key, AccountKeyTyp
                         return false;
                     }
                 }else{
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
                     return false;
                 }
             };break;
@@ -231,16 +218,13 @@ static bool from_accountkey(std::uint8_t const *const account_key, AccountKeyTyp
             if(*address_index_path < 2147483648U){
 
                 if(*role_path == Role::Staking && *address_index_path > 0){ //En caso de detectar una direccion stake el index_addr=0
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
                     return false;
                 }
                 if(!raw_child_publickey(buff_xsk, *address_index_path, buff_xsk)){                  /// m/1852'/1815'/account'/role_path/address
-                    sodium_memzero(buff_xsk, XSK_LENGTH);
                     return false;
                 }
 
             }else {
-                sodium_memzero(buff_xsk, XSK_LENGTH);
                 return false;
             }
         }else{
@@ -254,7 +238,7 @@ static bool from_accountkey(std::uint8_t const *const account_key, AccountKeyTyp
 
     }
 
- return true;
+    return true;
 }
 
 
@@ -274,8 +258,10 @@ bool raw_derive_master_key(std::uint8_t const *const extended_master_secret_key,
 
     //------ Derivacion----
 
-    if(!from_masterkey(extended_master_secret_key, &wallet_type, &key_type, &role_path, &index_acc, &l_key, &address_index_path, buff_xsk)){
-    return false;
+    if(!from_masterkey(extended_master_secret_key, &wallet_type, &key_type, &role_path,
+                       &index_acc, &l_key, &address_index_path, buff_xsk)){
+        sodium_memzero(buff_xsk, XSK_LENGTH);
+        return false;
     }
     //----------------
 
@@ -289,8 +275,8 @@ bool raw_derive_master_key(std::uint8_t const *const extended_master_secret_key,
 
 
 bool derive_master_key(std::uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
-                std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
-                std::string& bech32_child_key_out){
+                       std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
+                       std::string& bech32_child_key_out){
 
     bech32_child_key_out.clear(); //se deja en cero el string
 
@@ -305,8 +291,10 @@ bool derive_master_key(std::uint8_t const *const extended_master_secret_key, Wal
 
     //------ Derivacion----
 
-  if(!from_masterkey(extended_master_secret_key, &wallet_type, &key_type, &role_path, &index_acc, &l_key, &address_index_path, buff_xsk)){
-    return false;
+    if(!from_masterkey(extended_master_secret_key, &wallet_type, &key_type, &role_path,
+                       &index_acc, &l_key, &address_index_path, buff_xsk)){
+        sodium_memzero(buff_xsk, XSK_LENGTH);
+        return false;
     }
     //------- Hrp ------
     if(role_path != Role::OnlyAccount){
@@ -341,14 +329,17 @@ bool raw_derive_account_key(std::uint8_t const *const account_key, AccountKeyTyp
                             Key key_type, Role role_path, std::uint32_t const address_index_path,
                             std::uint8_t *const child_key_out){
 
-    std::memset(child_key_out,0,XVK_LENGTH); //se deja a cero los primeros 64 bytes, asi en caso de un error su sk o xvk seran cero
+
 
     int l_key=0;
     std::uint8_t buff_xsk[XSK_LENGTH];  //Se crea un buffer que pueda contener los dos tipos de llaves
 
 
     //------ Derivacion----
-  if(!from_accountkey(account_key, &account_key_type, &wallet_type, &key_type, &role_path, &l_key, &address_index_path, buff_xsk)){
+    if(!from_accountkey(account_key, &account_key_type, &wallet_type, &key_type, &role_path,
+                        &l_key, &address_index_path, buff_xsk)){
+        std::memset(child_key_out,0,XVK_LENGTH); //se deja a cero los primeros 64 bytes, asi en caso de un error su sk o xvk seran cero
+        sodium_memzero(buff_xsk, XSK_LENGTH);
         return false;
     }
     //----------------
@@ -373,7 +364,9 @@ bool derive_account_key(std::uint8_t const *const account_key, AccountKeyType ac
     std::uint8_t buff_xsk[XSK_LENGTH];  //Se crea un buffer que pueda contener los dos tipos de llaves
 
     //------ Derivacion----
-  if(!from_accountkey(account_key, &account_key_type, &wallet_type, &key_type, &role_path, &l_key, &address_index_path, buff_xsk)){
+    if(!from_accountkey(account_key, &account_key_type, &wallet_type, &key_type, &role_path,
+                        &l_key, &address_index_path, buff_xsk)){
+        sodium_memzero(buff_xsk, XSK_LENGTH);
         return false;
     }
     //------- Hrp ------
