@@ -1,7 +1,8 @@
 #include "bip44_ed25519.hpp"
 
-static bool from_masterkey(std::uint8_t const *const extended_master_secret_key, Wallet const *const wallet_type, Key const *const key_type, Role const *const role_path,
-                           std::uint32_t const *const index_acc, int *const l_key, std::uint32_t const *const address_index_path,
+
+static bool from_masterkey(std::uint8_t const *const extended_master_secret_key, Wallet const *const wallet_type, OutputKey const *const output_key_type, Role const *const role_path,
+                           std::uint32_t const *const index_acc, int *const keysize, std::uint32_t const *const address_index_path,
                            std::uint8_t *const buff_xsk){
 
     switch(*wallet_type){
@@ -15,7 +16,9 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
             return false;
         }
     };break;
-
+    default:{
+        return false;
+    };break;
     }
 
     if(!raw_child_privatekey(buff_xsk, H1815, buff_xsk)){                     /// m/1852'/1815'
@@ -26,10 +29,10 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
         return false;
     }
 
-    switch (*key_type){
+    switch (*output_key_type){
 
-    case Key::Private:{
-        *l_key = XSK_LENGTH;
+    case OutputKey::Private:{
+        *keysize = XSK_LENGTH;
         if(*role_path != Role::OnlyAccount){
 
             switch(*wallet_type){
@@ -54,7 +57,7 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
 
             if(*address_index_path < 2147483648U){
 
-                if(*role_path == Role::Staking && address_index_path > 0){ //En caso de detectar una direccion stake el index_addr=0
+                if(*role_path == Role::Staking && *address_index_path > 0){ //En caso de detectar una direccion stake el index_addr=0
                     return false;
                 }
 
@@ -72,9 +75,8 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
 
     };break;
 
-
-    case Key::Public:{
-        *l_key = XVK_LENGTH;
+    case OutputKey::Public:{
+        *keysize = XVK_LENGTH;
         if(!raw_privatekey_to_publickey(buff_xsk, buff_xsk)){
             return false;
         }
@@ -127,15 +129,15 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
 }
 
 
-static bool from_accountkey(std::uint8_t const *const account_key, AccountKeyType const *const account_key_type, Wallet const *const wallet_type,Key const *const key_type, Role const *const role_path,
-                            int *const l_key, std::uint32_t const *const address_index_path,
+static bool from_accountkey(std::uint8_t const *const account_key, InputKey const *const account_key_type, Wallet const *const wallet_type, OutputKey const *const output_key_type, Role const *const role_path,
+                            int *const keysize, std::uint32_t const *const address_index_path,
                             std::uint8_t *const buff_xsk){
 
-    switch (*key_type){
+    switch (*output_key_type){
 
-    case Key::Private:{
-        if(*account_key_type == AccountKeyType::Account_xsk){
-            *l_key = XSK_LENGTH;
+    case OutputKey::Private:{
+        if(*account_key_type == InputKey::AccountKey_xsk){
+            *keysize = XSK_LENGTH;
             if(*role_path != Role::OnlyAccount){
 
                 switch(*wallet_type){
@@ -181,11 +183,10 @@ static bool from_accountkey(std::uint8_t const *const account_key, AccountKeyTyp
         }
     };break;
 
+    case OutputKey::Public:{
+        *keysize = XVK_LENGTH;
 
-    case Key::Public:{
-        *l_key = XVK_LENGTH;
-
-        if(*account_key_type == AccountKeyType::Account_xsk){
+        if(*account_key_type == InputKey::AccountKey_xsk){
             if(!raw_privatekey_to_publickey(account_key, buff_xsk)){
                 return false;
             }
@@ -242,31 +243,43 @@ static bool from_accountkey(std::uint8_t const *const account_key, AccountKeyTyp
 }
 
 
-bool raw_derive_master_key(std::uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
-                           std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
-                           std::uint8_t *const child_key_out){
+bool raw_derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
+                    std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
+                    std::uint8_t *const output_key){
 
-    std::memset(child_key_out,0,XVK_LENGTH); //se deja a cero los primeros 64 bytes, asi en caso de un error su sk o xvk seran cero
+    std::memset(output_key,0,XVK_LENGTH); //se deja a cero los primeros 64 bytes, asi en caso de un error su sk o xvk seran cero
 
-    int l_key=0;
-    if(account_path > 2147483647U){ // y si no excede el limite maximo ((2^32) - 1) - 2^31 = (2^31) - 1 = 2147483647
-        return false;
-    }
-
+    int keysize = 0;
+    std::uint32_t index_acc = 0;
     std::uint8_t buff_xsk[XSK_LENGTH];  //Se crea un buffer que pueda contener los dos tipos de llaves
-    std::uint32_t index_acc = account_path + H0;
 
     //------ Derivacion----
 
-    if(!from_masterkey(extended_master_secret_key, &wallet_type, &key_type, &role_path,
-                       &index_acc, &l_key, &address_index_path, buff_xsk)){
-        sodium_memzero(buff_xsk, XSK_LENGTH);
+    switch(input_key_type){
+    case InputKey::ExtendedMasterKey:{
+        if(account_path > 2147483647U){ // y si no excede el limite maximo ((2^32) - 1) - 2^31 = (2^31) - 1 = 2147483647
         return false;
+        }
+        index_acc = account_path + H0;
+        if(!from_masterkey(input_key, &wallet_type, &output_key_type, &role_path,
+                           &index_acc, &keysize, &address_index_path, buff_xsk)){
+            sodium_memzero(buff_xsk, XSK_LENGTH);
+            return false;
+        }
+    };break;
+    default:{
+        if(!from_accountkey(input_key, &input_key_type, &wallet_type, &output_key_type, &role_path,
+                            &keysize, &address_index_path, buff_xsk)){
+            sodium_memzero(buff_xsk, XSK_LENGTH);
+            return false;
+        }
+    };break;
     }
+
     //----------------
 
-    for(std::uint8_t i = 0; i<l_key; i++){
-        child_key_out[i] = buff_xsk[i];
+    for(std::uint8_t i = 0; i<keysize; i++){
+        output_key[i] = buff_xsk[i];
     }
     sodium_memzero(buff_xsk, XSK_LENGTH);
 
@@ -274,120 +287,66 @@ bool raw_derive_master_key(std::uint8_t const *const extended_master_secret_key,
 }
 
 
-bool derive_master_key(std::uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
-                       std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
-                       std::string& bech32_child_key_out){
+bool derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
+                    std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
+                    std::string& bech32_output_key){
 
-    bech32_child_key_out.clear(); //se deja en cero el string
+    bech32_output_key.clear(); //se deja en cero el string
 
-    if(account_path > 2147483647U){ // y si no excede el limite maximo ((2^32) - 1) - 2^31 = (2^31) - 1 = 2147483647
-        return false;
-    }
-
-    int l_key=0;
+    int keysize = 0;
+    std::uint32_t index_acc = 0;
     char hrp[17]; //soporta el prefijo mas largo
     std::uint8_t buff_xsk[XSK_LENGTH];  //Se crea un buffer que pueda contener los dos tipos de llaves
-    std::uint32_t index_acc = account_path + H0;
 
     //------ Derivacion----
 
-    if(!from_masterkey(extended_master_secret_key, &wallet_type, &key_type, &role_path,
-                       &index_acc, &l_key, &address_index_path, buff_xsk)){
-        sodium_memzero(buff_xsk, XSK_LENGTH);
+    switch(input_key_type){
+    case InputKey::ExtendedMasterKey:{
+        if(account_path > 2147483647U){ // y si no excede el limite maximo ((2^32) - 1) - 2^31 = (2^31) - 1 = 2147483647
         return false;
+        }
+        index_acc = account_path + H0;
+        if(!from_masterkey(input_key, &wallet_type, &output_key_type, &role_path,
+                           &index_acc, &keysize, &address_index_path, buff_xsk)){
+            sodium_memzero(buff_xsk, XSK_LENGTH);
+            return false;
+        }
+    };break;
+    default:{
+        if(!from_accountkey(input_key, &input_key_type, &wallet_type, &output_key_type, &role_path,
+                            &keysize, &address_index_path, buff_xsk)){
+            sodium_memzero(buff_xsk, XSK_LENGTH);
+            return false;
+        }
+    };break;
     }
+
     //------- Hrp ------
     if(role_path != Role::OnlyAccount){
         if(role_path != Role::Staking){
-            std::strcpy (hrp,"addr"); ///prefix
+            std::strcpy (hrp,"addr");   ///prefix
         }else{
-            std::strcpy (hrp,"stake"); ///prefix
+            std::strcpy (hrp,"stake");  ///prefix
         }
     }
     else{
-        std::strcpy (hrp,"acct"); ///prefix
+        std::strcpy (hrp,"acct");       ///prefix
     }
     if(wallet_type == Wallet::MultiSignHD){
-        std::strcat (hrp,"_shared"); ///prefix
+        std::strcat (hrp,"_shared");    ///prefix
     }
-    if(l_key == XVK_LENGTH){
-        std::strcat (hrp,"_xvk"); ///prefix
+    if(keysize == XVK_LENGTH){
+        std::strcat (hrp,"_xvk");       ///prefix
 
     }else{
-        std::strcat (hrp,"_xsk"); ///prefix
+        std::strcat (hrp,"_xsk");       ///prefix
     }
     //---------------
 
-    bech32_encode(hrp,buff_xsk,l_key,bech32_child_key_out);
+    bech32_encode(hrp,buff_xsk,keysize,bech32_output_key);
     sodium_memzero(buff_xsk, XSK_LENGTH);
 
     return true;
 }
 
 
-bool raw_derive_account_key(std::uint8_t const *const account_key, AccountKeyType account_key_type, Wallet wallet_type,
-                            Key key_type, Role role_path, std::uint32_t const address_index_path,
-                            std::uint8_t *const child_key_out){
-
-    int l_key=0;
-    std::memset(child_key_out,0,XVK_LENGTH); //se deja a cero los primeros 64 bytes, asi en caso de un error su sk o xvk seran cero
-    std::uint8_t buff_xsk[XSK_LENGTH];  //Se crea un buffer que pueda contener los dos tipos de llaves
-
-
-    //------ Derivacion----
-    if(!from_accountkey(account_key, &account_key_type, &wallet_type, &key_type, &role_path,
-                        &l_key, &address_index_path, buff_xsk)){
-        sodium_memzero(buff_xsk, XSK_LENGTH);
-        return false;
-    }
-    //----------------
-
-    for(std::uint8_t i = 0; i<l_key; i++){
-        child_key_out[i] = buff_xsk[i];
-    }
-    sodium_memzero(buff_xsk, XSK_LENGTH);
-
-    return true;
-}
-
-
-bool derive_account_key(std::uint8_t const *const account_key, AccountKeyType account_key_type, Wallet wallet_type,
-                        Key key_type, Role role_path, std::uint32_t const address_index_path,
-                        std::string& bech32_child_key_out){
-
-    bech32_child_key_out.clear(); //se deja en cero el string
-
-    int l_key=0;
-    char hrp[17]; //soporta el prefijo mas largo
-    std::uint8_t buff_xsk[XSK_LENGTH];  //Se crea un buffer que pueda contener los dos tipos de llaves
-
-    //------ Derivacion----
-    if(!from_accountkey(account_key, &account_key_type, &wallet_type, &key_type, &role_path,
-                        &l_key, &address_index_path, buff_xsk)){
-        sodium_memzero(buff_xsk, XSK_LENGTH);
-        return false;
-    }
-    //------- Hrp ------
-    if(role_path != Role::OnlyAccount){
-        if(role_path != Role::Staking){
-            std::strcpy (hrp,"addr"); ///prefix
-        }else{
-            std::strcpy (hrp,"stake"); ///prefix
-        }
-    }
-    if(wallet_type == Wallet::MultiSignHD){
-        std::strcat (hrp,"_shared"); ///prefix
-    }
-    if(l_key == XVK_LENGTH){
-        std::strcat (hrp,"_xvk"); ///prefix
-
-    }else{
-        std::strcat (hrp,"_xsk"); ///prefix
-    }
-    //---------------
-
-    bech32_encode(hrp,buff_xsk,l_key,bech32_child_key_out);
-    sodium_memzero(buff_xsk, XSK_LENGTH);
-
-    return true;
-}
