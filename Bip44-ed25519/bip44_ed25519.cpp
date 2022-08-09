@@ -57,10 +57,6 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
 
             if(*address_index_path < 2147483648U){
 
-                if(*role_path == Role::Staking && *address_index_path > 0){ //En caso de detectar una direccion stake el index_addr=0
-                    return false;
-                }
-
                 if(!raw_child_privatekey(buff_xsk, *address_index_path, buff_xsk)){                     /// m/1852'/1815'/account'/role_path/address
                     return false;
                 }
@@ -106,9 +102,6 @@ static bool from_masterkey(std::uint8_t const *const extended_master_secret_key,
 
             if(*address_index_path < 2147483648U){
 
-                if(*role_path == Role::Staking && *address_index_path > 0){ //En caso de detectar una direccion stake el index_addr=0
-                    return false;
-                }
                 if(!raw_child_publickey(buff_xsk, *address_index_path, buff_xsk)){                  /// m/1852'/1815'/account'/role_path/address
                     return false;
                 }
@@ -162,9 +155,6 @@ static bool from_accountkey(std::uint8_t const *const account_key, InputKey cons
 
                 if(*address_index_path < 2147483648U){
 
-                    if(*role_path == Role::Staking && *address_index_path > 0){ //En caso de detectar una direccion stake el index_addr=0
-                        return false;
-                    }
                     if(!raw_child_privatekey(buff_xsk, *address_index_path, buff_xsk)){                     /// m/1852'/1815'/account'/role_path/address
                         return false;
                     }
@@ -218,9 +208,6 @@ static bool from_accountkey(std::uint8_t const *const account_key, InputKey cons
 
             if(*address_index_path < 2147483648U){
 
-                if(*role_path == Role::Staking && *address_index_path > 0){ //En caso de detectar una direccion stake el index_addr=0
-                    return false;
-                }
                 if(!raw_child_publickey(buff_xsk, *address_index_path, buff_xsk)){                  /// m/1852'/1815'/account'/role_path/address
                     return false;
                 }
