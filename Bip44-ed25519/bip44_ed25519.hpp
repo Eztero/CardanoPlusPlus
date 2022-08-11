@@ -98,13 +98,22 @@ AccountKey_xvk,
 AccountKey_xsk
 };
 
-
+//for generate all key
 bool raw_derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
                     std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
                     std::uint8_t *const output_key);
 
+//for generate only key account
+bool raw_derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
+                   std::uint32_t const account_path, Role role_path, std::uint8_t *const output_key);
+
+//for generate all key
 bool derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
                     std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
                     std::string& bech32_output_key);
+
+//for generate only key account
+bool derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
+               std::uint32_t const account_path, Role role_path, std::string& bech32_output_key);
 
 #endif // BIP44_ED25519_HPP
