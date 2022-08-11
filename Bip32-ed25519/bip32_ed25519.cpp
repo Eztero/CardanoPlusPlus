@@ -229,8 +229,10 @@ bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, s
         for(std::uint8_t i = 32; i < 64; i++){
             raw_child_public_key_xvk[i] = data_ci[i];
         }
-        sodium_memzero(data_raw, 37);
-        sodium_memzero(data_ci, 64);
+
+        ///Por ser llaves Publicas no se realiza un borrado seguro
+        //sodium_memzero(data_raw, 37);
+        //sodium_memzero(data_ci, 64);
 
         //Ai = parent publickey + trunc28(Zl)B
         if(point_plus(raw_parent_public_key_xvk, data_z, raw_child_public_key_xvk) == false) {
