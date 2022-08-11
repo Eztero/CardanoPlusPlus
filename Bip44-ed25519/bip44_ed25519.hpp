@@ -35,34 +35,31 @@ https://input-output-hk.github.io/adrestia/cardano-wallet/concepts/hierarchical-
 --------------------   Bip44_ed25519 https://cips.cardano.org/cips/cip1852/  ------------------------
 
      m        /    1852' or 1854'     /    1815'     /    0'..(2^31)'-1     /      0..2       /    0...(2^31)-1 (only 0 for Role=2)
-     :                :                      :                :                     :                      :
+     :                   :                   :                :                     :                      :
 (master key)     (purpose/Wallet)        (coin type)       (account)              (Role)              (index address)
 Array(uint8_t)    0=HD (1852)            (constant)        Number(uint32)         0=Extern             Number(uint32)
                   1=MultiSignHD (1854)                                            1=Intern
                                                                                   2=Staking
                                                                                   3=OnlyAccount (only generate account address)
+
 -------------------------------------  Library functions  ---------------------------------------------------
-
-    derive_master_key(master key, Wallet::HD,  Key::Private,  account, Role::Extern, index_addr, bech32_raw_child_key_out)
-raw_derive_master_key(master key, Wallet::HD,  Key::Private,  account, Role::Extern, index_addr, raw_child_key_out)
-                                             :
-                                        0=Private(xsk)
-                                        1=Public (xvk)
-
-    derive_account_key(raw account key, AccountKeyType::Account_xvk, Wallet::HD, Key::Private, Role::Extern, index_addr, bech32_raw_child_key_out);
-raw_derive_account_key(raw account key, AccountKeyType::Account_xvk, Wallet::HD, Key::Private, Role::Extern, index_addr, raw_child_key_out);
-                                            :
-                                        0=Account_xvk
-                                        1=Account_xsk
+                                                                                                                             Key with prefix in bech32 format (string)
+                                                                                                                                      :
+    derivekey(input_key, InputKey::ExtendedMasterKey, Wallet::HD, OutputKey::Private,   account,   Role::Extern, index address, bech32_output_key)
+raw_derivekey(input_key, InputKey::ExtendedMasterKey, Wallet::HD, OutputKey::Private,   account,   Role::Extern, index address, output_key);
+                 :            :                                       :                    :                                          :
+           Master Key     0=ExtendedMasterKey                      0=Private(xsk)      disabled if                            Format in xsk or xvk (hex)
+           Account Key    1=AccountKey_xvk                         1=Public (xvk)      InputKey = AccountKey_xxx
+                          2=AccountKey_xsk
 
 
 ---------------------  Format Keys https://cips.cardano.org/cips/cip16/  -----------------------------
 
-    xsk(extended signing key)      =  Extended Private Key (64 bytes) || Chain Code (32 bytes) = 96 bytes (XSK_LENGTH)
-    xvk(extended verification key) =  Public Key (32 bytes) || Chain Code (32 bytes)           = 64 bytes (XVK_LENGTH)
+  xsk(extended signing key)      =  Extended Private Key (64 bytes) || Chain Code (32 bytes) = 96 bytes (XSK_LENGTH)
+  xvk(extended verification key) =  Public Key (32 bytes) || Chain Code (32 bytes)           = 64 bytes (XVK_LENGTH)
 
-    sk(signing key)      =   Private Key  = 32 bytes
-    vk(verification key) =   Public Key   = 32 bytes
+  sk(signing key)      =   Private Key  = 32 bytes
+  vk(verification key) =   Public Key   = 32 bytes
 ------------------------------------------------------------------------------------------------------
 **/
 
@@ -90,36 +87,33 @@ Staking,
 OnlyAccount
 };
 
-enum class Key{
+enum class OutputKey{
 Private,
 Public
 };
 
-enum class AccountKeyType{
-Account_xvk,
-Account_xsk
+enum class InputKey{
+ExtendedMasterKey,
+AccountKey_xvk,
+AccountKey_xsk
 };
 
-///raw_derive_key(master key) --> / master key / H1852 / H1815 / account_path / role_path / index_addr Keys xsk(Private) or xvk(Public)
-///                           --> / master key / H1852 / H1815 / account_path Keys xsk(Private) or xvk(Public)
-bool raw_derive_master_key(uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
-                           uint32_t const account_path, Role role_path, uint32_t const address_index_path,
-                           uint8_t *const raw_child_key_out);
+//for generate all key
+bool raw_derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
+                    std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
+                    std::uint8_t *const output_key);
 
-///derive_key(master key) --> / master key / H1852 / H1815 / account_path / role_path / index_addr Keys xsk(Private) or xvk(Public)
-///                       --> / master key / H1852 / H1815 / account_path Keys xsk(Private) or xvk(Public)
-bool derive_master_key(std::uint8_t const *const extended_master_secret_key, Wallet wallet_type, Key key_type,
-                       std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
-                       std::string& bech32_raw_child_key_out);
+//for generate only key account
+bool raw_derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
+                   std::uint32_t const account_path, Role role_path, std::uint8_t *const output_key);
 
-///raw_derive_account_key(raw account xvk/xsk)  --> / .. / .. / .. / account / role / index_addr Keys xsk(Private) or xvk(Public)
-bool raw_derive_account_key(std::uint8_t const *const account_key, AccountKeyType account_key_type ,Wallet wallet_type,
-                            Key key_type, Role role_path, std::uint32_t const address_index_path,
-                            std::uint8_t *const raw_child_key_out);
+//for generate all key
+bool derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
+                    std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
+                    std::string& bech32_output_key);
 
-///derive_account_key(raw account xvk/xsk)  --> / .. / .. / .. / account / role / index_addr Keys xsk(Private) or xvk(Public)
-bool derive_account_key(std::uint8_t const *const account_key, AccountKeyType account_key_type, Wallet wallet_type,
-                        Key key_type, Role role_path, std::uint32_t const address_index_path,
-                        std::string& bech32_raw_child_key_out);
+//for generate only key account
+bool derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
+               std::uint32_t const account_path, Role role_path, std::string& bech32_output_key);
 
 #endif // BIP44_ED25519_HPP
