@@ -75,24 +75,24 @@ raw_derivekey(input_key, InputKey::ExtendedMasterKey, Wallet::HD, OutputKey::Pri
 #include "../Hash/bech32.hpp"
 #include <string>
 
-enum class Wallet{
+enum class Wallet : std::uint8_t{
 HD,
 MultiSignHD
 };
 
-enum class Role{
+enum class Role : std::uint8_t{
 Extern,
 Intern,
 Staking,
 OnlyAccount
 };
 
-enum class OutputKey{
+enum class OutputKey : std::uint8_t{
 Private,
 Public
 };
 
-enum class InputKey{
+enum class InputKey : std::uint8_t{
 ExtendedMasterKey,
 AccountKey_xvk,
 AccountKey_xsk
