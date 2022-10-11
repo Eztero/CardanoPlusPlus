@@ -54,12 +54,12 @@ raw_createaddress_keyhash(input_key, InputKey::ExtendedMasterKey, Network::Mainn
 
 #include "../Bip44-ed25519/bip44_ed25519.hpp"
 
-enum class Network{
+enum class Network : std::uint8_t{
 Testnet,
 Mainnet
 };
 
-enum class Address{
+enum class Address : std::uint8_t{
 Base,
 Base_Change,
 Enterprise,
