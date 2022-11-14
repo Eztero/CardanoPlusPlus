@@ -35,35 +35,31 @@ https://www.rfc-editor.org/rfc/rfc8949
 class CborSerialize
 {
 public:
-    explicit CborSerialize();
+    explicit CborSerialize(std::vector <std::uint8_t> * const cbor_data_out);
     virtual ~CborSerialize();
 
-    CborSerialize &createArray(std::uint64_t size_array);
-    CborSerialize &createMap(std::uint64_t size_array);
-    CborSerialize &addIndexMap(std::uint64_t index);
+    CborSerialize &createArray(std::uint64_t const size_array);
+    CborSerialize &createMap(std::uint64_t const size_array);
+    CborSerialize &addIndexMap(std::uint64_t const index);
     CborSerialize &addIndexMap(std::string const &text);
-    CborSerialize &addBool(bool b);
+    CborSerialize &addBool(bool const b);
     CborSerialize &addNull();
-    CborSerialize &addUint(std::uint64_t number);
-    CborSerialize &addTag(std::int64_t number);
-    CborSerialize &addBytesArray(std::uint8_t const *const bytes, std::size_t bytes_length);
+    CborSerialize &addUint(std::uint64_t const number);
+    CborSerialize &addUint(std::uint8_t const * const numberinhex);
+    CborSerialize &addTag(std::int64_t const number);
+    CborSerialize &addBytesArray(std::uint8_t const *const bytes, std::size_t const bytes_length);
     CborSerialize &addString(std::string const &text);
-    void GetBytesCbor(std::vector<std::uint8_t> &copy) const;
-
+    CborSerialize &addVectorUint8(std::vector<std::uint8_t> const &vector_uint8t);
     void ClearCbor();
 
 private:
     enum class Pos_hex{
         hff,
         hff2,
-        hff3,
         hff4,
-        hff5,
-        hff6,
-        hff7,
         hff8,
     };
-    std::vector <std::uint8_t> bytes_cbor_data;
+    std::vector <std::uint8_t> *bytes_cbor_data;
     void AddSize2Vector(std::uint64_t const &size_array, Pos_hex const &pos);
 };
 
