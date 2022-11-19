@@ -31,18 +31,19 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include <vector>
 #include <cstdint>
 #include "../Utils/cbor_lite.hpp"
+#include "metadata.hpp"
 
-class AuxiliaryData : private CborSerialize {
+class AuxiliaryData : public Metadatas{
 public:
-    explicit AuxiliaryData(std::vector <std::uint8_t> * const auxiliary_data_cbor_out);
+    explicit AuxiliaryData();
     bool arethereAuxiliaryData() const;
-    void Build();
+    std::vector<std::uint8_t> const &Build();
+    //Metadatas Metadata; /// INCLUIR COMO HERENCIA O INDEPENDIENTE ?
+
 private:
     std::uint8_t * ptrvec;
-    std::size_t buff_sizet;
     std::uint8_t auxiliarymapcountbit;
-    std::uint16_t metadata_count;
-    std::vector <std::uint8_t> metadata;
+    std::vector <std::uint8_t> cborAuxiliaryData;
 
 };
 

@@ -31,6 +31,7 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include <vector>
 #include <cstdint>
 #include "../Utils/cbor_lite.hpp"
+#include "../Utils/txutils.hpp"
 
 class Certificates {
 
@@ -41,20 +42,18 @@ public:
     Certificates &addStakeDeregistration(std::uint8_t const *const addr_stakekeyhash);
     Certificates &addStakeDelegation(std::uint8_t const *const addr_stakekeyhash, std::uint8_t const *const addr_poolkeyhash);
     bool arethereCertificates() const;
-    std::vector<std::uint8_t> const &Build();  //serializa en cbor los certificados
+    std::vector<std::uint8_t> const &getCertificates();  //serializa en cbor los certificados
 private:
     std::uint8_t * ptrvec;
     std::size_t buff_sizet;
     std::uint16_t stake_registration_count;   //maximo 65534
     std::uint16_t stake_deregistration_count; //maximo 65534
-    std::uint16_t stake_delegation_count;    //maximo 65534
+    std::uint16_t stake_delegation_count;     //maximo 65534
     std::vector <std::uint8_t> stake_registration;
     std::vector <std::uint8_t> stake_deregistration;
     std::vector <std::uint8_t> stake_delegation;
     std::vector <std::uint8_t> cborCertificates;
     std::uint8_t certificatesmapcountbit;
-    bool existen_coincidencias(std::uint8_t const * data1, std::uint8_t const * data2, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto );
-
 
 };
 

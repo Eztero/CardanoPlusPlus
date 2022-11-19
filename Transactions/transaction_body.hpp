@@ -34,13 +34,14 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include <cstdint>
 #include "certificates.hpp"
 #include "../Utils/cbor_lite.hpp"
+#include "../Utils/txutils.hpp"
 #include "../Hash/bech32.hpp"
 
-class TransaccionBody : private CborSerialize{
+class TransaccionBody : public Certificates{
 
 public:
 
-    explicit TransaccionBody(std::vector <std::uint8_t> * const transactionbody_cbor_out);
+    explicit TransaccionBody();
     virtual ~TransaccionBody();
     TransaccionBody &addTransactionsInput(std::uint8_t const *const TxHash, std::uint64_t const TxIx);
     TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount);
@@ -49,29 +50,28 @@ public:
     TransaccionBody &addInvalidAfter(std::uint64_t const number);
     TransaccionBody &addInvalidBefore(std::uint64_t const number);
     TransaccionBody &addAuxiliaryDataHash(std::uint8_t const *const hash_32bytes);
-    TransaccionBody &addCertificates(Certificates *cert);
     TransaccionBody &addWithdrawals(std::uint8_t const *const stake_address_keyhash, std::uint64_t const amount);
     TransaccionBody &addWithdrawals(std::string &stake_address, std::uint64_t const amount);
-    void Build();
+    //Certificates Certificate;  /// INCLUIR COMO HERENCIA O INDEPENDIENTE?
+    std::vector<std::uint8_t> const &Build();
 
 private:
 
-    Certificates *cert_;
-    std::uint8_t *ptr_data;
+    std::uint8_t *ptrvec;
     std::size_t buff_sizet;
     std::uint8_t addr_keyhash_buffer[BECH32_MAX_LENGTH];
     std::uint16_t addr_keyhash_buffer_len;
     std::uint16_t bodymapcountbit; // pone un bits a 1 si existe la variable, en la posisicion correspondiente al map de el transaccion body
-    std::uint16_t output_count;
-    std::uint16_t input_count;
-    std::uint16_t withdrawals_count;
+    std::uint16_t output_count;      //maximo 65534
+    std::uint16_t input_count;       //maximo 65534
+    std::uint16_t withdrawals_count; //maximo 65534
     std::uint64_t fee;
     std::uint64_t ttl;  // time to alive
     std::uint64_t vis;  // validity interval start
+    std::vector <std::uint8_t> cborTransactionBody; //Guarda el transaction body en cbor
     std::vector <std::uint8_t>input;
     std::vector <std::uint8_t>output;
     std::vector <std::uint8_t>output_datum_hash;
-    std::vector <std::uint8_t>certificate;
     std::vector <std::uint8_t>withdrawals;
     std::vector <std::uint8_t>update;
     std::vector <std::uint8_t>auxiliary_data_hash;
@@ -84,9 +84,6 @@ private:
     std::vector <std::uint8_t>collateral_return;
     std::vector <std::uint8_t>total_collatera;
     std::vector <std::uint8_t>reference_inputs;
-    void addUint64BytestoVector(std::vector <std::uint8_t> & bytesvector, std::uint64_t const & numero);
-    bool existen_coincidencias(std::uint8_t const * data1, std::uint8_t const * data2, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto );
-    bool existen_coincidencias_output(std::uint8_t const * data, std::uint8_t const * output, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto );
 };
 
 

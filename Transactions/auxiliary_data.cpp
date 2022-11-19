@@ -1,17 +1,22 @@
 #include "auxiliary_data.hpp"
 
-AuxiliaryData::AuxiliaryData(std::vector <std::uint8_t> * const auxiliary_data_cbor_out) : CborSerialize(auxiliary_data_cbor_out) {
-    buff_sizet=0;
+AuxiliaryData::AuxiliaryData() : Metadatas(){
+    ptrvec = nullptr;
     auxiliarymapcountbit = 0;
-    metadata_count = 0;
 }
+
 
 bool AuxiliaryData::arethereAuxiliaryData() const{
-    return (auxiliarymapcountbit > 0) ? true : false;
+    return (arethereMetadatas()) ? true : false;
 }
 
-void AuxiliaryData::Build(){
-    ClearCbor();
+std::vector<std::uint8_t> const &AuxiliaryData::Build(){
+    if(arethereMetadatas()){
+        auxiliarymapcountbit |= 0x01;
+    }
+
+    CborSerialize cbor(&cborAuxiliaryData);
+    cbor.ClearCbor();
     std::uint8_t contador = 0;
 
     if(auxiliarymapcountbit > 0){
@@ -19,12 +24,16 @@ void AuxiliaryData::Build(){
         for(std::uint8_t x = 0; x < 4; x++ ){ //se realiza un conteo de los mapas que existen en auxiliary data
             contador += (auxiliarymapcountbit >> x ) & 0x01;
         }
-        createMap(contador);   /// { }
+        cbor.addTag(259);
+        cbor.createMap(contador);   /// { }
         for(std::uint8_t a = 0; a < 4; a++ ){ //se asignan los datos
 
             if((auxiliarymapcountbit >> a ) & 0x01){  //revisa cada item del transaction witness
                 switch(a){
-                case 0:{};break;
+                case 0:{
+                cbor.addIndexMap(static_cast<uint64_t>(0));    /// 0 :
+                cbor.bypassVectorCbor(getMetadatas());       /// Metadata
+                };break;
                 case 1:{};break;
                 case 2:{};break;
                 case 3:{};break;
@@ -33,7 +42,7 @@ void AuxiliaryData::Build(){
         }
     }
     else{
-        addNull();
+        cbor.addNull();
     }
-
+return cborAuxiliaryData;
 }

@@ -31,22 +31,23 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include <vector>
 #include <cstdint>
 #include "../Utils/cbor_lite.hpp"
+#include "../Utils/txutils.hpp"
 
-class TransactionWitness : private CborSerialize  {
+class TransactionWitness {
 
 public:
-    explicit TransactionWitness(std::vector <std::uint8_t> * const witness_cbor_out);
+    explicit TransactionWitness();
     TransactionWitness &addVkeyWitness(std::uint8_t const *const public_key, std::uint8_t const * const signature_transactionbody );
-    void Build();
+    std::vector<std::uint8_t> const &Build();
 
 private:
     std::uint8_t * ptrvec;
     std::size_t buff_sizet;
     std::uint8_t witnessmapcountbit;
-    std::uint16_t vkeywitness_count;
+    std::uint16_t vkeywitness_count; //maximo 65534
+    std::vector <std::uint8_t> cbor_TransactionWitness;
     std::vector <std::uint8_t> vkeywitness;
     std::vector <std::uint8_t> native_script;
-    bool existen_coincidencias(std::uint8_t const * data1, std::uint8_t const * data2, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto );
 
 };
 
