@@ -67,12 +67,14 @@ Enterprise_Change,
 Stake
 };
 
-bool createaddress(std::uint8_t const *const input_key, InputKey const input_key_type, Network const network_id, Wallet const wallet_type, Address const address_type,
+bool createAddress(std::uint8_t const *const input_key, InputKey const input_key_type, Network const network_id, Wallet const wallet_type, Address const address_type,
                    std::uint32_t const account_path, std::uint32_t const address_index_path,
                    std::string& address_out);
 
-bool raw_createaddress_keyhash(std::uint8_t const *const input_key, InputKey const input_key_type, Network const network_id, Wallet const wallet_type, Address const address_type,
+bool createAddress_Keyhash(std::uint8_t const *const input_key, InputKey const input_key_type, Network const network_id, Wallet const wallet_type, Address const address_type,
                                std::uint32_t const account_path, std::uint32_t const address_index_path,
                                std::uint8_t *const output_keyhash,std::uint8_t *const output_keyhash_len);
+
+/// Falta una funcion para crear direcciones de pago Shared , createAddressShared() , createAddressShared_Keyhash()
 
 #endif // ADDRESSES_HPP

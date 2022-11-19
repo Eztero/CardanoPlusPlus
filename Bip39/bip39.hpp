@@ -34,8 +34,6 @@ https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
 #include <cstdlib>
 #include "diccionary.hpp"
 
-#include <iostream>
-
 ///Returns its entropy and its length in bytes ; if there is an error it returns a nullptr; free memory with free()
 std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary[][2048], std::size_t *const entropy_length_bytes);
 
