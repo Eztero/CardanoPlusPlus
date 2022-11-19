@@ -74,6 +74,9 @@ raw_derivekey(input_key, InputKey::ExtendedMasterKey, Wallet::HD, OutputKey::Pri
 #include "../Bip32-ed25519/bip32_ed25519.hpp"
 #include "../Hash/bech32.hpp"
 #include <string>
+#include <cstring>
+
+#include <cstdint>
 
 enum class Wallet : std::uint8_t{
 HD,
