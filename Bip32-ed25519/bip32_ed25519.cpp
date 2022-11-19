@@ -249,7 +249,7 @@ bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, s
 }
 
 /// signature_extended[64] = R[32] || S[32]
-bool signature( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t const *const message, const size_t message_len, std::uint8_t *const out ){
+bool signature( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t const *const message,std::size_t const message_len, std::uint8_t *const out){
 
     if(!valid_ed25519_sk(raw_privatekey_xsk)){
         return false;

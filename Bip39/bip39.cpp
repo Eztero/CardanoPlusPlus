@@ -124,7 +124,7 @@ std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary
                     }
                 }
             }
-            // Aqui se comprueba la validez de la entropia
+            /// Aqui se comprueba la validez de la entropia
             std::uint8_t cs_length = static_cast<std::uint8_t>((*entropy_length_bytes * 8) / 32);
             std::uint8_t checksumsha256[crypto_hash_sha256_BYTES]; //almacena el hash de la entropia
             crypto_hash_sha256(checksumsha256, entropy, *entropy_length_bytes); ///se obtiene el hash sha256 con la libreria libsodium, iniciar antes con sodium_init()
@@ -132,7 +132,7 @@ std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary
             std::uint8_t word_bin_cs_bits = static_cast<std::uint8_t>(word_bin[word_bin_length - 1]) & (0xff >> (8 - cs_length)); // se extaen los cs_bits de word_bin
             sodium_memzero(checksumsha256, crypto_hash_sha256_BYTES); /// Pone a Cero la Memoria
 
-            if(word_bin_cs_bits != cs_bits){ //Se comparan los cs_bits de ambos para ver si la entropia es replicable (valida)
+            if(word_bin_cs_bits != cs_bits){ ///Se comparan los cs_bits de ambos para ver si la entropia es replicable (valida)
                 sodium_memzero(entropy, *entropy_length_bytes); /// Pone a Cero la Memoria
                 free(entropy);
                 entropy = nullptr;
