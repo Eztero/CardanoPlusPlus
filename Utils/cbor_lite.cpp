@@ -43,6 +43,52 @@ void CborSerialize::AddSize2Vector(std::uint64_t const &size_array, Pos_hex cons
     }
 };
 
+CborSerialize &CborSerialize::addBytesArray(std::uint8_t const *const bytes, std::uint64_t bytes_length){
+
+    if(bytes_length < 0x18){//0...23
+        bytes_cbor_data->push_back( bytes_length + 0x40 );
+    }
+
+    else if(bytes_length < 0x100){ //24...255
+        bytes_cbor_data->push_back( 0x58 );
+        AddSize2Vector(bytes_length, Pos_hex::hff);
+    }
+
+    else if(bytes_length < 0x10000){//256...65535  (uint16)
+        bytes_cbor_data->push_back(0x59);
+        AddSize2Vector(bytes_length, Pos_hex::hff2);
+    }
+
+    else if(bytes_length < 0x100000000){// 65536...4294967295 (uint32)
+        bytes_cbor_data->push_back( 0x5a );
+        AddSize2Vector(bytes_length, Pos_hex::hff4);
+
+    }
+
+    else if(bytes_length < UINT64_MAX){ // 4294967296...18446744073709551615 (uint64)
+
+        bytes_cbor_data->push_back( 0x5b );
+        AddSize2Vector(bytes_length, Pos_hex::hff8);
+
+    }
+
+    bytes_cbor_data->insert(bytes_cbor_data->end(), bytes, bytes + bytes_length);
+
+    return *this;
+};
+
+CborSerialize &CborSerialize::bypassVectorCbor(std::vector<std::uint8_t> const &vectorCbor){
+    bytes_cbor_data->insert(bytes_cbor_data->end(), vectorCbor.begin(), vectorCbor.end());
+    return *this;
+}
+
+CborSerialize &CborSerialize::bypassPtrUint8Cbor( std::uint8_t const * const ptrArrayCbor, std::uint16_t ptrArrayCbor_len ){
+    bytes_cbor_data->insert(bytes_cbor_data->end(), ptrArrayCbor, ptrArrayCbor + ptrArrayCbor_len);
+    return *this;
+}
+
+
+
 CborSerialize &CborSerialize::addUint(std::uint64_t const number){ //dicierne entre numero negativo y positivo
     if(number < 0x18){//0...23
         bytes_cbor_data->push_back( number + 0x00 );
@@ -72,34 +118,34 @@ CborSerialize &CborSerialize::addUint(std::uint64_t const number){ //dicierne en
     return *this;
 };
 
-CborSerialize &CborSerialize::addUint(std::uint8_t const * const numberinhex){
-    std::uint64_t const number = ( static_cast<std::uint64_t>(numberinhex[0]) << 56 ) | (static_cast<std::uint64_t>(numberinhex[1]) << 48) | (static_cast<std::uint64_t>(numberinhex[2]) << 40) |
-            ( static_cast<std::uint64_t>(numberinhex[3]) << 32 ) | (static_cast<std::uint64_t>(numberinhex[4]) << 24) | (static_cast<std::uint64_t>(numberinhex[5]) << 16) |
-            ( static_cast<std::uint64_t>(numberinhex[6]) << 8  ) | static_cast<std::uint64_t>(numberinhex[7]);
+CborSerialize &CborSerialize::addUint(std::uint8_t const * const arraynumbe8byteshex){
+    std::uint64_t const number = ( static_cast<std::uint64_t>(arraynumbe8byteshex[0]) << 56 ) | (static_cast<std::uint64_t>(arraynumbe8byteshex[1]) << 48) | (static_cast<std::uint64_t>(arraynumbe8byteshex[2]) << 40) |
+            ( static_cast<std::uint64_t>(arraynumbe8byteshex[3]) << 32 ) | (static_cast<std::uint64_t>(arraynumbe8byteshex[4]) << 24) | (static_cast<std::uint64_t>(arraynumbe8byteshex[5]) << 16) |
+            ( static_cast<std::uint64_t>(arraynumbe8byteshex[6]) << 8  ) | static_cast<std::uint64_t>(arraynumbe8byteshex[7]);
 
 
     if(number < 0x18){//0...23
-        bytes_cbor_data->insert(bytes_cbor_data->end(),numberinhex+7,numberinhex+8);
+        bytes_cbor_data->insert(bytes_cbor_data->end(),arraynumbe8byteshex+7,arraynumbe8byteshex+8);
     }
 
     else if(number < 0x100){ //24...255
         bytes_cbor_data->push_back( 0x18 );
-        bytes_cbor_data->insert(bytes_cbor_data->end(),numberinhex+7,numberinhex+8);
+        bytes_cbor_data->insert(bytes_cbor_data->end(),arraynumbe8byteshex+7,arraynumbe8byteshex+8);
     }
 
     else if(number < 0x10000){//256...65535  (uint16)
         bytes_cbor_data->push_back(0x19);
-        bytes_cbor_data->insert(bytes_cbor_data->end(),numberinhex+6,numberinhex+8);
+        bytes_cbor_data->insert(bytes_cbor_data->end(),arraynumbe8byteshex+6,arraynumbe8byteshex+8);
     }
 
     else if(number < 0x100000000){// 65536...4294967295 (uint32)
         bytes_cbor_data->push_back( 0x1a );
-        bytes_cbor_data->insert(bytes_cbor_data->end(),numberinhex+4,numberinhex+8);
+        bytes_cbor_data->insert(bytes_cbor_data->end(),arraynumbe8byteshex+4,arraynumbe8byteshex+8);
     }
 
     else if(number < UINT64_MAX){ // 4294967296...18446744073709551615 (uint64)
         bytes_cbor_data->push_back( 0x1b );
-        bytes_cbor_data->insert(bytes_cbor_data->end(),numberinhex,numberinhex+8);
+        bytes_cbor_data->insert(bytes_cbor_data->end(),arraynumbe8byteshex,arraynumbe8byteshex+8);
     }
     return *this;
 }
@@ -179,7 +225,7 @@ CborSerialize &CborSerialize::addNull(){
 };
 
 CborSerialize &CborSerialize::addString(std::string const &text){
-    std::size_t size_array = text.size();
+    std::uint64_t size_array = text.size();
     if(size_array < 0x18){//0...23
         bytes_cbor_data->push_back( size_array + 0x60 );
     }
@@ -222,49 +268,45 @@ CborSerialize &CborSerialize::addIndexMap(std::string const &text){
     return *this;
 };
 
-CborSerialize &CborSerialize::addTag(std::int64_t const number){
-
+CborSerialize &CborSerialize::addIndexMap(std::uint8_t const *const bytesarray, std::uint64_t bytesarray_length){
+    addBytesArray(bytesarray, bytesarray_length);
     return *this;
 };
 
-CborSerialize &CborSerialize::addBytesArray(std::uint8_t const *const bytes, std::size_t bytes_length){
-
-    if(bytes_length < 0x18){//0...23
-        bytes_cbor_data->push_back( bytes_length + 0x40 );
-    }
-
-    else if(bytes_length < 0x100){ //24...255
-        bytes_cbor_data->push_back( 0x58 );
-        AddSize2Vector(bytes_length, Pos_hex::hff);
-    }
-
-    else if(bytes_length < 0x10000){//256...65535  (uint16)
-        bytes_cbor_data->push_back(0x59);
-        AddSize2Vector(bytes_length, Pos_hex::hff2);
-    }
-
-    else if(bytes_length < 0x100000000){// 65536...4294967295 (uint32)
-        bytes_cbor_data->push_back( 0x5a );
-        AddSize2Vector(bytes_length, Pos_hex::hff4);
-
-    }
-
-    else if(bytes_length < UINT64_MAX){ // 4294967296...18446744073709551615 (uint64)
-
-        bytes_cbor_data->push_back( 0x5b );
-        AddSize2Vector(bytes_length, Pos_hex::hff8);
-
-    }
-
-    bytes_cbor_data->insert(bytes_cbor_data->end(), bytes, bytes + bytes_length);
-
+CborSerialize &CborSerialize::addIndexMap(std::uint8_t const * const arraynumbe8byteshex){
+    addUint(arraynumbe8byteshex);
     return *this;
 };
 
-CborSerialize &CborSerialize::addVectorUint8(std::vector<std::uint8_t> const &vector_uint8t){
-    bytes_cbor_data->insert(bytes_cbor_data->end(), vector_uint8t.begin(), vector_uint8t.end());
+CborSerialize &CborSerialize::addTag(std::uint64_t const number){
+    if(number < 0x18){//0...23
+        bytes_cbor_data->push_back( number + 0xc0 );
+    }
+
+    else if(number < 0x100){ //24...255
+        bytes_cbor_data->push_back( 0xd8 );
+        AddSize2Vector(number, Pos_hex::hff);
+    }
+
+    else if(number < 0x10000){//256...65535  (uint16)
+        bytes_cbor_data->push_back(0xd9);
+        AddSize2Vector(number, Pos_hex::hff2);
+    }
+
+    else if(number < 0x100000000){// 65536...4294967295 (uint32)
+        bytes_cbor_data->push_back( 0xda );
+        AddSize2Vector(number, Pos_hex::hff4);
+
+    }
+
+    else if(number < UINT64_MAX){ // 4294967296...18446744073709551615 (uint64)
+
+        bytes_cbor_data->push_back( 0xdb );
+        AddSize2Vector(number, Pos_hex::hff8);
+    }
+
     return *this;
-}
+};
 
 void CborSerialize::ClearCbor(){
     bytes_cbor_data->clear();

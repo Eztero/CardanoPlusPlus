@@ -42,14 +42,17 @@ public:
     CborSerialize &createMap(std::uint64_t const size_array);
     CborSerialize &addIndexMap(std::uint64_t const index);
     CborSerialize &addIndexMap(std::string const &text);
+    CborSerialize &addIndexMap(std::uint8_t const *const bytesarray, std::uint64_t bytesarray_length);
+    CborSerialize &addIndexMap(std::uint8_t const * const arraynumbe8byteshex);
     CborSerialize &addBool(bool const b);
     CborSerialize &addNull();
     CborSerialize &addUint(std::uint64_t const number);
-    CborSerialize &addUint(std::uint8_t const * const numberinhex);
-    CborSerialize &addTag(std::int64_t const number);
-    CborSerialize &addBytesArray(std::uint8_t const *const bytes, std::size_t const bytes_length);
+    CborSerialize &addUint(std::uint8_t const * const arraynumbe8byteshex);
+    CborSerialize &addTag(std::uint64_t const number); //funcion addTag incompleta,los primeros 23 numeros estan reservados a funciones especiales
+    CborSerialize &addBytesArray(std::uint8_t const *const bytes, std::uint64_t const bytes_length);
     CborSerialize &addString(std::string const &text);
-    CborSerialize &addVectorUint8(std::vector<std::uint8_t> const &vector_uint8t);
+    CborSerialize &bypassVectorCbor(std::vector<std::uint8_t> const &vectorCbor);
+    CborSerialize &bypassPtrUint8Cbor( std::uint8_t const * const ptrArrayCbor, std::uint16_t ptrArrayCbor_len );
     void ClearCbor();
 
 private:
