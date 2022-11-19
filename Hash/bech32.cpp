@@ -88,7 +88,7 @@ static bool decode_bits( std::uint8_t const *const data,std::uint16_t const data
         bits += fromBits;
         while (bits >= toBits)
         {
-            if(blen <= 96){ //si esta fuera del rango de la llave mas larga (xsk) genera un false
+            if(blen <= 57){ //si esta fuera del rango de la llave mas larga (hashkey) genera un false
                 bits -= toBits;
                 bits_out[blen] = static_cast<std::uint8_t>((acc >> bits) & maxv);
                 blen += 1;
@@ -97,7 +97,7 @@ static bool decode_bits( std::uint8_t const *const data,std::uint16_t const data
             }
         }
     }
-    if (bits >= fromBits || static_cast<std::uint8_t>((acc << (toBits - bits)) & maxv) != 0 || blen < 64) //si blen es menor a la llave mas corta (xvk) genera un false
+    if (bits >= fromBits || static_cast<std::uint8_t>((acc << (toBits - bits)) & maxv) != 0 || blen < 28) //si blen es menor a la llave mas corta (hashkey) genera un false
     {
         return false;
     }
