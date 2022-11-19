@@ -90,7 +90,7 @@ static bool set_address(Address const *const address_type, std::uint8_t const *c
 }
 
 
-bool createaddress(std::uint8_t const *const input_key, InputKey const input_key_type, Network const network_id, Wallet const wallet_type, Address const address_type,
+bool createAddress(std::uint8_t const *const input_key, InputKey const input_key_type, Network const network_id, Wallet const wallet_type, Address const address_type,
                    std::uint32_t const account_path, std::uint32_t const address_index_path,
                    std::string& address_out){
 
@@ -114,6 +114,7 @@ bool createaddress(std::uint8_t const *const input_key, InputKey const input_key
     }
 
     ///Set Address
+    if(wallet_type == Wallet::MultiSignHD){ return false;} // las direcciones de pago y stake multifirma (shared) se crean de dos o mas  direcciones keyhash
     if(!set_address(&address_type, input_key, &input_key_type, &wallet_type,
                     &account_path, &address_index_path, &header,
                     payload_left, payload_right, buff_xvk)){
@@ -138,7 +139,7 @@ bool createaddress(std::uint8_t const *const input_key, InputKey const input_key
 }
 
 
-bool raw_createaddress_keyhash(std::uint8_t const *const input_key, InputKey const input_key_type, Network const network_id, Wallet const wallet_type, Address const address_type,
+bool createAddress_Keyhash(std::uint8_t const *const input_key, InputKey const input_key_type, Network const network_id, Wallet const wallet_type, Address const address_type,
                                std::uint32_t const account_path, std::uint32_t const address_index_path,
                                std::uint8_t *const output_keyhash,std::uint8_t *const output_keyhash_len){
 
@@ -152,6 +153,7 @@ bool raw_createaddress_keyhash(std::uint8_t const *const input_key, InputKey con
 
 
     ///Set Address
+    if(wallet_type == Wallet::MultiSignHD){ return false;} // las direcciones de pago y stake multifirma (shared) se crean de dos o mas  direcciones keyhash
     if(!set_address(&address_type, input_key, &input_key_type, &wallet_type,
                     &account_path, &address_index_path, &header,
                     payload_left, payload_right, buff_xvk)){
