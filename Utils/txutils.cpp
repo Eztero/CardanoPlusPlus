@@ -12,7 +12,7 @@ void agregarUint64BytestoVector(std::vector <std::uint8_t> & bytesvector, std::u
     bytesvector.push_back( ( numero ) & 0xff );
 }
 
-bool existen_coincidencias(std::uint8_t const * data1, std::uint8_t const * data2, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto ){
+bool const existen_coincidencias(std::uint8_t const * data1, std::uint8_t const * data2, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto ){
     std::uint16_t buff_sizet = 0;
     for(int e = 0 ;e < ciclos ; e++){
         data2 = data2 + salto*e;
@@ -30,7 +30,7 @@ bool existen_coincidencias(std::uint8_t const * data1, std::uint8_t const * data
     return false;
 }
 
-bool existen_coincidencias_output(std::uint8_t const * data, std::uint8_t const * output, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto ){
+bool const existen_coincidencias_output(std::uint8_t const * data, std::uint8_t const * output, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto ){
     std::uint16_t buff_sizet = 0;
     std::uint16_t addr_keyhash_buffer_len = 0;
     for(int e = 0 ;e < ciclos ; e++){
@@ -51,3 +51,17 @@ bool existen_coincidencias_output(std::uint8_t const * data, std::uint8_t const 
     return false;
 }
 
+std::uint8_t const *const hexchararray2uint8array(std::string const & string_hex, std::size_t * const hexchararray2uint8array_len)
+{
+    //se crea una memoria dinamica para un nuevo array char_hexa[]
+    std::size_t array_hex_len = static_cast<std::size_t>( string_hex.size() / 2 );
+    if(hexchararray2uint8array_len != nullptr){
+        *hexchararray2uint8array_len = array_hex_len;
+    }
+    std::uint8_t *array_hex = new std::uint8_t[array_hex_len];
+    for(std::size_t ha = 0; ha < array_hex_len; ha++){
+        array_hex[ha] = static_cast<std::uint8_t>(std::stoul(string_hex.substr(ha*2,2),nullptr,16));
+    };
+
+    return array_hex;
+};
