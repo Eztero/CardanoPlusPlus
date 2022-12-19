@@ -34,10 +34,10 @@ SOFTWARE.
 class Metadatas{
 public:
     explicit Metadatas();
-Metadatas &addMetadata(std::uint64_t const keytag, std::vector<std::uint8_t> const &metadataincbor);
-Metadatas &addMetadata(std::uint64_t const keytag, std::string const metadata);
+void addMetadata(std::uint64_t const keytag, std::vector<std::uint8_t> const &CborMetadata);
+//Metadatas &addMetadata(std::uint64_t const keytag, std::string const metadata);  ///SIN TERMINAR
 bool arethereMetadatas() const;
-std::vector<std::uint8_t> const &getMetadatas();
+std::vector<std::uint8_t> const &getCborMetadatas();
 private:
 std::uint8_t * ptrvec;
 std::uint16_t metadata_count;
