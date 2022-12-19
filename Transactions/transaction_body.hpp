@@ -43,8 +43,10 @@ public:
 
     explicit TransaccionBody();
     virtual ~TransaccionBody();
-    TransaccionBody &addTransactionsInput(std::uint8_t const *const TxHash, std::uint64_t const TxIx);
-    TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount);
+    TransaccionBody &addTransactionsInput(std::uint8_t const *const TxHash,std::uint64_t const TxIx);
+    TransaccionBody &addTransactionsInput(std::string &TxHash, std::uint64_t const TxIx);
+    TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount); //comprobar que el ada enviado sea mayor al minimo
+    //TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount, Multiasset assets); //comprobar que el ada enviado sea mayor al minimo
     TransaccionBody &addTransactionsOutput(std::string &payment_address, std::uint64_t const amount);
     TransaccionBody &addFee(std::uint64_t const amount);
     TransaccionBody &addInvalidAfter(std::uint64_t const number);
@@ -52,7 +54,6 @@ public:
     TransaccionBody &addAuxiliaryDataHash(std::uint8_t const *const hash_32bytes);
     TransaccionBody &addWithdrawals(std::uint8_t const *const stake_address_keyhash, std::uint64_t const amount);
     TransaccionBody &addWithdrawals(std::string &stake_address, std::uint64_t const amount);
-    //Certificates Certificate;  /// INCLUIR COMO HERENCIA O INDEPENDIENTE?
     std::vector<std::uint8_t> const &Build();
 
 private:

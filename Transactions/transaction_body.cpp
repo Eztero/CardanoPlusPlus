@@ -21,10 +21,10 @@ TransaccionBody::~TransaccionBody(){
     ptrvec=nullptr;
 }
 
-TransaccionBody &TransaccionBody::addTransactionsInput(std::uint8_t const *const TxHash, std::uint64_t const TxIx){   //0 : set<transaction_input> --> transaction_input = [ transaction_id : hash32, index : uint]
+TransaccionBody &TransaccionBody::addTransactionsInput(std::uint8_t const *const TxHash,std::uint64_t const TxIx){   //0 : set<transaction_input> --> transaction_input = [ transaction_id : hash32, index : uint]
     /// 32(TxHash) + 8(TxIx) = 40 bytes de largo cada input
 
-    if(input_count < UINT16_MAX && !existen_coincidencias(TxHash,input.data(),32,input_count,40)){
+    if( ( input_count < UINT16_MAX ) && ( !existen_coincidencias(TxHash, input.data(), 32, input_count, 40) ) ){
         buff_sizet = static_cast<std::size_t>( input.capacity() ) - static_cast<std::size_t>( input.size() );
 
         // Si la capacidad reservada es menor a la que se debe ingresar se aumenta el espacio de reserva
@@ -41,6 +41,17 @@ TransaccionBody &TransaccionBody::addTransactionsInput(std::uint8_t const *const
 
 
     return *this;
+}
+
+TransaccionBody &TransaccionBody::addTransactionsInput(std::string &TxHash, std::uint64_t const TxIx){
+    std::size_t txhash_len;
+    std::uint8_t const *const TxHash_uint8t = hexchararray2uint8array(TxHash, &txhash_len);
+    if(txhash_len == 32){
+    addTransactionsInput(TxHash_uint8t, TxIx);
+    }
+    delete[] TxHash_uint8t;
+
+return *this;
 }
 
 TransaccionBody &TransaccionBody::addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount){ // 1 : [* transaction_output] --> transaction_output = [ address , amount : value , ? datum_hash : $hash32 ; New]
@@ -249,7 +260,7 @@ std::vector<std::uint8_t> const &TransaccionBody::Build(){
                 };break;
                 case 4 :{
                     cbor.addIndexMap(4);                                 /// 4:
-                    cbor.bypassVectorCbor(getCertificates());                 /// certificates
+                    cbor.bypassVectorCbor(getCborCertificates());                 /// certificates
                 };break;
                 case 5 :{
                     ptrvec = withdrawals.data();
