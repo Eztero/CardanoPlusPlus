@@ -38,7 +38,6 @@ public:
     explicit AuxiliaryData();
     bool arethereAuxiliaryData() const;
     std::vector<std::uint8_t> const &Build();
-    //Metadatas Metadata; /// INCLUIR COMO HERENCIA O INDEPENDIENTE ?
 
 private:
     std::uint8_t * ptrvec;

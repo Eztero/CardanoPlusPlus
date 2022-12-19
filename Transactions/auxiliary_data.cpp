@@ -32,7 +32,7 @@ std::vector<std::uint8_t> const &AuxiliaryData::Build(){
                 switch(a){
                 case 0:{
                 cbor.addIndexMap(static_cast<uint64_t>(0));    /// 0 :
-                cbor.bypassVectorCbor(getMetadatas());       /// Metadata
+                cbor.bypassVectorCbor(getCborMetadatas());       /// Metadata
                 };break;
                 case 1:{};break;
                 case 2:{};break;
