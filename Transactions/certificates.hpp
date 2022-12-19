@@ -38,11 +38,11 @@ class Certificates {
 public:
     explicit Certificates();
     virtual ~Certificates();
-    Certificates &addStakeRegistration(std::uint8_t const *const addr_stakekeyhash);
-    Certificates &addStakeDeregistration(std::uint8_t const *const addr_stakekeyhash);
-    Certificates &addStakeDelegation(std::uint8_t const *const addr_stakekeyhash, std::uint8_t const *const addr_poolkeyhash);
+    void addStakeRegistration(std::uint8_t const *const addr_stakekeyhash);
+    void addStakeDeregistration(std::uint8_t const *const addr_stakekeyhash);
+    void addStakeDelegation(std::uint8_t const *const addr_stakekeyhash, std::uint8_t const *const addr_poolkeyhash);
     bool arethereCertificates() const;
-    std::vector<std::uint8_t> const &getCertificates();  //serializa en cbor los certificados
+    std::vector<std::uint8_t> const &getCborCertificates();  //serializa en cbor los certificados
 private:
     std::uint8_t * ptrvec;
     std::size_t buff_sizet;

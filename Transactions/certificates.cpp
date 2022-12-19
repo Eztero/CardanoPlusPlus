@@ -13,7 +13,7 @@ Certificates::~Certificates(){
     ptrvec = nullptr;
 }
 
-Certificates &Certificates::addStakeRegistration(std::uint8_t const *const addr_stakekeyhash){
+void Certificates::addStakeRegistration(std::uint8_t const *const addr_stakekeyhash){
     // addr_stakekeyhash(28bytes)
 
     if(stake_registration_count < UINT16_MAX && !existen_coincidencias(addr_stakekeyhash, stake_registration.data(),28,stake_registration_count,28)){
@@ -29,12 +29,9 @@ Certificates &Certificates::addStakeRegistration(std::uint8_t const *const addr_
 
         certificatesmapcountbit |= 0x01;
     }
-
-
-    return *this;
 }
 
-Certificates &Certificates::addStakeDeregistration(std::uint8_t const *const addr_stakekeyhash){
+void Certificates::addStakeDeregistration(std::uint8_t const *const addr_stakekeyhash){
     // addr_stakekeyhash(28bytes)
 
     if(stake_deregistration_count < UINT16_MAX && !existen_coincidencias(addr_stakekeyhash, stake_deregistration.data(),28,stake_deregistration_count,28)){
@@ -48,12 +45,9 @@ Certificates &Certificates::addStakeDeregistration(std::uint8_t const *const add
 
         certificatesmapcountbit |= 0x02;
     }
-
-
-    return *this;
 }
 
-Certificates &Certificates::addStakeDelegation(std::uint8_t const *const addr_stakekeyhash, std::uint8_t const *const addr_poolkeyhash){
+void Certificates::addStakeDelegation(std::uint8_t const *const addr_stakekeyhash, std::uint8_t const *const addr_poolkeyhash){
     // addr_stakekeyhash(28bytes) + addr_poolkeyhash(28bytes) = 56 bytes
 
     if(stake_delegation_count < UINT16_MAX && !existen_coincidencias(addr_stakekeyhash, stake_delegation.data(),28,stake_delegation_count,56)){
@@ -69,9 +63,6 @@ Certificates &Certificates::addStakeDelegation(std::uint8_t const *const addr_st
 
         certificatesmapcountbit |= 0x04;
     }
-
-
-    return *this;
 }
 
 bool Certificates::arethereCertificates() const{
@@ -79,7 +70,7 @@ bool Certificates::arethereCertificates() const{
 }
 
 
-std::vector<std::uint8_t> const &Certificates::getCertificates(){
+std::vector<std::uint8_t> const &Certificates::getCborCertificates(){
 
     CborSerialize cert_cbor(&cborCertificates);
     cert_cbor.ClearCbor();
