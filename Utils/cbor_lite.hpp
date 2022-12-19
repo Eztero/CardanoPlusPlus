@@ -52,6 +52,7 @@ public:
     CborSerialize &addBytesArray(std::uint8_t const *const bytes, std::uint64_t const bytes_length);
     CborSerialize &addString(std::string const &text);
     CborSerialize &bypassVectorCbor(std::vector<std::uint8_t> const &vectorCbor);
+    CborSerialize &bypassIteratorVectorCbor(std::vector<std::uint8_t>::iterator const &it_begin, std::vector<std::uint8_t>::iterator const &it_end);
     CborSerialize &bypassPtrUint8Cbor( std::uint8_t const * const ptrArrayCbor, std::uint16_t ptrArrayCbor_len );
     void ClearCbor();
 
@@ -63,7 +64,7 @@ private:
         hff8,
     };
     std::vector <std::uint8_t> *bytes_cbor_data;
-    void AddSize2Vector(std::uint64_t const &size_array, Pos_hex const &pos);
+    void AddNumber2Vector(std::uint64_t const &size_array, Pos_hex const &pos);
 };
 
 #endif // CBOR_LITE_HPP

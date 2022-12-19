@@ -3,11 +3,7 @@
 CborSerialize::CborSerialize(std::vector <std::uint8_t> * const cbor_data_out)
 {
     bytes_cbor_data = cbor_data_out;
-    //cbor_data_out->clear();
-    //if(bytes_cbor_data->capacity() < 150 ){
-    //   bytes_cbor_data->reserve(150);
-    //}
-
+    bytes_cbor_data->reserve(150);
 };
 
 CborSerialize::~CborSerialize()
@@ -15,7 +11,7 @@ CborSerialize::~CborSerialize()
     bytes_cbor_data = nullptr;
 };
 
-void CborSerialize::AddSize2Vector(std::uint64_t const &size_array, Pos_hex const &pos){
+void CborSerialize::AddNumber2Vector(std::uint64_t const &size_array, Pos_hex const &pos){
     switch(pos){
     case Pos_hex::hff : { // < 0x100
         bytes_cbor_data->push_back( size_array );
@@ -51,24 +47,24 @@ CborSerialize &CborSerialize::addBytesArray(std::uint8_t const *const bytes, std
 
     else if(bytes_length < 0x100){ //24...255
         bytes_cbor_data->push_back( 0x58 );
-        AddSize2Vector(bytes_length, Pos_hex::hff);
+        AddNumber2Vector(bytes_length, Pos_hex::hff);
     }
 
     else if(bytes_length < 0x10000){//256...65535  (uint16)
         bytes_cbor_data->push_back(0x59);
-        AddSize2Vector(bytes_length, Pos_hex::hff2);
+        AddNumber2Vector(bytes_length, Pos_hex::hff2);
     }
 
     else if(bytes_length < 0x100000000){// 65536...4294967295 (uint32)
         bytes_cbor_data->push_back( 0x5a );
-        AddSize2Vector(bytes_length, Pos_hex::hff4);
+        AddNumber2Vector(bytes_length, Pos_hex::hff4);
 
     }
 
     else if(bytes_length < UINT64_MAX){ // 4294967296...18446744073709551615 (uint64)
 
         bytes_cbor_data->push_back( 0x5b );
-        AddSize2Vector(bytes_length, Pos_hex::hff8);
+        AddNumber2Vector(bytes_length, Pos_hex::hff8);
 
     }
 
@@ -82,12 +78,15 @@ CborSerialize &CborSerialize::bypassVectorCbor(std::vector<std::uint8_t> const &
     return *this;
 }
 
+CborSerialize &CborSerialize::bypassIteratorVectorCbor(std::vector<std::uint8_t>::iterator const &it_begin, std::vector<std::uint8_t>::iterator const &it_end){
+bytes_cbor_data->insert(bytes_cbor_data->end(), it_begin, it_end);
+return *this;
+}
+
 CborSerialize &CborSerialize::bypassPtrUint8Cbor( std::uint8_t const * const ptrArrayCbor, std::uint16_t ptrArrayCbor_len ){
     bytes_cbor_data->insert(bytes_cbor_data->end(), ptrArrayCbor, ptrArrayCbor + ptrArrayCbor_len);
     return *this;
 }
-
-
 
 CborSerialize &CborSerialize::addUint(std::uint64_t const number){ //dicierne entre numero negativo y positivo
     if(number < 0x18){//0...23
@@ -96,24 +95,24 @@ CborSerialize &CborSerialize::addUint(std::uint64_t const number){ //dicierne en
 
     else if(number < 0x100){ //24...255
         bytes_cbor_data->push_back( 0x18 );
-        AddSize2Vector(number, Pos_hex::hff);
+        AddNumber2Vector(number, Pos_hex::hff);
     }
 
     else if(number < 0x10000){//256...65535  (uint16)
         bytes_cbor_data->push_back(0x19);
-        AddSize2Vector(number, Pos_hex::hff2);
+        AddNumber2Vector(number, Pos_hex::hff2);
     }
 
     else if(number < 0x100000000){// 65536...4294967295 (uint32)
         bytes_cbor_data->push_back( 0x1a );
-        AddSize2Vector(number, Pos_hex::hff4);
+        AddNumber2Vector(number, Pos_hex::hff4);
 
     }
 
     else if(number < UINT64_MAX){ // 4294967296...18446744073709551615 (uint64)
 
         bytes_cbor_data->push_back( 0x1b );
-        AddSize2Vector(number, Pos_hex::hff8);
+        AddNumber2Vector(number, Pos_hex::hff8);
     }
     return *this;
 };
@@ -157,23 +156,23 @@ CborSerialize &CborSerialize::createArray(std::uint64_t const size_array){
 
     else if(size_array < 0x100){ //24...255
         bytes_cbor_data->push_back( 0x98 );
-        AddSize2Vector(size_array, Pos_hex::hff);
+        AddNumber2Vector(size_array, Pos_hex::hff);
     }
 
     else if(size_array < 0x10000){//256...65535  (uint16)
         bytes_cbor_data->push_back(0x99);
-        AddSize2Vector(size_array, Pos_hex::hff2);
+        AddNumber2Vector(size_array, Pos_hex::hff2);
     }
 
     else if(size_array < 0x100000000){// 65536...4294967295 (uint32)
         bytes_cbor_data->push_back( 0x9a );
-        AddSize2Vector(size_array, Pos_hex::hff4);
+        AddNumber2Vector(size_array, Pos_hex::hff4);
     }
 
     else if(size_array < UINT64_MAX){ // 4294967296...18446744073709551615 (uint64)
 
         bytes_cbor_data->push_back( 0x9b );
-        AddSize2Vector(size_array, Pos_hex::hff8);
+        AddNumber2Vector(size_array, Pos_hex::hff8);
 
 
     }
@@ -187,24 +186,24 @@ CborSerialize &CborSerialize::createMap(std::uint64_t const size_array){
 
     else if(size_array < 0x100){ //24...255
         bytes_cbor_data->push_back( 0xb8 );
-        AddSize2Vector(size_array, Pos_hex::hff);
+        AddNumber2Vector(size_array, Pos_hex::hff);
     }
 
     else if(size_array < 0x10000){//256...65535  (uint16)
         bytes_cbor_data->push_back(0xb9);
-        AddSize2Vector(size_array, Pos_hex::hff2);
+        AddNumber2Vector(size_array, Pos_hex::hff2);
     }
 
     else if(size_array < 0x100000000){// 65536...4294967295 (uint32)
         bytes_cbor_data->push_back( 0xba );
-        AddSize2Vector(size_array, Pos_hex::hff4);
+        AddNumber2Vector(size_array, Pos_hex::hff4);
 
     }
 
     else if(size_array < UINT64_MAX){ // 4294967296...18446744073709551615 (uint64)
 
         bytes_cbor_data->push_back( 0xbb );
-        AddSize2Vector(size_array, Pos_hex::hff8);
+        AddNumber2Vector(size_array, Pos_hex::hff8);
 
     }
 
@@ -232,24 +231,24 @@ CborSerialize &CborSerialize::addString(std::string const &text){
 
     else if(size_array < 0x100){ //24...255
         bytes_cbor_data->push_back( 0x78 );
-        AddSize2Vector(size_array, Pos_hex::hff);
+        AddNumber2Vector(size_array, Pos_hex::hff);
     }
 
     else if(size_array < 0x10000){//256...65535  (uint16)
         bytes_cbor_data->push_back(0x79);
-        AddSize2Vector(size_array, Pos_hex::hff2);
+        AddNumber2Vector(size_array, Pos_hex::hff2);
     }
 
     else if(size_array < 0x100000000){// 65536...4294967295 (uint32)
         bytes_cbor_data->push_back( 0x7a );
-        AddSize2Vector(size_array, Pos_hex::hff4);
+        AddNumber2Vector(size_array, Pos_hex::hff4);
 
     }
 
     else if(size_array < UINT64_MAX){ // 4294967296...18446744073709551615 (uint64)
 
         bytes_cbor_data->push_back( 0x7b );
-        AddSize2Vector(size_array, Pos_hex::hff8);
+        AddNumber2Vector(size_array, Pos_hex::hff8);
 
     }
 
@@ -285,24 +284,24 @@ CborSerialize &CborSerialize::addTag(std::uint64_t const number){
 
     else if(number < 0x100){ //24...255
         bytes_cbor_data->push_back( 0xd8 );
-        AddSize2Vector(number, Pos_hex::hff);
+        AddNumber2Vector(number, Pos_hex::hff);
     }
 
     else if(number < 0x10000){//256...65535  (uint16)
         bytes_cbor_data->push_back(0xd9);
-        AddSize2Vector(number, Pos_hex::hff2);
+        AddNumber2Vector(number, Pos_hex::hff2);
     }
 
     else if(number < 0x100000000){// 65536...4294967295 (uint32)
         bytes_cbor_data->push_back( 0xda );
-        AddSize2Vector(number, Pos_hex::hff4);
+        AddNumber2Vector(number, Pos_hex::hff4);
 
     }
 
     else if(number < UINT64_MAX){ // 4294967296...18446744073709551615 (uint64)
 
         bytes_cbor_data->push_back( 0xdb );
-        AddSize2Vector(number, Pos_hex::hff8);
+        AddNumber2Vector(number, Pos_hex::hff8);
     }
 
     return *this;
@@ -310,7 +309,4 @@ CborSerialize &CborSerialize::addTag(std::uint64_t const number){
 
 void CborSerialize::ClearCbor(){
     bytes_cbor_data->clear();
-    if(bytes_cbor_data->capacity() < 150 ){
-        bytes_cbor_data->reserve(150);
-    }
 };
