@@ -154,6 +154,7 @@ bool createAddress_Keyhash(std::uint8_t const *const input_key, InputKey const i
 
     ///Set Address
     if(wallet_type == Wallet::MultiSignHD){ return false;} // las direcciones de pago y stake multifirma (shared) se crean de dos o mas  direcciones keyhash
+
     if(!set_address(&address_type, input_key, &input_key_type, &wallet_type,
                     &account_path, &address_index_path, &header,
                     payload_left, payload_right, buff_xvk)){
