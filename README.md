@@ -14,9 +14,9 @@ This library uses libsodium as a cryptographic library, it is a robust and cross
 - [x] Bip44-ed25519 standard implementation (branch bip44-ed25519)
 - [x] Address serialization and deserialization (branch addresses)
 - [x] Serialization and deserialization phase of data structures that allow interaction with the blockchain
-    - [x] implement send, receive, delegation and withdrawal of delegation in ADA
-    - [ ] implement Native asset management
-    - [ ] implement NFT management
+    - [x] implement send, receive, delegation and withdrawal of delegation, withdrawal of reward, in ADA
+    - [x] implement Native asset management (send, receive)
+    - [x] implement NFT management          (send, receive)
     - [ ] implement the use of smart contracts.
 - [ ] Integration of functions, testing and stable release of the library
 
