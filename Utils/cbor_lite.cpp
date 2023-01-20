@@ -83,7 +83,7 @@ bytes_cbor_data->insert(bytes_cbor_data->end(), it_begin, it_end);
 return *this;
 }
 
-CborSerialize &CborSerialize::bypassPtrUint8Cbor( std::uint8_t const * const ptrArrayCbor, std::uint16_t ptrArrayCbor_len ){
+CborSerialize &CborSerialize::bypassPtrUint8Cbor( std::uint8_t const * const ptrArrayCbor, std::uint64_t ptrArrayCbor_len ){
     bytes_cbor_data->insert(bytes_cbor_data->end(), ptrArrayCbor, ptrArrayCbor + ptrArrayCbor_len);
     return *this;
 }

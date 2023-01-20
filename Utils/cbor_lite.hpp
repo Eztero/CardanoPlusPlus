@@ -53,7 +53,7 @@ public:
     CborSerialize &addString(std::string const &text);
     CborSerialize &bypassVectorCbor(std::vector<std::uint8_t> const &vectorCbor);
     CborSerialize &bypassIteratorVectorCbor(std::vector<std::uint8_t>::iterator const &it_begin, std::vector<std::uint8_t>::iterator const &it_end);
-    CborSerialize &bypassPtrUint8Cbor( std::uint8_t const * const ptrArrayCbor, std::uint16_t ptrArrayCbor_len );
+    CborSerialize &bypassPtrUint8Cbor( std::uint8_t const * const ptrArrayCbor, std::uint64_t ptrArrayCbor_len );
     void ClearCbor();
 
 private:
