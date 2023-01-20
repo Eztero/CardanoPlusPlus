@@ -55,7 +55,7 @@ return *this;
 }
 
 TransaccionBody &TransaccionBody::addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount){ // 1 : [* transaction_output] --> transaction_output = [ address , amount : value , ? datum_hash : $hash32 ; New]
-    ///  1(address_keyhash_len) + 57(address_keyhash) + 8(amount) = 65 bytes maximo de largo cada output
+    ///  1(address_keyhash_len) + 57(address_keyhash) + 8(amount) + 1 (separador) = 67 bytes maximo de largo cada output
     if(address_keyhash_len == 29 || address_keyhash_len == 57){
 
         if(output_count < UINT16_MAX && !existen_coincidencias_output(address_keyhash, output.data(), address_keyhash_len,output_count , 9) ){
@@ -72,6 +72,40 @@ TransaccionBody &TransaccionBody::addTransactionsOutput(std::uint8_t const *cons
             output.push_back(static_cast<std::uint8_t>(address_keyhash_len)); //Agrega el address_keyhash_len en un bytes antes del address_keyhash
             output.insert(output.end(), address_keyhash, address_keyhash + address_keyhash_len); //Agrega el array address_keyhash
             agregarUint64BytestoVector(output, amount); //Agrega el amount en 8 bytes
+            output.push_back(0); //separador 0 = no hay datos extras
+
+            bodymapcountbit |= 0x0002;
+        }
+
+    }
+
+    return *this;
+}
+
+TransaccionBody &TransaccionBody::addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount, Multiassets &assets){
+    ///  1(address_keyhash_len) + 57(address_keyhash) + 8(amount) + 1(separador) + 8(data_cbor_len) + n(data_cbor)= 66+n bytes maximo de largo cada output
+    if(address_keyhash_len == 29 || address_keyhash_len == 57){
+
+        if(output_count < UINT16_MAX && !existen_coincidencias_output(address_keyhash, output.data(), address_keyhash_len,output_count , 9) ){
+
+            buff_sizet = static_cast<std::size_t>( output.capacity() ) - static_cast<std::size_t>( output.size() );
+            addr_keyhash_buffer_len = address_keyhash_len + 9;
+
+            // Si la capacidad reservada es menor a la que se debe ingresar se aumenta el espacio de reserva
+            if(buff_sizet < addr_keyhash_buffer_len ) {
+                input.reserve(input.size() + addr_keyhash_buffer_len);
+            }
+
+            output_count++;
+            output.push_back(static_cast<std::uint8_t>(address_keyhash_len)); //Agrega el address_keyhash_len en un bytes antes del address_keyhash
+            output.insert(output.end(), address_keyhash, address_keyhash + address_keyhash_len); //Agrega el array address_keyhash
+            agregarUint64BytestoVector(output, amount); //Agrega el amount en 8 bytes
+            output.push_back(1); //separador , 1= datos de assets
+            std::vector<std::uint8_t> const data_cbor = assets.getCborMultiassets();
+            agregarUint64BytestoVector(output, data_cbor.size()); // se agrega el largo de la cadena data_cbor MAXIMO 255 Bytes
+            output.insert(output.end(),data_cbor.begin(),data_cbor.end()); // se agrega data_cbor
+
+
 
             bodymapcountbit |= 0x0002;
         }
@@ -82,7 +116,7 @@ TransaccionBody &TransaccionBody::addTransactionsOutput(std::uint8_t const *cons
 }
 
 TransaccionBody &TransaccionBody::addTransactionsOutput(std::string &payment_address, std::uint64_t const amount){ // 1 : [* transaction_output] --> transaction_output = [ address , amount : value , ? datum_hash : $hash32 ; New]
-    ///  1(addr_keyhash_buffer_len) + 57(addr_keyhash_buffer) + 8(amount) = 65 bytes maximo de largo cada output
+    ///  1(address_keyhash_len) + 57(address_keyhash) + 8(amount) + 1 (separador) = 67 bytes maximo de largo cada output
 
     if(bech32_decode(payment_address.c_str(), addr_keyhash_buffer, &addr_keyhash_buffer_len)){
 
@@ -104,7 +138,15 @@ TransaccionBody &TransaccionBody::addTransactionsOutput(std::string &payment_add
 
     }
 
+    return *this;
+}
 
+TransaccionBody &TransaccionBody::addTransactionsOutput(std::string &payment_address, std::uint64_t const amount, Multiassets &assets){
+    ///  1(address_keyhash_len) + 57(address_keyhash) + 8(amount) + 1(separador) + 8(data_cbor_len) + n(data_cbor)= 66+n bytes maximo de largo cada output
+
+    if(bech32_decode(payment_address.c_str(), addr_keyhash_buffer, &addr_keyhash_buffer_len)){
+        addTransactionsOutput(addr_keyhash_buffer, addr_keyhash_buffer_len, amount, assets);
+    }
 
     return *this;
 }
@@ -241,9 +283,23 @@ std::vector<std::uint8_t> const &TransaccionBody::Build(){
                         cbor.addBytesArray(&ptrvec[0], addr_keyhash_buffer_len);        /// { 0: address_keyhash, }
 
                         cbor.addIndexMap(1);                                            /// { 0: address_keyhash, 1: }
+                        if(*(ptrvec + addr_keyhash_buffer_len + 8) == 1){ // se verifica el separador, para ver si hay datos extras, en este caso 1 = assests
+                        cbor.createArray(2);  //se crea un array para incluir los assets
+                        }
                         cbor.addUint(&ptrvec[addr_keyhash_buffer_len]);                 /// { 0: address_keyhash, 1: amount }
 
-                        ptrvec += addr_keyhash_buffer_len + 8;  //  addr_keyhash_buffer_len + 9 - 1 = addr_keyhash_buffer_len + 8 Se resta uno menos en puntero
+                        ptrvec += addr_keyhash_buffer_len + 8;  //  addr_keyhash_buffer_len + 9 - 1 = addr_keyhash_buffer_len + 8 Se resta uno menos en puntero, ahora se esta en el separador
+
+                        if(*ptrvec == 1){   // se verifica nuevamente el separador si contiene datos para agregar assets
+                           ptrvec+=1; //se salta el separador
+                           std::uint64_t const len_data = Array8bytestoUint64(ptrvec);
+                           cbor.bypassPtrUint8Cbor(ptrvec+8,len_data); // se pasan los datos en cbor
+                           ptrvec += len_data + 8;
+                        }else{
+                        ptrvec+=1; //se salta el separador
+                        }
+
+
 
 
 

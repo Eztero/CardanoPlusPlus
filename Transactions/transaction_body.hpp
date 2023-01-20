@@ -33,11 +33,12 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include <string>
 #include <cstdint>
 #include "certificates.hpp"
+#include "multiassets.hpp"
 #include "../Utils/cbor_lite.hpp"
 #include "../Utils/txutils.hpp"
 #include "../Hash/bech32.hpp"
 
-class TransaccionBody : public Certificates{
+class TransaccionBody : private Certificates, Multiassets {
 
 public:
 
@@ -46,8 +47,10 @@ public:
     TransaccionBody &addTransactionsInput(std::uint8_t const *const TxHash,std::uint64_t const TxIx);
     TransaccionBody &addTransactionsInput(std::string &TxHash, std::uint64_t const TxIx);
     TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount); //comprobar que el ada enviado sea mayor al minimo
+    TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount, Multiassets &assets);
     //TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount, Multiasset assets); //comprobar que el ada enviado sea mayor al minimo
     TransaccionBody &addTransactionsOutput(std::string &payment_address, std::uint64_t const amount);
+    TransaccionBody &addTransactionsOutput(std::string &payment_address, std::uint64_t const amount, Multiassets &assets);
     TransaccionBody &addFee(std::uint64_t const amount);
     TransaccionBody &addInvalidAfter(std::uint64_t const number);
     TransaccionBody &addInvalidBefore(std::uint64_t const number);
