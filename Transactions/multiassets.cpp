@@ -8,13 +8,13 @@ Multiassets::~Multiassets(){
 delete cbor;
 }
 
-Multiassets &Multiassets::addAsset(std::uint8_t const *const policyID, std::uint8_t const *const assetname, std::size_t const &assetname_len, std::uint64_t const &amount){
+Multiassets &Multiassets::addAsset(std::uint8_t const *const policyID, std::uint8_t const *const assetname, std::size_t const &assetname_len, std::uint64_t const amount){
     if( capsula.size() == 0 ){ //si no se han creado datos en la capsula se crea el primer dato
                 capsula.push_back(std::vector<std::uint8_t>(0));
                 capsula[0].push_back(0); //se agrega el primer elemento del array
                 capsula[0].reserve(30);
     }
-    std::uint8_t igual = 0;
+    std::uint8_t igual = 0;  // indica si el policyid es el mismo
     std::size_t posicion = 0; //parte de la posicion cero
     std::vector<std::uint8_t>::iterator it = capsula[0].begin();
 
@@ -56,6 +56,19 @@ Multiassets &Multiassets::addAsset(std::uint8_t const *const policyID, std::uint
 
         }
     }
+    return *this;
+}
+
+Multiassets &Multiassets::addAsset(std::uint8_t const *const policyID, std::string assetname, std::uint64_t const amount){
+
+    std::uint8_t assetname_len = assetname.size();
+    std::uint8_t asset_name[assetname_len] = {};
+    for(std::uint8_t a = 0; a < assetname_len; a ++){
+        asset_name[a] = static_cast<uint8_t>(assetname[a]);
+
+    }
+    addAsset(policyID, asset_name, assetname_len, amount);
+
     return *this;
 }
 

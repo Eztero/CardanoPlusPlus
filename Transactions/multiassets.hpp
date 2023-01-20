@@ -39,7 +39,8 @@ class Multiassets{
 public:
     explicit Multiassets();
     virtual ~Multiassets();
-    Multiassets &addAsset(std::uint8_t const *const policyID, std::uint8_t const *const assetname, std::size_t const &assetname_len, std::uint64_t const &amount);
+    Multiassets &addAsset(std::uint8_t const *const policyID, std::uint8_t const *const assetname, std::size_t const &assetname_len, std::uint64_t const amount);
+    Multiassets &addAsset(std::uint8_t const *const policyID, std::string assetname, std::uint64_t const amount);
     //std::uint8_t const &minUTXORequired();
     std::vector<std::uint8_t> const &getCborMultiassets();
 private:
