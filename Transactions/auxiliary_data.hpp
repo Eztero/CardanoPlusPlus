@@ -33,7 +33,7 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "../Utils/cbor_lite.hpp"
 #include "metadata.hpp"
 
-class AuxiliaryData : public Metadatas{
+class AuxiliaryData : private Metadatas{
 public:
     explicit AuxiliaryData();
     bool arethereAuxiliaryData() const;
