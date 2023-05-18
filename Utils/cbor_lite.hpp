@@ -39,6 +39,7 @@ public:
     virtual ~CborSerialize();
 
     CborSerialize &createArray(std::uint64_t const size_array);
+    CborSerialize &createArrayUndefined();  // stop whith addBreak()
     CborSerialize &createMap(std::uint64_t const size_array);
     CborSerialize &addIndexMap(std::uint64_t const index);
     CborSerialize &addIndexMap(std::string const &text);
@@ -46,10 +47,15 @@ public:
     CborSerialize &addIndexMap(std::uint8_t const * const arraynumbe8byteshex);
     CborSerialize &addBool(bool const b);
     CborSerialize &addNull();
+    CborSerialize &addBreak();
     CborSerialize &addUint(std::uint64_t const number);
     CborSerialize &addUint(std::uint8_t const * const arraynumbe8byteshex);
+    CborSerialize &addNint_withoutzero(std::uint64_t number); // toma un uint64_t y lo serializa como un numero negativo de 64bytes, se excluye el cero
+    CborSerialize &addNint_zero_equal_1(std::uint64_t number); //considera cero = -1
     CborSerialize &addTag(std::uint64_t const number); //funcion addTag incompleta,los primeros 23 numeros estan reservados a funciones especiales
     CborSerialize &addBytesArray(std::uint8_t const *const bytes, std::uint64_t const bytes_length);
+    CborSerialize &addBytesArray(std::vector<std::uint8_t> const &bytes);
+    CborSerialize &addUint2BytesArray(std::uint64_t const number);
     CborSerialize &addString(std::string const &text);
     CborSerialize &bypassVectorCbor(std::vector<std::uint8_t> const &vectorCbor);
     CborSerialize &bypassIteratorVectorCbor(std::vector<std::uint8_t>::iterator const &it_begin, std::vector<std::uint8_t>::iterator const &it_end);
@@ -65,6 +71,7 @@ private:
     };
     std::vector <std::uint8_t> *bytes_cbor_data;
     void AddNumber2Vector(std::uint64_t const &size_array, Pos_hex const &pos);
+    void AddNumber2Vector(std::uint64_t const &size_array, Pos_hex const &pos, std::vector<std::uint8_t> &Vector_);
 };
 
 #endif // CBOR_LITE_HPP
