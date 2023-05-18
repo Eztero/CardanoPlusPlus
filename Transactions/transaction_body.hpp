@@ -37,6 +37,7 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "../Utils/cbor_lite.hpp"
 #include "../Utils/txutils.hpp"
 #include "../Hash/bech32.hpp"
+#include "transactionoutput.hpp"
 
 class TransaccionBody : private Certificates, Multiassets {
 
@@ -46,11 +47,12 @@ public:
     virtual ~TransaccionBody();
     TransaccionBody &addTransactionsInput(std::uint8_t const *const TxHash,std::uint64_t const TxIx);
     TransaccionBody &addTransactionsInput(std::string &TxHash, std::uint64_t const TxIx);
-    TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount); //comprobar que el ada enviado sea mayor al minimo
-    TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount, Multiassets &assets);
+    TransactionsOutputs TransaccionOutput;
+    //TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount); //comprobar que el ada enviado sea mayor al minimo
+    //TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount, Multiassets &assets);
     //TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount, Multiasset assets); //comprobar que el ada enviado sea mayor al minimo
-    TransaccionBody &addTransactionsOutput(std::string &payment_address, std::uint64_t const amount);
-    TransaccionBody &addTransactionsOutput(std::string &payment_address, std::uint64_t const amount, Multiassets &assets);
+    //TransaccionBody &addTransactionsOutput(std::string &payment_address, std::uint64_t const amount);
+    //TransaccionBody &addTransactionsOutput(std::string &payment_address, std::uint64_t const amount, Multiassets &assets);
     TransaccionBody &addFee(std::uint64_t const amount);
     TransaccionBody &addInvalidAfter(std::uint64_t const number);
     TransaccionBody &addInvalidBefore(std::uint64_t const number);
@@ -61,11 +63,12 @@ public:
 
 private:
 
-    std::uint8_t *ptrvec;
+    std::uint8_t const *ptrvec;
     std::size_t buff_sizet;
+    std::uint32_t buff_uint32t;
     std::uint8_t addr_keyhash_buffer[BECH32_MAX_LENGTH];
     std::uint16_t addr_keyhash_buffer_len;
-    std::uint16_t bodymapcountbit; // pone un bits a 1 si existe la variable, en la posisicion correspondiente al map de el transaccion body
+    std::uint32_t bodymapcountbit; // pone un bits a 1 si existe la variable, en la posisicion correspondiente al map de el transaccion body
     std::uint16_t output_count;      //maximo 65534
     std::uint16_t input_count;       //maximo 65534
     std::uint16_t withdrawals_count; //maximo 65534
