@@ -29,6 +29,8 @@ SOFTWARE.
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <memory>
+#include <stdexcept>
 
 void agregarUint64BytestoVector(std::vector <std::uint8_t> & bytesvector, std::uint64_t const & numero);
 
@@ -37,7 +39,7 @@ std::uint64_t const Array8bytestoUint64(std::uint8_t  const * const array8bytes)
 bool const existen_coincidencias(std::uint8_t const * data1, std::uint8_t const * data2, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto );
 
 bool const existen_coincidencias_output(std::uint8_t const * data, std::uint8_t const * output, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto );
-
+bool is_only_hex(std::string const & string_hex);
 std::uint8_t const *const hexchararray2uint8array(std::string const & string_hex, std::size_t *hexchararray2uint8array_len); // free memory with delete[]
 
 #endif

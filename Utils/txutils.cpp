@@ -15,7 +15,7 @@ void agregarUint64BytestoVector(std::vector <std::uint8_t> & bytesvector, std::u
 
 std::uint64_t const Array8bytestoUint64(std::uint8_t const * const array8bytes){
 
-return (( static_cast<std::uint64_t>(*array8bytes) << 56) | (static_cast<std::uint64_t>(*(array8bytes+1)) << 48) | (static_cast<std::uint64_t>(*(array8bytes+2)) << 40) | (static_cast<std::uint64_t>(*(array8bytes+3)) << 32) | (static_cast<std::uint64_t>(*(array8bytes+4)) << 24) | (static_cast<std::uint64_t>(*(array8bytes+5)) << 16) | (static_cast<std::uint64_t>(*(array8bytes+6)) << 8) | (static_cast<std::uint64_t>(*(array8bytes+7))) );
+    return (( static_cast<std::uint64_t>(*array8bytes) << 56) | (static_cast<std::uint64_t>(*(array8bytes+1)) << 48) | (static_cast<std::uint64_t>(*(array8bytes+2)) << 40) | (static_cast<std::uint64_t>(*(array8bytes+3)) << 32) | (static_cast<std::uint64_t>(*(array8bytes+4)) << 24) | (static_cast<std::uint64_t>(*(array8bytes+5)) << 16) | (static_cast<std::uint64_t>(*(array8bytes+6)) << 8) | (static_cast<std::uint64_t>(*(array8bytes+7))) );
 
 }
 
@@ -58,16 +58,57 @@ bool const existen_coincidencias_output(std::uint8_t const * data, std::uint8_t 
     return false;
 }
 
+bool is_only_hex(std::string const & string_hex){
+    for(char c : string_hex){
+        switch(c){
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+        case 'a':
+        case 'b':
+        case 'c':
+        case 'd':
+        case 'e':
+        case 'f':
+        case 'A':
+        case 'B':
+        case 'C':
+        case 'D':
+        case 'E':
+        case 'F':{};break;
+        default:{return false;};break;
+        }
+    }
+    return true;
+}
+
 std::uint8_t const *const hexchararray2uint8array(std::string const & string_hex, std::size_t * const hexchararray2uint8array_len){
     //se crea una memoria dinamica para un nuevo array char_hexa[]
-    std::size_t array_hex_len = static_cast<std::size_t>( string_hex.size() / 2 );
-    if(hexchararray2uint8array_len != nullptr){
-        *hexchararray2uint8array_len = array_hex_len;
-    }
-    std::uint8_t *array_hex = new std::uint8_t[array_hex_len];
-    for(std::size_t ha = 0; ha < array_hex_len; ha++){
-        array_hex[ha] = static_cast<std::uint8_t>(std::stoul(string_hex.substr(ha*2,2),nullptr,16));
-    };
 
-    return array_hex;
+    if(is_only_hex(string_hex)){
+
+        std::size_t array_hex_len = static_cast<std::size_t>( string_hex.size() / 2 );
+        if(hexchararray2uint8array_len != nullptr){
+            *hexchararray2uint8array_len = array_hex_len;
+        }
+        std::uint8_t *array_hex = new std::uint8_t[array_hex_len];
+        //std::unique_ptr<std::uint8_t[]> array_hex(new std::uint8_t[array_hex_len]);
+        //
+        for(std::size_t ha = 0; ha < array_hex_len; ha++){
+            array_hex[ha] = static_cast<std::uint8_t>(std::stoul(string_hex.substr(ha*2,2),nullptr,16));
+        }
+
+
+        return array_hex;
+
+    }
+
+    return nullptr;
 };
