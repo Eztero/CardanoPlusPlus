@@ -35,7 +35,7 @@ https://www.rfc-editor.org/rfc/rfc8949
 class CborSerialize
 {
 public:
-    explicit CborSerialize(std::vector <std::uint8_t> * const cbor_data_out);
+    explicit CborSerialize();
     virtual ~CborSerialize();
 
     CborSerialize &createArray(std::uint64_t const size_array);
@@ -55,12 +55,14 @@ public:
     CborSerialize &addTag(std::uint64_t const number); //funcion addTag incompleta,los primeros 23 numeros estan reservados a funciones especiales
     CborSerialize &addBytesArray(std::uint8_t const *const bytes, std::uint64_t const bytes_length);
     CborSerialize &addBytesArray(std::vector<std::uint8_t> const &bytes);
+    CborSerialize &addBytesArray();
     CborSerialize &addUint2BytesArray(std::uint64_t const number);
     CborSerialize &addString(std::string const &text);
     CborSerialize &bypassVectorCbor(std::vector<std::uint8_t> const &vectorCbor);
     CborSerialize &bypassIteratorVectorCbor(std::vector<std::uint8_t>::iterator const &it_begin, std::vector<std::uint8_t>::iterator const &it_end);
-    CborSerialize &bypassPtrUint8Cbor( std::uint8_t const * const ptrArrayCbor, std::uint64_t ptrArrayCbor_len );
-    void ClearCbor();
+    CborSerialize &bypassPtrUint8Cbor( std::uint8_t const * const ptrArrayCbor, std::uint64_t const ptrArrayCbor_len );
+    void clearCbor();
+    std::vector<std::uint8_t> const & getCbor() const;
 
 private:
     enum class Pos_hex{
@@ -69,7 +71,7 @@ private:
         hff4,
         hff8,
     };
-    std::vector <std::uint8_t> *bytes_cbor_data;
+    std::vector<std::uint8_t> bytes_cbor_data{};
     void AddNumber2Vector(std::uint64_t const &size_array, Pos_hex const &pos);
     void AddNumber2Vector(std::uint64_t const &size_array, Pos_hex const &pos, std::vector<std::uint8_t> &Vector_);
 };
