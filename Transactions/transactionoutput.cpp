@@ -15,21 +15,23 @@
 /// 94+n bytes maximo de largo cada output
 
 TransactionsOutputs::TransactionsOutputs(){
-    cbor.reset(new CborSerialize( &cbor_array ));
+    //cbor.reset(new CborSerialize( &cbor_array ));
     outputmap_countbit = 0;
     bodymap_countbit = 0; ///  0x0002 , Tiene que iniciar con cero
     tx_output_count = 0;      // maximo 65534
     buff_sizet = 0;
+    addr_keyhash_buffer_len = 0;
+    pos_registro_elementos = 0;
 }
 
 // 0: address
 // 1: value / [value , multiasset]
-TransactionsOutputs &TransactionsOutputs::addOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount){
+TransactionsOutputs &TransactionsOutputs::addOutput(std::uint8_t const * const address_keyhash, std::size_t const & address_keyhash_len, std::uint64_t const & amount){
 
     if(outputmap_countbit & 0x02){ // si tiene un asset previo, se borran los datos
-            getCborMultiassets();
+            std::vector<std::uint8_t> const & cbor_array = getCborMultiassets();
             tx_output.push_back(0x01); //separador
-            agregarUint64BytestoVector(tx_output, cbor_array.size()); // se agrega el largo de la cadena data_cbor
+            addUint64toVector(tx_output, cbor_array.size()); // se agrega el largo de la cadena data_cbor
             tx_output.insert(tx_output.end(),cbor_array.begin(),cbor_array.end()); // se agrega data_cbor
             outputmap_countbit &= 0xfb;  // se pone a cero el outputmap_countbit para asset, en caso de un error evita que se vuelva a copiar
             tx_output[pos_registro_elementos] += 1;  // se agrega el conteo a asset
@@ -60,7 +62,7 @@ TransactionsOutputs &TransactionsOutputs::addOutput(std::uint8_t const *const ad
             tx_output.push_back(1); // agrega el indicador que define la existencia de assets en este output, 1 = no hay
             tx_output.push_back(static_cast<std::uint8_t>(address_keyhash_len)); //Agrega el address_keyhash_len en un bytes antes del address_keyhash
             tx_output.insert(tx_output.end(), address_keyhash, address_keyhash + address_keyhash_len); //Agrega el array address_keyhash
-            agregarUint64BytestoVector(tx_output, amount); //Agrega el amount en 8 bytes
+            addUint64toVector(tx_output, amount); //Agrega el amount en 8 bytes
             //tx_output.push_back(0); // cierra esta transaccion
             bodymap_countbit |= 0x0002;
             outputmap_countbit |= 0x01;
@@ -72,7 +74,7 @@ TransactionsOutputs &TransactionsOutputs::addOutput(std::uint8_t const *const ad
     return *this;
 }
 
-TransactionsOutputs &TransactionsOutputs::addOutput(std::string payment_address, std::uint64_t const amount){
+TransactionsOutputs &TransactionsOutputs::addOutput(std::string const payment_address, std::uint64_t const amount){
 
     if(bech32_decode(payment_address.c_str(), addr_keyhash_buffer, &addr_keyhash_buffer_len)){
         addOutput(addr_keyhash_buffer, addr_keyhash_buffer_len, amount);
@@ -81,7 +83,7 @@ TransactionsOutputs &TransactionsOutputs::addOutput(std::string payment_address,
     return *this;
 }
 
-TransactionsOutputs &TransactionsOutputs::addReturnColateral(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount){
+TransactionsOutputs &TransactionsOutputs::addColateralReturn(std::uint8_t const * const address_keyhash, std::size_t const & address_keyhash_len, std::uint64_t const & amount){
 if((outputmap_countbit & 0x10) == 0){   // si no existe un returncolateral
 
 
@@ -103,7 +105,7 @@ if((outputmap_countbit & 0x10) == 0){   // si no existe un returncolateral
             tx_output.push_back(5); // separador, indica que es el inicio de esta transaccion
             tx_output.push_back(static_cast<std::uint8_t>(address_keyhash_len)); //Agrega el address_keyhash_len en un bytes antes del address_keyhash
             tx_output.insert(tx_output.end(), address_keyhash, address_keyhash + address_keyhash_len); //Agrega el array address_keyhash
-            agregarUint64BytestoVector(tx_output, amount); //Agrega el amount en 8 bytes
+            addUint64toVector(tx_output, amount); //Agrega el amount en 8 bytes
             //tx_output.push_back(0); // cierra esta transaccion
             bodymap_countbit |= 0x10000;  // indica a txbody que existe un return colateral
             outputmap_countbit |= 0x10;
@@ -112,6 +114,15 @@ if((outputmap_countbit & 0x10) == 0){   // si no existe un returncolateral
 
     }
 
+
+    return *this;
+}
+
+TransactionsOutputs &TransactionsOutputs::addColateralReturn(std::string const payment_address, std::uint64_t const amount){
+
+    if(bech32_decode(payment_address.c_str(), addr_keyhash_buffer, &addr_keyhash_buffer_len)){
+        addColateralReturn(addr_keyhash_buffer, addr_keyhash_buffer_len, amount);
+    }
 
     return *this;
 }
@@ -155,9 +166,10 @@ TransactionsOutputs &TransactionsOutputs::addAsset(std::uint8_t const *const pol
     if(assetname_len < 32){   // el largo del nombre no debe exceder los 32 bytes
         if(igual == 28){      // Si se encontro el mismo PolicyID , solo se agregan el assetname
 
-            cbor->ClearCbor();
-            cbor->addBytesArray(assetname, assetname_len);
-            cbor->addUint(amount);
+            cbor.clearCbor();
+            cbor.addBytesArray(assetname, assetname_len);
+            cbor.addUint(amount);
+            std::vector<std::uint8_t> const & cbor_array = cbor.getCbor();
             capsula[posicion][0] += 1;  ///aumenta la cantidad de elementos en el mapa ///PONER LIMITE A 254 elementos
             capsula[posicion].insert( capsula[posicion].end(), cbor_array.begin(), cbor_array.end() ); //inserta los datos en cbor
 
@@ -168,9 +180,10 @@ TransactionsOutputs &TransactionsOutputs::addAsset(std::uint8_t const *const pol
             posicion += 1; // se pasa a la siguiente posicion (columna)
             capsula[posicion].push_back(0); //se agrega el primer elemento del array en esa posicion
 
-            cbor->ClearCbor();
-            cbor->addBytesArray(assetname, assetname_len);
-            cbor->addUint(amount);
+            cbor.clearCbor();
+            cbor.addBytesArray(assetname, assetname_len);
+            cbor.addUint(amount);
+            std::vector<std::uint8_t> const & cbor_array = cbor.getCbor();
             capsula[posicion][0] += 1;  //aumenta la cantidad de elementos en el mapa
             capsula[posicion].insert( capsula[posicion].end(), cbor_array.begin(), cbor_array.end() ); //inserta los datos en cbor
 
@@ -196,33 +209,73 @@ TransactionsOutputs &TransactionsOutputs::addAsset(std::uint8_t const *const pol
     return *this;
 }
 
-// ? datum = hash32
-TransactionsOutputs &TransactionsOutputs::addDatumHash(std::uint8_t const *const datum_hash, std::size_t &datum_hash_len){
+// ? datum = h'hash32'
+TransactionsOutputs &TransactionsOutputs::addDatumHash(std::uint8_t const *const datum_hash, std::size_t const &datum_hash_len){
  if((outputmap_countbit & 0x05) == 1){   // si existe un output y no existe un datumhash
- cbor->ClearCbor();
- cbor->addBytesArray(datum_hash, datum_hash_len);
+ cbor.clearCbor();
+ cbor.addBytesArray(datum_hash, datum_hash_len);
+ std::vector<std::uint8_t> const & cbor_array = cbor.getCbor();
 
  tx_output.push_back(2); //separador
- agregarUint64BytestoVector(tx_output, cbor_array.size());
- tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end());
- outputmap_countbit |= 0x04;
- tx_output[pos_registro_elementos] +=1;
+ addUint64toVector(tx_output, cbor_array.size());               // cantidad de bytes del datumhash
+ tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end()); // datumhash
+ outputmap_countbit |= 0x04;             // indica que existe un datum  o un datumhash ligado a una direccion
+ tx_output[pos_registro_elementos] +=1; // se aumenta en 1 el contador de elementos en tx_output
+ }
+ return *this;
+}
+
+// ? datum = h'hash32'
+TransactionsOutputs &TransactionsOutputs::addDatumHashcreatedfromJson(std::string &json_datum){
+std::unique_ptr<PlutusJsonSchema> Json_p(new PlutusJsonSchema());
+Json_p->addSchemaJson(json_datum);
+
+ if((outputmap_countbit & 0x05) == 1){   // si existe un output y no existe un datumhash
+ cbor.clearCbor();
+ cbor.addBytesArray(Json_p->getHash32CborSchemaJson(), 32);
+ std::vector<std::uint8_t> const & cbor_array = cbor.getCbor();
+
+ tx_output.push_back(2); //separador
+ addUint64toVector(tx_output, cbor_array.size());               // cantidad de bytes del datumhash
+ tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end()); // datumhash
+ outputmap_countbit |= 0x04;            // indica que existe un datum  o un datumhash ligado a una direccion
+ tx_output[pos_registro_elementos] +=1; // se aumenta en 1 el contador de elementos en tx_output
  }
  return *this;
 }
 
 // ? datum = 24(h'datum_value cbor')]
-TransactionsOutputs &TransactionsOutputs::addDatumValue(std::uint64_t const datum_value){
+TransactionsOutputs &TransactionsOutputs::addDatumIntValue(std::uint64_t const integer_datum){
  if((outputmap_countbit & 0x05) == 1 ){  // si existe un output y no existe un datumvalue
- cbor->ClearCbor();
- cbor->addTag(24);
- cbor->addUint2BytesArray(datum_value);
+ cbor.clearCbor();
+ cbor.addTag(24);
+ cbor.addUint2BytesArray(integer_datum);
+ std::vector<std::uint8_t> const & cbor_array = cbor.getCbor();
 
  tx_output.push_back(3); //separador
- agregarUint64BytestoVector(tx_output, cbor_array.size());
- tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end());
- outputmap_countbit |= 0x04;
- tx_output[pos_registro_elementos] +=1;
+ addUint64toVector(tx_output, cbor_array.size()); // cantidad de bytes del datum
+ tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end()); // datum
+ outputmap_countbit |= 0x04;             // indica que existe un datum  o un datumhash ligado a una direccion
+ tx_output[pos_registro_elementos] +=1; // se aumenta en 1 el contador de elementos en tx_output
+ }
+ return *this;
+}
+
+// ? datum = 24(h'datum_value cbor')]
+TransactionsOutputs &TransactionsOutputs::addDatum(std::string &json_datum){
+std::unique_ptr<PlutusJsonSchema> Json_p(new PlutusJsonSchema());
+Json_p->addSchemaJson(json_datum);
+ if((outputmap_countbit & 0x05) == 1 ){  // si existe un output y no existe un datumvalue
+ cbor.clearCbor();
+ cbor.addTag(24);
+ cbor.addBytesArray(Json_p->getCborSchemaJson());
+ std::vector<std::uint8_t> const & cbor_array = cbor.getCbor();
+
+ tx_output.push_back(3); //separador
+ addUint64toVector(tx_output, cbor_array.size()); // cantidad de bytes del datum
+ tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end());  // datum
+ outputmap_countbit |= 0x04;            // indica que existe un datum  o un datumhash ligado a una direccion
+ tx_output[pos_registro_elementos] +=1; // se aumenta en 1 el contador de elementos en tx_output
  }
  return *this;
 }
@@ -231,17 +284,19 @@ TransactionsOutputs &TransactionsOutputs::addDatumValue(std::uint64_t const datu
 TransactionsOutputs &TransactionsOutputs::addReferenceScript(TransactionsOutputs::ScriptType script_type, std::uint8_t const *const script_, std::size_t &script_len ){
 if((outputmap_countbit & 0x09) == 1 ){ // si existe un output y no existe un scriptref
 std::vector<std::uint8_t> buff_vector;
-cbor->ClearCbor();
-cbor->createArray(2);
-cbor->addUint(static_cast<std::uint64_t>(script_type));
-cbor->bypassPtrUint8Cbor(script_, script_len);
+cbor.clearCbor();
+cbor.createArray(2);
+cbor.addUint(static_cast<std::uint64_t>(script_type));
+cbor.bypassPtrUint8Cbor(script_, script_len);
+std::vector<std::uint8_t> const & cbor_array = cbor.getCbor(); // como es un alias a la valiable privada de cbor, cbor_array actualizara su valor si cbor cambia mas adelante
+
 buff_vector.insert(buff_vector.begin(),cbor_array.begin(),cbor_array.end());
-cbor->ClearCbor();
-cbor->addTag(24);
-cbor->addBytesArray(buff_vector.data(),buff_vector.size());
+cbor.clearCbor();
+cbor.addTag(24);
+cbor.addBytesArray(buff_vector.data(),buff_vector.size());
 
 tx_output.push_back(4); //separador
-agregarUint64BytestoVector(tx_output, cbor_array.size());
+addUint64toVector(tx_output, cbor_array.size());
 tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end());
 outputmap_countbit |= 0x08;
 tx_output[pos_registro_elementos] +=1;
@@ -256,30 +311,31 @@ std::uint32_t const &TransactionsOutputs::getBodyMapcountbit() const{
 }
 
 
-void TransactionsOutputs::getCborMultiassets(){
-    cbor->ClearCbor();
+std::vector<std::uint8_t> const & TransactionsOutputs::getCborMultiassets(){
+    cbor.clearCbor();
     int policyID_count = static_cast<std::uint64_t>(capsula[0][0]);
     if(policyID_count != 0){ // si no esta vacio se procede con el resto
     std::uint8_t *ptr_policyID = capsula[0].data();
     ptr_policyID++; //salta la primera posicion
-    cbor->createMap(capsula[0][0]);
+    cbor.createMap(capsula[0][0]);
 
     policyID_count += 1; //aumento en uno, para que concuerde la posicion de los datos en las otras columnas
     for(int a = 1; a < policyID_count;a++){
-     cbor->addBytesArray(ptr_policyID,28);
-     cbor->createMap(static_cast<std::uint64_t>(capsula[a][0]));
-     cbor->bypassIteratorVectorCbor(capsula[a].begin()+1, capsula[a].end());
+     cbor.addBytesArray(ptr_policyID,28);
+     cbor.createMap(static_cast<std::uint64_t>(capsula[a][0]));
+     cbor.bypassIteratorVectorCbor(capsula[a].begin()+1, capsula[a].end());
      ptr_policyID += 28;
     }
     }
+    return cbor.getCbor();
 }
 
 
-std::vector<std::uint8_t> const &TransactionsOutputs::getTransactionsOutputs() {
+std::vector<std::uint8_t> const & TransactionsOutputs::getTransactionsOutputs() {
     if(outputmap_countbit & 0x02){    // en caso de que no se cree una nueva salida (addOutput), se escriben los asset almacenados en memoria a la ultima salida
-            getCborMultiassets();
+            std::vector<std::uint8_t> const & cbor_array = getCborMultiassets();
             tx_output.push_back(0x01); //separador
-            agregarUint64BytestoVector(tx_output, cbor_array.size()); // se agrega el largo de la cadena data_cbor
+            addUint64toVector(tx_output, cbor_array.size()); // se agrega el largo de la cadena data_cbor
             tx_output.insert(tx_output.end(),cbor_array.begin(),cbor_array.end()); // se agrega data_cbor
             outputmap_countbit &= 0xfb;  // se pone a cero el outputmap_countbit para asset, en caso de un error evita que se vuelva a copiar
             tx_output[pos_registro_elementos] += 1;  // se agrega el conteo a assets

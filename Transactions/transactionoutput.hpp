@@ -36,6 +36,8 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "../Utils/cbor_lite.hpp"
 #include "../Utils/txutils.hpp"
 #include "../Hash/bech32.hpp"
+#include "../Utils/plutusjsonschema.hpp"
+
 
 class TransactionsOutputs {
 public:
@@ -46,15 +48,19 @@ public:
     Plutus_Script_V1,
     Plutus_Script_V2
     };
-    TransactionsOutputs &addOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount);
-    TransactionsOutputs &addReturnColateral(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount);
-    //TransactionsOutputs &addOutput(std::string &payment_address, std::uint64_t const amount);
-    TransactionsOutputs &addOutput(std::string payment_address, std::uint64_t const amount);
+    TransactionsOutputs &addOutput(std::uint8_t const * const address_keyhash, std::size_t const & address_keyhash_len, std::uint64_t const & amount);
+    TransactionsOutputs &addColateralReturn(std::uint8_t const * const address_keyhash, std::size_t const & address_keyhash_len, std::uint64_t const & amount);
+
+    TransactionsOutputs &addColateralReturn(std::string const payment_address, std::uint64_t const amount);
+    TransactionsOutputs &addOutput(std::string const payment_address, std::uint64_t const amount);
+
     TransactionsOutputs &addAsset(std::uint8_t const *const policyID, std::uint8_t const *const assetname, std::size_t const &assetname_len, std::uint64_t const amount);
     TransactionsOutputs &addAsset(std::uint8_t const *const policyID, std::string assetname, std::uint64_t const amount);
-    TransactionsOutputs &addDatumHash(std::uint8_t const *const datum_hash, std::size_t &datum_hash_len);
-    TransactionsOutputs &addReferenceScript(TransactionsOutputs::ScriptType script_type, std::uint8_t const *const script_, std::size_t &script_len );
-    TransactionsOutputs &addDatumValue(std::uint64_t const datum_value);
+    TransactionsOutputs &addDatumHash(std::uint8_t const *const datum_hash, std::size_t const &datum_hash_len);
+    TransactionsOutputs &addDatumHashcreatedfromJson(std::string &json_datum);
+    TransactionsOutputs &addReferenceScript(TransactionsOutputs::ScriptType script_type, std::uint8_t const *const script_, std::size_t &script_len ); //native, plutus script
+    TransactionsOutputs &addDatumIntValue(std::uint64_t const integer_datum);
+    TransactionsOutputs &addDatum(std::string &json_datum);
     std::uint32_t const &getBodyMapcountbit() const;
     std::vector<std::uint8_t> const &getTransactionsOutputs();
     std::uint16_t const &getAmountTransactionsOutputs() const;
@@ -63,15 +69,18 @@ private:
     std::uint32_t pos_registro_elementos; // maximo 4294967295 , indica en que posicion del vector se deben registrar la cantidad de elementos
     std::uint32_t bodymap_countbit; ///  0x0002 , Tiene que iniciar con cero
     std::uint16_t tx_output_count;      // maximo 65535
-    std::uint8_t addr_keyhash_buffer[BECH32_MAX_LENGTH];
+    std::uint8_t addr_keyhash_buffer[BECH32_MAX_LENGTH]{};
     std::uint16_t addr_keyhash_buffer_len;
     std::size_t buff_sizet;
     std::vector<std::uint8_t> tx_output;
     std::vector<std::uint8_t> datum_hash;
+    // cbor_datum_array : Almacena los datum en un array, para luego usarlos en transaction witness (index 4)
+    // esquema [cantidad de datum  | largo valor1 | valor1 | largo valor2 | valor2 | largo valor3 | valor3 ]
+    //std::vector<std::uint8_t> cbor_datum_array; /// VER SI ACTIVAR ESTA FUNCION O REALIZARLA DESDE EL BODY
     std::vector< std::vector<std::uint8_t> > capsula;
-    std::vector<std::uint8_t> cbor_array;
-    std::unique_ptr<CborSerialize> cbor;
-    void getCborMultiassets();
+    //std::vector<std::uint8_t> cbor_array;
+    CborSerialize cbor;
+    std::vector<std::uint8_t> const & getCborMultiassets();
 
 };
 
