@@ -140,7 +140,7 @@ TransactionsInputs &TransactionsInputs::addDatum(std::string & json_datum){
 
 
 // redeemer = [ tag: redeemer_tag, index: uint, data: plutus_data, ex_units: ex_units ]
-TransactionsInputs &TransactionsInputs::addRedeemer( TransactionsInputs::RTag const r_tag, std::uint64_t const r_index , std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
+TransactionsInputs &TransactionsInputs::addRedeemer( TransactionsInputs::RTag const r_tag, std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
 
 
     std::unique_ptr<CborSerialize> rcbor(new CborSerialize);

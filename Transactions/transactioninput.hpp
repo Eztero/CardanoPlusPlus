@@ -62,7 +62,7 @@ public:
     TransactionsInputs & addCollateralInput( std::string const & TxHash, std::uint64_t const TxIx );
     TransactionsInputs & setGlobalReferencesStriptsType( TransactionsInputs::ScriptType const script_type); // necesario para el calculo del scriptdatahash , se debe especificar por obligacion
     TransactionsInputs & addDatum( std::string & json_datum );  // Se usa para el witness y el scriptdatahash
-    TransactionsInputs & addRedeemer( TransactionsInputs::RTag const r_tag, std::uint64_t r_index,  std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits );  // Se usa para el witness y el scriptdatahash
+    TransactionsInputs & addRedeemer( TransactionsInputs::RTag const r_tag, std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits );  // Se usa para el witness y el scriptdatahash
     TransactionsInputs & addScript( TransactionsInputs::ScriptType const script_type, std::uint8_t const * const & script, std::size_t & script_len ); // Se usa para el witness y el scriptdatahash (solo el script_type)
     TransactionsInputs & addScript( TransactionsInputs::ScriptType const script_type, std::string const & script );
     std::uint32_t const & getBodyMapcountbit() const;
