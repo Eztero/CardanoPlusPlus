@@ -29,6 +29,7 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #ifndef TRANSACTION_BODY_HPP
 #define TRANSACTION_BODY_HPP
 
+#include <sodium.h>
 #include <vector>
 #include <string>
 #include <cstdint>
@@ -38,59 +39,58 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "../Utils/txutils.hpp"
 #include "../Hash/bech32.hpp"
 #include "transactionoutput.hpp"
+#include "transactioninput.hpp"
 
-class TransaccionBody : private Certificates, Multiassets {
+class TransactionBody : private Certificates, Multiassets {
 
 public:
 
-    explicit TransaccionBody();
-    virtual ~TransaccionBody();
-    TransaccionBody &addTransactionsInput(std::uint8_t const *const TxHash,std::uint64_t const TxIx);
-    TransaccionBody &addTransactionsInput(std::string &TxHash, std::uint64_t const TxIx);
-    TransactionsOutputs TransaccionOutput;
-    //TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount); //comprobar que el ada enviado sea mayor al minimo
-    //TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount, Multiassets &assets);
-    //TransaccionBody &addTransactionsOutput(std::uint8_t const *const address_keyhash, std::size_t address_keyhash_len, std::uint64_t const amount, Multiasset assets); //comprobar que el ada enviado sea mayor al minimo
-    //TransaccionBody &addTransactionsOutput(std::string &payment_address, std::uint64_t const amount);
-    //TransaccionBody &addTransactionsOutput(std::string &payment_address, std::uint64_t const amount, Multiassets &assets);
-    TransaccionBody &addFee(std::uint64_t const amount);
-    TransaccionBody &addInvalidAfter(std::uint64_t const number);
-    TransaccionBody &addInvalidBefore(std::uint64_t const number);
-    TransaccionBody &addAuxiliaryDataHash(std::uint8_t const *const hash_32bytes);
-    TransaccionBody &addWithdrawals(std::uint8_t const *const stake_address_keyhash, std::uint64_t const amount);
-    TransaccionBody &addWithdrawals(std::string &stake_address, std::uint64_t const amount);
-    std::vector<std::uint8_t> const &Build();
+    explicit TransactionBody();
+    virtual ~TransactionBody();
+    TransactionsOutputs TransactionOutput;
+    TransactionsInputs TransactionInput;
+    TransactionBody & addFee(std::uint64_t const amount);
+    TransactionBody & addInvalidAfter(std::uint64_t const number);
+    TransactionBody & addInvalidBefore(std::uint64_t const number);
+    TransactionBody & addAuxiliaryDataHash(std::uint8_t const *const hash_32bytes);
+    TransactionBody & addWithdrawals(std::uint8_t const *const stake_address_keyhash, std::uint64_t const amount);
+    TransactionBody & addWithdrawals(std::string &stake_address, std::uint64_t const amount);
+    TransactionBody & addTotalCollateral(std::uint64_t const amount);
+    std::vector<std::uint8_t> const & Build();
+    std::vector<std::uint8_t> const & getcborDatums_afterBuild() const;
+    std::vector<std::uint8_t> const & getcborRedeemers_afterBuild() const;
+    std::uint16_t const & getWitnessMapcountbit() const;
 
 private:
 
     std::uint8_t const *ptrvec;
     std::size_t buff_sizet;
     std::uint32_t buff_uint32t;
-    std::uint8_t addr_keyhash_buffer[BECH32_MAX_LENGTH];
+    std::uint8_t addr_keyhash_buffer[BECH32_MAX_LENGTH]{};
     std::uint16_t addr_keyhash_buffer_len;
     std::uint32_t bodymapcountbit; // pone un bits a 1 si existe la variable, en la posisicion correspondiente al map de el transaccion body
-    std::uint16_t output_count;      //maximo 65534
-    std::uint16_t input_count;       //maximo 65534
+    std::uint16_t witnessmapcountbit; // pone un bits a 1 si existe la variable, en la posisicion correspondiente al map de el transaccion witness
     std::uint16_t withdrawals_count; //maximo 65534
     std::uint64_t fee;
     std::uint64_t ttl;  // time to alive
     std::uint64_t vis;  // validity interval start
-    std::vector <std::uint8_t> cborTransactionBody; //Guarda el transaction body en cbor
-    std::vector <std::uint8_t>input;
-    std::vector <std::uint8_t>output;
-    std::vector <std::uint8_t>output_datum_hash;
-    std::vector <std::uint8_t>withdrawals;
-    std::vector <std::uint8_t>update;
-    std::vector <std::uint8_t>auxiliary_data_hash;
-    std::vector <std::uint8_t>validity_interval_start;
-    std::vector <std::uint8_t>mint;
-    std::vector <std::uint8_t>script_data_hash;
-    std::vector <std::uint8_t>collateral_inputs;
-    std::vector <std::uint8_t>required_signers;
-    std::vector <std::uint8_t>network_id;
-    std::vector <std::uint8_t>collateral_return;
-    std::vector <std::uint8_t>total_collatera;
-    std::vector <std::uint8_t>reference_inputs;
+    std::uint64_t totalcollateral;  // validity interval start
+    CborSerialize cbor;
+    std::vector <std::uint8_t>cbor_redeemers{};
+    std::vector <std::uint8_t>cbor_datums{};
+    std::vector <std::uint8_t>withdrawals{};
+    std::vector <std::uint8_t>update{};
+    std::vector <std::uint8_t>auxiliary_data_hash{};
+    std::vector <std::uint8_t>validity_interval_start{};
+    std::vector <std::uint8_t>mint{};
+    std::vector <std::uint8_t>collateral_inputs{};
+    std::vector <std::uint8_t>required_signers{};
+    std::vector <std::uint8_t>network_id{};
+    std::vector <std::uint8_t>collateral_return{};
+    std::vector <std::uint8_t>total_collatera{};
+    std::vector <std::uint8_t>reference_inputs{};
+    std::uint8_t V1language_views[444];
+    std::uint8_t V2language_views[467];
 };
 
 
