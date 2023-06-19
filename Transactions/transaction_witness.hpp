@@ -37,17 +37,28 @@ class TransactionWitness {
 
 public:
     explicit TransactionWitness();
-    TransactionWitness &addVkeyWitness(std::uint8_t const *const public_key, std::uint8_t const * const signature_transactionbody );
-    std::vector<std::uint8_t> const &Build();
+    virtual ~TransactionWitness();
+    TransactionWitness & addVkeyWitness( std::uint8_t const * const public_key, std::uint8_t const * const signature_transactionbody );
+    TransactionWitness & addNativeScript( std::uint8_t const * const cborNativeScript, std::size_t const cborNativeScript_len );
+    TransactionWitness & addNativeScript( std::vector<std::uint8_t> const & cborNativeScript );
+    TransactionWitness & addRedeemer( std::vector <std::uint8_t> const & cborRedeemers);
+    TransactionWitness & addDatum(std::vector <std::uint8_t> const & cborDatums);
+    TransactionWitness & addPlutusV1Script(std::vector <std::uint8_t> const & cborPlutusV1Scripts);
+    TransactionWitness & addPlutusV2Script(std::vector <std::uint8_t> const & cborPlutusV2Scripts);
+    std::vector<std::uint8_t> const & Build();
 
 private:
     std::uint8_t * ptrvec;
     std::size_t buff_sizet;
     std::uint8_t witnessmapcountbit;
     std::uint16_t vkeywitness_count; //maximo 65534
-    std::vector <std::uint8_t> cbor_TransactionWitness;
-    std::vector <std::uint8_t> vkeywitness;
-    std::vector <std::uint8_t> native_script;
+    CborSerialize cbor;
+    std::vector <std::uint8_t> vkeywitness{};
+    std::vector <std::uint8_t> cbor_datums{};
+    std::vector <std::uint8_t> cbor_redeemers{};
+    std::vector <std::uint8_t> cbor_plutusv1scripts{};
+    std::vector <std::uint8_t> cbor_plutusv2scripts{};
+    std::vector <std::uint8_t> cbor_native_script{};
 
 };
 
