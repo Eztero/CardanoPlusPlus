@@ -32,9 +32,16 @@ SOFTWARE.
 #include <memory>
 #include <stdexcept>
 
-void agregarUint64BytestoVector(std::vector <std::uint8_t> & bytesvector, std::uint64_t const & numero);
+void addUint64toVector(std::vector <std::uint8_t> & bytesvector, std::uint64_t const & numero);
+void addUint16toVector(std::vector <std::uint8_t> & bytesvector, std::uint16_t const & numero);
+void addUint16toVector(std::vector <std::uint8_t> *& bytesvector, std::uint16_t *& numero);
+void insertUint64toVector(std::vector <std::uint8_t> & bytesvector, std::vector<std::uint8_t>::iterator & it, std::uint64_t const & numero);
+void replaceUint16toVector(std::vector<std::uint8_t>::iterator & bytesvector, std::uint16_t const & numero);  /// no probado
+void replaceUint16toVector(std::uint8_t * bytesvector, std::uint16_t const & numero);
+void replaceUint64toVector(std::vector<std::uint8_t>::iterator & bytesvector, std::uint64_t const & numero);  /// no probado
 
-std::uint64_t const Array8bytestoUint64(std::uint8_t  const * const array8bytes);
+std::uint64_t const extract8bytestoUint64(std::uint8_t  const * const array8bytes);
+std::uint16_t const extract2bytestoUint16(std::uint8_t  const * const array2bytes);
 
 bool const existen_coincidencias(std::uint8_t const * data1, std::uint8_t const * data2, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto );
 

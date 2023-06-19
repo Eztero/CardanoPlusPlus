@@ -1,7 +1,7 @@
 #include "txutils.hpp"
 
 
-void agregarUint64BytestoVector(std::vector <std::uint8_t> & bytesvector, std::uint64_t const & numero){
+void addUint64toVector(std::vector <std::uint8_t> & bytesvector, std::uint64_t const & numero){
     bytesvector.push_back( ( numero >> 56 ) & 0xff );
     bytesvector.push_back( ( numero >> 48 ) & 0xff );
     bytesvector.push_back( ( numero >> 40 ) & 0xff );
@@ -12,10 +12,59 @@ void agregarUint64BytestoVector(std::vector <std::uint8_t> & bytesvector, std::u
     bytesvector.push_back( ( numero ) & 0xff );
 }
 
+void insertUint64toVector(std::vector <std::uint8_t> & bytesvector, std::vector<std::uint8_t>::iterator & it, std::uint64_t const & numero){
+    std::vector <std::uint8_t> bytes_numero;
+    bytes_numero.push_back( ( numero >> 56 ) & 0xff );
+    bytes_numero.push_back( ( numero >> 48 ) & 0xff );
+    bytes_numero.push_back( ( numero >> 40 ) & 0xff );
+    bytes_numero.push_back( ( numero >> 32 ) & 0xff );
+    bytes_numero.push_back( ( numero >> 24 ) & 0xff );
+    bytes_numero.push_back( ( numero >> 16 ) & 0xff );
+    bytes_numero.push_back( ( numero >> 8 ) & 0xff );
+    bytes_numero.push_back( ( numero ) & 0xff );
+    bytesvector.insert(it, bytes_numero.begin(),bytes_numero.end());
+}
 
-std::uint64_t const Array8bytestoUint64(std::uint8_t const * const array8bytes){
+void replaceUint64toVector(std::vector<std::uint8_t>::iterator & bytesvector, std::uint64_t const & numero){
+    *bytesvector =( ( numero >> 56 ) & 0xff );
+    *(bytesvector + 1) =( ( numero >> 48 ) & 0xff );
+    *(bytesvector + 2) =( ( numero >> 40 ) & 0xff );
+    *(bytesvector + 3) =( ( numero >> 32 ) & 0xff );
+    *(bytesvector + 4) =( ( numero >> 24 ) & 0xff );
+    *(bytesvector + 5) =( ( numero >> 16 ) & 0xff );
+    *(bytesvector + 6) =( ( numero >> 8 ) & 0xff );
+    *(bytesvector + 7) =( ( numero ) & 0xff );
+}
+
+void addUint16toVector(std::vector <std::uint8_t> & bytesvector, std::uint16_t const & numero){
+    bytesvector.push_back( ( numero >> 8 ) & 0xff );
+    bytesvector.push_back( ( numero ) & 0xff );
+}
+
+void addUint16toVector(std::vector <std::uint8_t> *& bytesvector, std::uint16_t *& numero){
+    bytesvector->push_back( ( *numero >> 8 ) & 0xff );
+    bytesvector->push_back( ( *numero ) & 0xff );
+}
+
+void replaceUint16toVector(std::vector<std::uint8_t>::iterator & bytesvector, std::uint16_t const & numero){
+    *bytesvector = ( ( numero >> 8 ) & 0xff );
+    *( bytesvector + 1 ) = ( ( numero ) & 0xff );
+}
+
+void replaceUint16toVector(std::uint8_t * bytesvector, std::uint16_t const & numero){
+    *bytesvector = ( ( numero >> 8 ) & 0xff );
+    *( bytesvector + 1 ) = ( ( numero ) & 0xff );
+}
+
+std::uint64_t const extract8bytestoUint64(std::uint8_t const * const array8bytes){
 
     return (( static_cast<std::uint64_t>(*array8bytes) << 56) | (static_cast<std::uint64_t>(*(array8bytes+1)) << 48) | (static_cast<std::uint64_t>(*(array8bytes+2)) << 40) | (static_cast<std::uint64_t>(*(array8bytes+3)) << 32) | (static_cast<std::uint64_t>(*(array8bytes+4)) << 24) | (static_cast<std::uint64_t>(*(array8bytes+5)) << 16) | (static_cast<std::uint64_t>(*(array8bytes+6)) << 8) | (static_cast<std::uint64_t>(*(array8bytes+7))) );
+
+}
+
+std::uint16_t const extract2bytestoUint16(std::uint8_t  const * const array2bytes){
+
+    return ( (static_cast<std::uint16_t>(*(array2bytes)) << 8) | (static_cast<std::uint16_t>(*(array2bytes+1))) );
 
 }
 
@@ -99,8 +148,6 @@ std::uint8_t const *const hexchararray2uint8array(std::string const & string_hex
             *hexchararray2uint8array_len = array_hex_len;
         }
         std::uint8_t *array_hex = new std::uint8_t[array_hex_len];
-        //std::unique_ptr<std::uint8_t[]> array_hex(new std::uint8_t[array_hex_len]);
-        //
         for(std::size_t ha = 0; ha < array_hex_len; ha++){
             array_hex[ha] = static_cast<std::uint8_t>(std::stoul(string_hex.substr(ha*2,2),nullptr,16));
         }
