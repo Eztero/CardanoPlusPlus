@@ -26,6 +26,7 @@ SOFTWARE.
 #ifndef PLUTUSJSONSCHEMA
 #define PLUTUSJSONSCHEMA
 
+#include <sodium.h>
 #include <stdexcept>
 #include <memory>
 #include <string>
@@ -41,7 +42,8 @@ public:
     explicit PlutusJsonSchema();
     virtual ~PlutusJsonSchema();
     void addSchemaJson(std::string json);
-    std::vector<std::uint8_t> getCborSchemaJson() const;
+    std::vector<std::uint8_t> const &getCborSchemaJson() const;
+    std::uint8_t const *const getHash32CborSchemaJson();
 
 
 private:
@@ -57,6 +59,7 @@ private:
     };
 
     std::vector<std::uint8_t> cborschema;
+    std::uint8_t datum_hash[32]{};
     std::size_t find_caracter_it(char const caracter, std::string::const_iterator it, std::string::const_iterator it_end);
     std::size_t pos_primer_caracter_it(char const caracter, std::string::const_iterator it, std::string::const_iterator it_end );
     std::size_t pos_ultimo_caracter_it(char const caracter, std::string::const_iterator it, std::string::const_iterator it_end );
@@ -66,8 +69,8 @@ private:
     bool es_igual_ydesplazaIt(std::string const frase, std::string::iterator &it, std::string::const_iterator const &it_end);
     bool obtener_bytes_str(std::string::iterator &it, std::string::const_iterator const &it_end, std::vector<std::uint8_t> &bytes_vector);
     bool obtener_key_value_map(std::string::iterator &it, std::string::const_iterator &it_end, std::vector<std::uint8_t> &key_cbor, std::vector<std::uint8_t> &value_cbor );
-    bool obtener_list_cbor(std::string::iterator &it, std::string::const_iterator &it_end, std::vector<std::uint8_t> &list_cbor);
-    bool obtener_tipo(std::string::iterator &it, std::string::const_iterator &it_end, std::vector<std::uint8_t> &cbor_data );
+    std::vector<std::uint8_t> obtener_list_cbor(std::string::iterator &it, std::string::const_iterator &it_end);
+    std::vector<std::uint8_t> obtener_tipo(std::string::iterator &it, std::string::const_iterator &it_end);
     tipo_t detectar_tipo(std::string::iterator &it, std::string::const_iterator const &it_end);
 
 

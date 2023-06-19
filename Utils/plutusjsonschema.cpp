@@ -269,14 +269,11 @@ bool PlutusJsonSchema::obtener_key_value_map(std::string::iterator &it, std::str
                 if(desplazamiento_buffk != std::string::npos){
                     it += desplazamiento_buffk;
                     //Aca se crea el tipo en cbor
-                    if(obtener_tipo(it, it_end, key_cbor)){
-                        bit_keyvalue |= 0x01;
-                        desplazamiento_buffk = pos_primer_caracter_it(',',it,it_end);
-                        if(desplazamiento_buffk != std::string::npos){ // si encuentra una coma, entonces avanza una unidad, si no hara que el ciclo se cierre
-                            it += desplazamiento_buffk + 1;
-                        }
-                    }else{
-                        return false;  /// en este caso lanzaria una exepcion
+                    key_cbor = obtener_tipo(it, it_end);
+                    bit_keyvalue |= 0x01;
+                    desplazamiento_buffk = pos_primer_caracter_it(',',it,it_end);
+                    if(desplazamiento_buffk != std::string::npos){ // si encuentra una coma, entonces avanza una unidad, si no hara que el ciclo se cierre
+                        it += desplazamiento_buffk + 1;
                     }
                 }else{
                     throw std::invalid_argument("error in \"map\" elements: a ( : ) is expected at the end of \"k\"");
@@ -288,15 +285,13 @@ bool PlutusJsonSchema::obtener_key_value_map(std::string::iterator &it, std::str
                 if(desplazamiento_buffv != std::string::npos){
                     it += desplazamiento_buffv;
                     //Aca se crea el tipo en cbor
-                    if(obtener_tipo(it, it_end, value_cbor)){
-                        bit_keyvalue |= 0x02;
-                        desplazamiento_buffv = pos_primer_caracter_it(',',it,it_end);
-                        if(desplazamiento_buffv != std::string::npos){ // si encuentra una coma, entonces avanza una unidad, si no hara que el ciclo se cierre
-                            it += desplazamiento_buffv +1;
-                        }
-                    }else{
-                        return false;
+                    value_cbor = obtener_tipo(it, it_end);
+                    bit_keyvalue |= 0x02;
+                    desplazamiento_buffv = pos_primer_caracter_it(',',it,it_end);
+                    if(desplazamiento_buffv != std::string::npos){ // si encuentra una coma, entonces avanza una unidad, si no hara que el ciclo se cierre
+                        it += desplazamiento_buffv +1;
                     }
+
                 }else{
                     throw std::invalid_argument("error in \"map\" elements: a ( : ) is expected at the end of \"v\"");
                 }
@@ -334,8 +329,8 @@ bool PlutusJsonSchema::obtener_key_value_map(std::string::iterator &it, std::str
     return true;
 }
 
-bool PlutusJsonSchema::obtener_list_cbor(std::string::iterator &it, std::string::const_iterator &it_end, std::vector<std::uint8_t> &list_cbor){
-    std::unique_ptr<CborSerialize> a(new CborSerialize(&list_cbor));
+std::vector<std::uint8_t> PlutusJsonSchema::obtener_list_cbor(std::string::iterator &it, std::string::const_iterator &it_end){
+    std::unique_ptr<CborSerialize> a(new CborSerialize);
 
     std::size_t pos_corchete_inicio = pos_primer_caracter_it('[', it, it_end); // se delimita el espacio de trabajo de field
     std::size_t pos_corchete_fin = 0;
@@ -351,11 +346,11 @@ bool PlutusJsonSchema::obtener_list_cbor(std::string::iterator &it, std::string:
 
         while(pos_coma != std::string::npos && it < it_end){
 
-            if(obtener_tipo(it, it_end,value_cbor)){
+            value_cbor = obtener_tipo(it, it_end);
                 numero_elementos_lista++;
                 listvalue_cbor.insert( listvalue_cbor.end(), value_cbor.begin(), value_cbor.end() );
                 value_cbor.clear();
-            }else{return false;}
+
 
             pos_coma = pos_primer_caracter_it(',',it,it_end);
             if(pos_coma != std::string::npos){
@@ -369,7 +364,7 @@ bool PlutusJsonSchema::obtener_list_cbor(std::string::iterator &it, std::string:
             it += pos_corchete_fin + 1;
             a->createArray(numero_elementos_lista);
             a->bypassIteratorVectorCbor(listvalue_cbor.begin(),listvalue_cbor.end());
-            return true;
+            return a->getCbor();
         }else{
             throw std::invalid_argument("error in list of element: missing a ( ] )");
         }
@@ -378,12 +373,12 @@ bool PlutusJsonSchema::obtener_list_cbor(std::string::iterator &it, std::string:
         throw std::invalid_argument("error in list of element: missing a ( [ )");
     }
 
-    return false;
+    return a->getCbor();
 }
 
 
-bool PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::const_iterator &it_end, std::vector<std::uint8_t> &cbor_data ){
-    std::unique_ptr<CborSerialize> a(new CborSerialize(&cbor_data));
+std::vector<std::uint8_t> PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::const_iterator &it_end ){
+    std::unique_ptr<CborSerialize> a(new CborSerialize);
     std::size_t pos_caracter = 0;
 
     tipo_t elemento = detectar_tipo(it, it_end);
@@ -411,7 +406,7 @@ bool PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::con
                         tag_constructor = obtener_int_constructor_str(it, it_end);
                     }
                     else if(elemento == tipo_t::tipo_constructor_field){
-                        obtener_list_cbor(it, it_end, field_constructor );
+                        field_constructor = obtener_list_cbor( it, it_end );
                     }
 
                     pos_coma = pos_primer_caracter_it(',', it, it_end);
@@ -420,7 +415,7 @@ bool PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::con
                         elemento = detectar_tipo(it, it_end);
 
                         if(elemento == tipo_t::tipo_error){
-                            return false;
+                            throw std::invalid_argument("error in constructor element, unknown element type");
                         }else{
                             pos_caracter = pos_primer_caracter_it(':',it,it_end); // avanza de los :
                             if(pos_caracter != std::string::npos){
@@ -466,7 +461,7 @@ bool PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::con
 
                 a->bypassIteratorVectorCbor(field_constructor.begin(),field_constructor.end());
 
-                return true;
+                return a->getCbor();
 
             };break;
             case tipo_t::tipo_int:{
@@ -482,14 +477,14 @@ bool PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::con
                     a->addNint_withoutzero(n_entero);
                 }
 
-                return true;
+                return a->getCbor();;
 
             };break;
             case tipo_t::tipo_bytes:{
                 std::vector<std::uint8_t> bytes_;
                 if(obtener_bytes_str(it, it_end, bytes_)){
                     a->addBytesArray(bytes_);
-                    return true;
+                    return a->getCbor();
                 }
             };break;
             case tipo_t::tipo_map:{
@@ -513,7 +508,9 @@ bool PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::con
                             keyvalue_cbor.insert(keyvalue_cbor.end(),value_cbor.begin(),value_cbor.end());
                             key_cbor.clear();
                             value_cbor.clear();
-                        }else{return false;}
+                        }else{
+                            throw std::invalid_argument("error in \"map\": could not determine the value of a variable");
+                        }
 
                         pos_coma = pos_primer_caracter_it(',',it,it_end);
                         if(pos_coma != std::string::npos){
@@ -530,7 +527,7 @@ bool PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::con
                             it += pos_corchete_fin + 1;
                             a->createMap(numero_elementos_mapa);
                             a->bypassIteratorVectorCbor(keyvalue_cbor.begin(),keyvalue_cbor.end());
-                            return true;
+                            return a->getCbor();;
 
                         }else{
                             throw std::invalid_argument("error in \"map\", missing ( } ) at end");
@@ -548,13 +545,14 @@ bool PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::con
             };break;
             case tipo_t::tipo_list:{ /// poner el contenido de list en una funcion para que se pueda reutilizar en field, ver lo mismo con map
 
-                if(!obtener_list_cbor(it, it_end, cbor_data)){  // se pasa el vector cbor_data para que se serialize dentro de obtener_list_cbor(), pero tambien esta ligado al elemento CborSerialize de esta funcion
-                    return false;                               // pero en este "case" no se llama, asi que no genera sobre escrituras de datos
-                }
+                //if(!obtener_list_cbor(it, it_end, cbor_data)){  // se pasa el vector cbor_data para que se serialize dentro de obtener_list_cbor(), pero tambien esta ligado al elemento CborSerialize de esta funcion
+                //    return false;                               // pero en este "case" no se llama, asi que no genera sobre escrituras de datos
+                //}
+                std::vector<std::uint8_t> const &cbor_data = obtener_list_cbor(it, it_end);
                 std::size_t pos_llave_fin = pos_primer_caracter_it('}',it, it_end); // Se sale del esquema list y se crea el mapa en cbor
                 if(pos_llave_fin != std::string::npos){
                     it += pos_llave_fin + 1;
-                    return true;
+                    return cbor_data;
 
                 }else{
                     throw std::invalid_argument("error in \"list\", missing ( } ) at end");
@@ -562,7 +560,9 @@ bool PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::con
 
 
             };break;
-            default:{return false;};break;
+            default:{
+                throw std::invalid_argument("error could not find the data type");
+            };break;
             }
 
         }else{
@@ -579,7 +579,7 @@ bool PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::con
         }
 
     }
-    return false;
+    return a->getCbor();
 }
 
 PlutusJsonSchema::tipo_t PlutusJsonSchema::detectar_tipo(std::string::iterator &it, std::string::const_iterator const &it_end){ //PROBADO
@@ -688,6 +688,7 @@ PlutusJsonSchema::tipo_t PlutusJsonSchema::detectar_tipo(std::string::iterator &
     return tipo_t::tipo_error;
 };
 
+
 void PlutusJsonSchema::addSchemaJson(std::string json){
 
 
@@ -696,7 +697,7 @@ void PlutusJsonSchema::addSchemaJson(std::string json){
 
 
     try{
-        obtener_tipo(cit, cit_end, cborschema);
+        cborschema = obtener_tipo(cit, cit_end);
     }
     catch(std::logic_error &erl){
         cborschema.clear();
@@ -709,9 +710,16 @@ void PlutusJsonSchema::addSchemaJson(std::string json){
 };
 
 
-std::vector<std::uint8_t> PlutusJsonSchema::getCborSchemaJson() const{
+std::vector<std::uint8_t> const &PlutusJsonSchema::getCborSchemaJson() const{
 
     return cborschema;
 
-}
+};
+
+std::uint8_t const *const PlutusJsonSchema::getHash32CborSchemaJson(){
+
+    crypto_generichash_blake2b(datum_hash, 32, cborschema.data() ,cborschema.size(), nullptr, 0);
+
+    return datum_hash;
+};
 
