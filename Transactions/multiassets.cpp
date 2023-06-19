@@ -1,11 +1,10 @@
 #include "multiassets.hpp"
 
 Multiassets::Multiassets(){
-cbor = new CborSerialize( &buffer_cbor ); ///si no puede asignar memoria que lanze un error
+//cbor = new CborSerialize( &buffer_cbor ); ///si no puede asignar memoria que lanze un error
 }
 
 Multiassets::~Multiassets(){
-delete cbor;
 }
 
 Multiassets &Multiassets::addAsset(std::uint8_t const *const policyID, std::uint8_t const *const assetname, std::size_t const &assetname_len, std::uint64_t const amount){
@@ -35,9 +34,10 @@ Multiassets &Multiassets::addAsset(std::uint8_t const *const policyID, std::uint
     if(assetname_len < 32){ // el largo del nombre no debe exceder los 32 bytes
         if(igual == 28){
 
-            cbor->ClearCbor();
-            cbor->addBytesArray(assetname, assetname_len);
-            cbor->addUint(amount);
+            cbor.clearCbor();
+            cbor.addBytesArray(assetname, assetname_len);
+            cbor.addUint(amount);
+            std::vector<std::uint8_t> const & buffer_cbor = cbor.getCbor();
             capsula[posicion][0] += 1;  ///aumenta la cantidad de elementos en el mapa ///PONER LIMITE A 254 elementos
             capsula[posicion].insert( capsula[posicion].end(), buffer_cbor.begin(), buffer_cbor.end() ); //inserta los datos en cbor
 
@@ -48,9 +48,10 @@ Multiassets &Multiassets::addAsset(std::uint8_t const *const policyID, std::uint
             posicion += 1; // se pasa a la siguiente posicion (columna)
             capsula[posicion].push_back(0); //se agrega el primer elemento del array en esa posicion
 
-            cbor->ClearCbor();
-            cbor->addBytesArray(assetname, assetname_len);
-            cbor->addUint(amount);
+            cbor.clearCbor();
+            cbor.addBytesArray(assetname, assetname_len);
+            cbor.addUint(amount);
+            std::vector<std::uint8_t> const & buffer_cbor = cbor.getCbor();
             capsula[posicion][0] += 1;  //aumenta la cantidad de elementos en el mapa
             capsula[posicion].insert( capsula[posicion].end(), buffer_cbor.begin(), buffer_cbor.end() ); //inserta los datos en cbor
 
@@ -73,20 +74,20 @@ Multiassets &Multiassets::addAsset(std::uint8_t const *const policyID, std::stri
 }
 
 std::vector<std::uint8_t> const &Multiassets::getCborMultiassets(){
-    cbor->ClearCbor();
+    cbor.clearCbor();
     int policyID_count = static_cast<std::uint64_t>(capsula[0][0]);
     if(policyID_count != 0){ // si no esta vacio se procede con el resto
     std::uint8_t *ptr_policyID = capsula[0].data();
     ptr_policyID++; //salta la primera posicion
-    cbor->createMap(capsula[0][0]);
+    cbor.createMap(capsula[0][0]);
 
     policyID_count += 1; //aumento en uno, para que concuerde la posicion de los datos en las otras columnas
     for(int a = 1; a < policyID_count;a++){
-     cbor->addBytesArray(ptr_policyID,28);
-     cbor->createMap(static_cast<std::uint64_t>(capsula[a][0]));
-     cbor->bypassIteratorVectorCbor(capsula[a].begin()+1, capsula[a].end());
+     cbor.addBytesArray(ptr_policyID,28);
+     cbor.createMap(static_cast<std::uint64_t>(capsula[a][0]));
+     cbor.bypassIteratorVectorCbor(capsula[a].begin()+1, capsula[a].end());
      ptr_policyID += 28;
     }
     }
-    return buffer_cbor;
+    return cbor.getCbor();
 }

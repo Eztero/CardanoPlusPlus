@@ -42,7 +42,7 @@ public:
     void addStakeDeregistration(std::uint8_t const *const addr_stakekeyhash);
     void addStakeDelegation(std::uint8_t const *const addr_stakekeyhash, std::uint8_t const *const addr_poolkeyhash);
     bool arethereCertificates() const;
-    std::vector<std::uint8_t> const &getCborCertificates();  //serializa en cbor los certificados
+    std::vector<std::uint8_t> const & getCborCertificates();  //serializa en cbor los certificados
 private:
     std::uint8_t * ptrvec;
     std::size_t buff_sizet;
@@ -52,7 +52,8 @@ private:
     std::vector <std::uint8_t> stake_registration;
     std::vector <std::uint8_t> stake_deregistration;
     std::vector <std::uint8_t> stake_delegation;
-    std::vector <std::uint8_t> cborCertificates;
+    //std::vector <std::uint8_t> cborCertificates;
+    CborSerialize cert_cbor;
     std::uint8_t certificatesmapcountbit;
 
 };

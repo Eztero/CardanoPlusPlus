@@ -1,14 +1,15 @@
 #include "metadata.hpp"
 Metadatas::Metadatas(){
     metadata_count = 0;
+    ptrvec = nullptr;
     }
 
 void Metadatas::addMetadata(std::uint64_t const keytag, std::vector<std::uint8_t> const &CborMetadata){
 // 8 (keytag) + 8(CborMetadata.size) + UINT16_MAX (CborMetadata) = 16bytes + UINT16_MAX bytes
 
 if(metadata_count < UINT16_MAX && CborMetadata.size() < UINT16_MAX){
-    agregarUint64BytestoVector(metadata, keytag);
-    agregarUint64BytestoVector(metadata, CborMetadata.size());
+    addUint64toVector(metadata, keytag);
+    addUint64toVector(metadata, CborMetadata.size());
     metadata.insert(metadata.end(),CborMetadata.begin(),CborMetadata.end());
     metadata_count++;
 }
@@ -18,11 +19,12 @@ bool Metadatas::arethereMetadatas() const {
     return metadata_count > 0 ? true : false;
 }
 
-std::vector<std::uint8_t> const &Metadatas::getCborMetadatas(){
+std::vector<std::uint8_t> const & Metadatas::getCborMetadatas(){
 
     if(metadata_count > 0){
 
-        CborSerialize cbor(&metadata_cbor);
+        //CborSerialize cbor(&metadata_cbor);
+        cbor.clearCbor();
         ptrvec = metadata.data();
         std::uint16_t metadataLen = 0;
 
@@ -40,5 +42,5 @@ std::vector<std::uint8_t> const &Metadatas::getCborMetadatas(){
 
         }
     }
-    return metadata_cbor;
+    return cbor.getCbor();
 }

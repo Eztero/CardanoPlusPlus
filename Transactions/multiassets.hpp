@@ -45,9 +45,10 @@ public:
     std::vector<std::uint8_t> const &getCborMultiassets();
 private:
 
-    std::vector<std::uint8_t> buffer_cbor;
+    //std::vector<std::uint8_t> buffer_cbor;
     std::vector< std::vector<std::uint8_t> > capsula;
-    CborSerialize *cbor; //se usa buffer_cbor para serializar en cbor
+    //CborSerialize *cbor; //se usa buffer_cbor para serializar en cbor
+    CborSerialize cbor;
 };
 
 #endif

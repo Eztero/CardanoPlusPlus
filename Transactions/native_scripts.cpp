@@ -4,10 +4,10 @@ NativeScripts::NativeScripts(){
     eoc = 0; //espacio ocupado en capsula
     pec = 0; // posicion en capsula
     condiciones.reserve(100);
-    vector_buffer.reserve(42);
+    //vector_buffer.reserve(42);
 }
 
-NativeScripts &NativeScripts::requireAllOf(){
+NativeScripts & NativeScripts::requireAllOf(){
     if(eoc != 0){
         capsula[pec][0] += 1;
         ppec.push_back(pec);
@@ -28,7 +28,7 @@ NativeScripts &NativeScripts::requireAllOf(){
     return *this;
 }
 
-NativeScripts &NativeScripts::requireAnyOf(){
+NativeScripts & NativeScripts::requireAnyOf(){
     if(eoc != 0){
         capsula[pec][0] += 1;
         ppec.push_back(pec);
@@ -49,7 +49,7 @@ NativeScripts &NativeScripts::requireAnyOf(){
     return *this;
 }
 
-NativeScripts &NativeScripts::requireAtLeastNOf(std::uint64_t const n){
+NativeScripts & NativeScripts::requireAtLeastNOf(std::uint64_t const n){
     if(eoc != 0){
         capsula[pec][0] += 1;
         ppec.push_back(pec);
@@ -63,7 +63,7 @@ NativeScripts &NativeScripts::requireAtLeastNOf(std::uint64_t const n){
     eoc ++;
     pec = eoc;
     condiciones.push_back(0x13);
-    agregarUint64BytestoVector(condiciones, n); //agrega 8 bytes referente a la cantidad K de "N de K"
+    addUint64toVector(condiciones, n); //agrega 8 bytes referente a la cantidad K de "N de K"
     condiciones.push_back( eoc );
     capsula[eoc].reserve(224); //reserva 224 bytes para trabajar
     capsula[eoc].push_back(0); //inicia el array de la capsula en cero, el primer array indica la cantidad de elementos de la capsula
@@ -71,37 +71,43 @@ NativeScripts &NativeScripts::requireAtLeastNOf(std::uint64_t const n){
     return *this;
 }
 
-NativeScripts &NativeScripts::thisIsValidBeforeSlot(std::uint64_t const slot){
+NativeScripts & NativeScripts::thisIsValidBeforeSlot(std::uint64_t const slot){
     capsula[pec][0] += 1;  // Agrega +1 a la cantidad de elementos
-    CborSerialize cbor( &vector_buffer );
+    //CborSerialize cbor( &vector_buffer );
     cbor.createArray(2).addUint(4).addUint( slot );
+    std::vector<std::uint8_t> const & vector_buffer = cbor.getCbor();
     capsula[pec].insert(capsula[pec].end(), vector_buffer.begin(), vector_buffer.end()); // Agrega el elemento serializado en cbor a la capsula
-    vector_buffer.clear();
+    //vector_buffer.clear();
+    cbor.clearCbor();
 
     return *this;
 }
 
-NativeScripts &NativeScripts::thisIsValidAfterSlot(std::uint64_t const slot){
+NativeScripts & NativeScripts::thisIsValidAfterSlot(std::uint64_t const slot){
     capsula[pec][0] += 1;  // Agrega +1 a la cantidad de elementos
-    CborSerialize cbor( &vector_buffer );
+    //CborSerialize cbor( &vector_buffer );
     cbor.createArray(2).addUint(5).addUint( slot );
+    std::vector<std::uint8_t> const & vector_buffer = cbor.getCbor();
     capsula[pec].insert(capsula[pec].end(), vector_buffer.begin(), vector_buffer.end()); // Agrega el elemento serializado en cbor a la capsula
-    vector_buffer.clear();
+    //vector_buffer.clear();
+    cbor.clearCbor();
 
     return *this;
 }
 
-NativeScripts &NativeScripts::SignatureOf(std::uint8_t const *const vk_hash){
+NativeScripts & NativeScripts::SignatureOf(std::uint8_t const *const vk_hash){
     capsula[pec][0] += 1;  // Agrega +1 a la cantidad de elementos
-    CborSerialize cbor( &vector_buffer );
+    //CborSerialize cbor( &vector_buffer );
     cbor.createArray(2).addUint( static_cast<std::uint8_t>(0) ).addBytesArray(vk_hash, 28);
+    std::vector<std::uint8_t> const & vector_buffer = cbor.getCbor();
     capsula[pec].insert(capsula[pec].end(), vector_buffer.begin(), vector_buffer.end());  // Agrega el elemento serializado en cbor a la capsula
-    vector_buffer.clear();
+    //vector_buffer.clear();
+    cbor.clearCbor();
 
     return *this;
 }
 
-NativeScripts &NativeScripts::SignatureOf(std::string payment_address){
+NativeScripts & NativeScripts::SignatureOf(std::string const payment_address){
     std::uint16_t bufferbech32_len = 0;
     if(bech32_decode(payment_address.c_str(), bufferbech32, &bufferbech32_len) && bufferbech32_len == 29){
         SignatureOf( &bufferbech32[1] );
@@ -110,14 +116,15 @@ NativeScripts &NativeScripts::SignatureOf(std::string payment_address){
     return *this;
 }
 
-NativeScripts &NativeScripts::Endrequire(){
+NativeScripts & NativeScripts::Endrequire(){
     pec = ppec[pec];
 
     return *this;
 }
 
 std::vector<std::uint8_t> const &NativeScripts::getCborNativeScripts(){
-    CborSerialize cbor( &cbornativescript );
+    //CborSerialize cbor( &cbornativescript );
+    cbor.clearCbor();
     std::vector<std::uint8_t>::iterator it = condiciones.begin();
     while(it != condiciones.end()){
         switch(*it){
@@ -149,8 +156,8 @@ std::vector<std::uint8_t> const &NativeScripts::getCborNativeScripts(){
         };break;
         }
     }
-
-    return cbornativescript;
+    return cbor.getCbor();
+    //return cbornativescript;
 }
 
 

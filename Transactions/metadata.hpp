@@ -42,7 +42,8 @@ private:
 std::uint8_t * ptrvec;
 std::uint16_t metadata_count;
 std::vector <std::uint8_t> metadata;
-std::vector <std::uint8_t> metadata_cbor;
+CborSerialize cbor;
+//std::vector <std::uint8_t> metadata_cbor;
 };
 
 #endif

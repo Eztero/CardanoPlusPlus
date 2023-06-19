@@ -40,9 +40,9 @@ public:
     std::vector<std::uint8_t> const &Build();
 
 private:
-    std::uint8_t * ptrvec;
     std::uint8_t auxiliarymapcountbit;
-    std::vector <std::uint8_t> cborAuxiliaryData;
+    CborSerialize cbor;
+    //std::vector <std::uint8_t> cborAuxiliaryData;
 
 };
 

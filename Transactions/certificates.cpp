@@ -70,10 +70,11 @@ bool Certificates::arethereCertificates() const{
 }
 
 
-std::vector<std::uint8_t> const &Certificates::getCborCertificates(){
+std::vector<std::uint8_t> const & Certificates::getCborCertificates(){
 
-    CborSerialize cert_cbor(&cborCertificates);
-    cert_cbor.ClearCbor();
+    //CborSerialize cert_cbor(&cborCertificates);
+
+    cert_cbor.clearCbor();
 
     if(certificatesmapcountbit > 0){ //Condicion que salta el proceso en caso de que no hayan datos
         cert_cbor.createArray(stake_delegation_count + stake_deregistration_count + stake_registration_count); // [ ]
@@ -128,5 +129,6 @@ std::vector<std::uint8_t> const &Certificates::getCborCertificates(){
         }
 
     }
-    return cborCertificates;
+    //return cborCertificates;
+    return cert_cbor.getCbor();
 }

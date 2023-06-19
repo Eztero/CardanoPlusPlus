@@ -1,7 +1,6 @@
 #include "auxiliary_data.hpp"
 
 AuxiliaryData::AuxiliaryData() : Metadatas(){
-    ptrvec = nullptr;
     auxiliarymapcountbit = 0;
 }
 
@@ -15,8 +14,8 @@ std::vector<std::uint8_t> const &AuxiliaryData::Build(){
         auxiliarymapcountbit |= 0x01;
     }
 
-    CborSerialize cbor(&cborAuxiliaryData);
-    cbor.ClearCbor();
+    //CborSerialize cbor(&cborAuxiliaryData);
+    cbor.clearCbor();
     std::uint8_t contador = 0;
 
     if(auxiliarymapcountbit > 0){
@@ -44,5 +43,5 @@ std::vector<std::uint8_t> const &AuxiliaryData::Build(){
     else{
         cbor.addNull();
     }
-return cborAuxiliaryData;
+return cbor.getCbor();
 }
