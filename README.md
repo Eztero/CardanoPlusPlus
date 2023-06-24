@@ -17,7 +17,7 @@ This library uses libsodium as a cryptographic library, it is a robust and cross
     - [x] implement send, receive, delegation and withdrawal of delegation, withdrawal of reward, in ADA
     - [x] implement Native asset management (send, receive)
     - [x] implement NFT management          (send, receive)
-    - [x] implement the use of smart contracts.
+    - [x] implement the use of smart contracts (spending, delegation, withdrawal).
 - [ ] Integration of functions, testing and stable release of the library
 
 
