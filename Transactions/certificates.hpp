@@ -32,29 +32,39 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include <cstdint>
 #include "../Utils/cbor_lite.hpp"
 #include "../Utils/txutils.hpp"
+#include "../Utils/plutusjsonschema.hpp"
 
 class Certificates {
 
 public:
     explicit Certificates();
     virtual ~Certificates();
-    void addStakeRegistration(std::uint8_t const *const addr_stakekeyhash);
-    void addStakeDeregistration(std::uint8_t const *const addr_stakekeyhash);
-    void addStakeDelegation(std::uint8_t const *const addr_stakekeyhash, std::uint8_t const *const addr_poolkeyhash);
-    bool arethereCertificates() const;
-    std::vector<std::uint8_t> const & getCborCertificates();  //serializa en cbor los certificados
+
+    enum class Credential{
+KeyHash = 0,
+ScriptHash
+};
+
+    void addStakeRegistration(Certificates::Credential ckey, std::uint8_t const *const stake_credential_hash);
+    void addStakeDeregistration(Certificates::Credential ckey, std::uint8_t const *const stake_credential_hash);
+    void addStakeDelegation(Certificates::Credential ckey, std::uint8_t const *const stake_credential_hash, std::uint8_t const *const pool_keyhash);
+    void addCertificateRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits );
+    std::vector<std::uint8_t> const & getCertificateRedeemers() const;
+
+    std::uint16_t const & getCertificateRedeemersCount() const;
+    std::uint32_t const & getBodyMapcountbit() const;
+    std::uint16_t const & getWitnessMapcountbit() const;
+    std::uint16_t const & getCborCertificatesCount() const;  //serializa en cbor los certificados
+    std::vector<std::uint8_t> const & getCborCertificates() const;  //serializa en cbor los certificados
 private:
-    std::uint8_t * ptrvec;
-    std::size_t buff_sizet;
-    std::uint16_t stake_registration_count;   //maximo 65534
-    std::uint16_t stake_deregistration_count; //maximo 65534
-    std::uint16_t stake_delegation_count;     //maximo 65534
-    std::vector <std::uint8_t> stake_registration;
-    std::vector <std::uint8_t> stake_deregistration;
-    std::vector <std::uint8_t> stake_delegation;
-    //std::vector <std::uint8_t> cborCertificates;
+
+    std::uint16_t redeemer_cert_count;
+    std::uint16_t cbor_certificates_count;
+    std::vector <std::uint8_t> redeemer_cert{};
+    std::vector <std::uint8_t> cbor_certificates{};
     CborSerialize cert_cbor;
-    std::uint8_t certificatesmapcountbit;
+    std::uint32_t bodymap_countbit;      ///  0x0001 , Tiene que iniciar con cero
+    std::uint16_t witnessmap_countbit;      ///  0x0001 , Tiene que iniciar con cero
 
 };
 
