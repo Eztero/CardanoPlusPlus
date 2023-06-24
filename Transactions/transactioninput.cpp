@@ -21,6 +21,12 @@
 /// +n (ex_units) (previamente serializado en cbor)
 /// 19+n bytes maximo de largo minimo
 
+/// Vector<std::uint8_t> scripts
+/// +2 (script count // indica la cantidad de script que tiene este vector
+/// +n (scripts)
+
+
+
 
 TransactionsInputs::TransactionsInputs(){
     bodymap_countbit = 0;
@@ -39,7 +45,7 @@ TransactionsInputs::TransactionsInputs(){
 }
 
 bool TransactionsInputs::addUtxoInput(std::uint8_t const t_selector, std::uint8_t const * const & TxHash,std::uint64_t const & TxIx){   //0 : set<transaction_input> --> transaction_input = [ transaction_id : hash32, index : uint]
-    /// 32(TxHash) + 8(TxIx) = 40 bytes de largo cada input
+    ///2(index) + 32(TxHash) + 8(TxIx) = 42 bytes de largo cada input
 
     std::vector<std::uint8_t> *data_input = nullptr;
     std::uint16_t *data_input_count = nullptr;
@@ -53,13 +59,11 @@ bool TransactionsInputs::addUtxoInput(std::uint8_t const t_selector, std::uint8_
     case 0x01:{
         data_input = &reference_input;
         data_input_count = &reference_input_count;
-
         bodymap_countbit |= 0x40000;
     };break;
     case 0x02:{
         data_input = &collateral_input;
         data_input_count = &collateral_input_count;
-
         bodymap_countbit |= 0x2000;
     };break;
     }
@@ -67,17 +71,17 @@ bool TransactionsInputs::addUtxoInput(std::uint8_t const t_selector, std::uint8_
     if( ( *data_input_count < UINT16_MAX ) && ( !existen_coincidencias(TxHash, data_input->data(), 32, *data_input_count, 40) ) ){
         buff_sizet = static_cast<std::size_t>( data_input->capacity() ) - static_cast<std::size_t>( data_input->size() );
 
-
-        addUint16toVector(data_input,data_input_count);  // Index
-
         // Si la capacidad reservada es menor a la que se debe ingresar se aumenta el espacio de reserva
-        if(buff_sizet < 40){
-            data_input->reserve(data_input->size() + 40);
+        if(buff_sizet < 42){
+            data_input->reserve(data_input->size() + 42);
         }
 
-        *data_input_count += 1;
+        addUint16toVector(data_input,data_input_count);  // Index
         data_input->insert(data_input->end(), TxHash, TxHash + 32);
         addUint64toVector(*data_input, TxIx);
+
+        *data_input_count += 1;
+
         return true;
     }
 
@@ -97,7 +101,30 @@ TransactionsInputs &TransactionsInputs::addInput(std::string const &TxHash, std:
 }
 
 // ? 18 : set<transaction_input> ; reference inputs;
-TransactionsInputs &TransactionsInputs::addReferenceInput(std::string const & TxHash, std::uint64_t const TxIx){
+TransactionsInputs &TransactionsInputs::addSpendingReference(std::string const & TxHash, std::uint64_t const TxIx){
+    std::size_t txhash_len;
+    std::uint8_t const * const TxHash_uint8t = hexchararray2uint8array(TxHash, &txhash_len);
+    if(txhash_len == 32){
+        addUtxoInput(1, TxHash_uint8t ,TxIx);
+    }
+    delete[] TxHash_uint8t;
+
+    return *this;
+}
+
+TransactionsInputs &TransactionsInputs::addWithdrawalReference(std::string const & TxHash, std::uint64_t const TxIx){
+    std::size_t txhash_len;
+    std::uint8_t const * const TxHash_uint8t = hexchararray2uint8array(TxHash, &txhash_len);
+    if(txhash_len == 32){
+        addUtxoInput(1, TxHash_uint8t ,TxIx);
+    }
+    delete[] TxHash_uint8t;
+
+    return *this;
+}
+
+
+TransactionsInputs &TransactionsInputs::addCertificateReference(std::string const & TxHash, std::uint64_t const TxIx){
     std::size_t txhash_len;
     std::uint8_t const * const TxHash_uint8t = hexchararray2uint8array(TxHash, &txhash_len);
     if(txhash_len == 32){
@@ -109,7 +136,7 @@ TransactionsInputs &TransactionsInputs::addReferenceInput(std::string const & Tx
 }
 
 // ? 13 : set<transaction_input> ; collateral inputs
-TransactionsInputs &TransactionsInputs::addCollateralInput(std::string const & TxHash, std::uint64_t const TxIx){
+TransactionsInputs &TransactionsInputs::addCollateral(std::string const & TxHash, std::uint64_t const TxIx){
     std::size_t txhash_len;
     std::uint8_t const * const TxHash_uint8t = hexchararray2uint8array(TxHash, &txhash_len);
     if(txhash_len == 32){
@@ -121,7 +148,7 @@ TransactionsInputs &TransactionsInputs::addCollateralInput(std::string const & T
 }
 
 // plutus_data
-TransactionsInputs &TransactionsInputs::addDatum(std::string & json_datum){
+TransactionsInputs &TransactionsInputs::addSpendingDatum(std::string & json_datum){
     std::unique_ptr<PlutusJsonSchema> Json_p(new PlutusJsonSchema());
     Json_p->addSchemaJson(json_datum);
     std::vector<std::uint8_t> const & cbor_datum = Json_p->getCborSchemaJson();
@@ -140,7 +167,7 @@ TransactionsInputs &TransactionsInputs::addDatum(std::string & json_datum){
 
 
 // redeemer = [ tag: redeemer_tag, index: uint, data: plutus_data, ex_units: ex_units ]
-TransactionsInputs &TransactionsInputs::addRedeemer( TransactionsInputs::RTag const r_tag, std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
+TransactionsInputs &TransactionsInputs::addSpendingRedeemer(std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
 
 
     std::unique_ptr<CborSerialize> rcbor(new CborSerialize);
@@ -157,7 +184,7 @@ TransactionsInputs &TransactionsInputs::addRedeemer( TransactionsInputs::RTag co
     std::vector<std::uint8_t> const & cbor_plutusdata = Json_p->getCborSchemaJson();
 
     addUint16toVector( redeemer_input, (tx_input_count - 1 ) );                                /// Index_redeemer , LANZAR ERROR SI tx_input_count=0
-    redeemer_input.push_back(static_cast<std::uint8_t>(r_tag));                                // tag
+    redeemer_input.push_back(static_cast<std::uint8_t>(0));                                    // tag = 0
     addUint64toVector(redeemer_input,cbor_plutusdata.size());                                  // plutusdata_len
     redeemer_input.insert(redeemer_input.end(),cbor_plutusdata.begin(),cbor_plutusdata.end()); // plutusdata
     addUint64toVector(redeemer_input,cbor_units.size());                                       // cbor_ex_units_len
@@ -174,16 +201,25 @@ TransactionsInputs &TransactionsInputs::addRedeemer( TransactionsInputs::RTag co
 TransactionsInputs &TransactionsInputs::addScript(TransactionsInputs::ScriptType const script_type, std::uint8_t const * const & script, std::size_t & script_len){
     switch(script_type){
     case ScriptType::Native_Script:{
+        if(nativescript_input_count == 0){
+            nativescript_input.assign( 2 , 0 );  // crea un espacio con ceros para despues indicar la cantidad de script en el array
+        }
         nativescript_input.insert(nativescript_input.end(),script,script+script_len);
         nativescript_input_count++;
         witnessmap_countbit |= 0x02;
     };break;
     case ScriptType::Plutus_Script_V1:{
+        if(plutusscript1_input_count == 0){
+            plutusscript1_input.assign( 2 , 0 );  // crea un espacio con ceros para despues indicar la cantidad de script en el array
+        }
         plutusscript1_input.insert(plutusscript1_input.end(),script,script+script_len);
         plutusscript1_input_count ++;
         witnessmap_countbit |= 0x08;
     };break;
     case ScriptType::Plutus_Script_V2:{
+        if(plutusscript2_input_count == 0){
+            plutusscript2_input.assign( 2 , 0 );  // crea un espacio con ceros para despues indicar la cantidad de script en el array
+        }
         plutusscript2_input.insert(plutusscript2_input.end(),script,script+script_len);
         plutusscript2_input_count++;
         witnessmap_countbit |= 0x40;
@@ -220,6 +256,7 @@ void TransactionsInputs::alphanumeric_organization(){
     std::uint8_t *ptr_datums[datum_input_count];
     std::uint8_t *ptr_redeemers[redeemer_input_count];
     std::uint16_t countmenosuno;
+    int i_cmp = 0;
 
     if(tx_input_count > 0){
         ptr_data = tx_input.data();
@@ -227,17 +264,14 @@ void TransactionsInputs::alphanumeric_organization(){
             ptr_input[i] = ptr_data;
             ptr_data += 42;
         }
-
         countmenosuno = tx_input_count - 1;
         for(std::uint16_t  i = 0; i < countmenosuno; i++ ){
             for(std::uint16_t  e = 0; e < countmenosuno;e++ ){
-                for(std::uint16_t  t = 0; t < 40; t++ ){
-                    if(ptr_input[e][t+2] > ptr_input[e+1][t+2]){
-                        ptr_data = ptr_input[e];
-                        ptr_input[e] = ptr_input[e+1];
-                        ptr_input[e+1] = ptr_data;
-                        break;
-                    }
+                i_cmp = std::memcmp(ptr_input[e]+2, ptr_input[e+1]+2, 40);
+                if(i_cmp > 0){
+                    ptr_data = ptr_input[e];
+                    ptr_input[e] = ptr_input[e+1];
+                    ptr_input[e+1] = ptr_data;
                 }
             }
         }
@@ -253,13 +287,11 @@ void TransactionsInputs::alphanumeric_organization(){
         countmenosuno = reference_input_count - 1;
         for(std::uint16_t  i = 0; i < countmenosuno; i++ ){
             for(std::uint16_t  e = 0; e < countmenosuno;e++ ){
-                for(std::uint16_t  t = 0; t < 40; t++ ){
-                    if(ptr_reference_input[e][t+2] > ptr_reference_input[e+1][t+2]){
-                        ptr_data = ptr_reference_input[e];
-                        ptr_reference_input[e] = ptr_reference_input[e+1];
-                        ptr_reference_input[e+1] = ptr_data;
-                        break;
-                    }
+                i_cmp = std::memcmp(ptr_reference_input[e]+2, ptr_reference_input[e+1]+2, 40);
+                if(i_cmp > 0){
+                    ptr_data = ptr_reference_input[e];
+                    ptr_reference_input[e] = ptr_reference_input[e+1];
+                    ptr_reference_input[e+1] = ptr_data;
                 }
             }
         }
@@ -276,13 +308,11 @@ void TransactionsInputs::alphanumeric_organization(){
         countmenosuno = collateral_input_count - 1;
         for(std::uint16_t  i = 0; i < countmenosuno; i++ ){
             for(std::uint16_t  e = 0; e < countmenosuno;e++ ){
-                for(std::uint16_t  t = 0; t < 40; t++ ){
-                    if(ptr_collateral_input[e][t+2] > ptr_collateral_input[e+1][t+2]){
-                        ptr_data = ptr_collateral_input[e];
-                        ptr_collateral_input[e] = ptr_collateral_input[e+1];
-                        ptr_collateral_input[e+1] = ptr_data;
-                        break;
-                    }
+                i_cmp = std::memcmp(ptr_collateral_input[e]+2, ptr_collateral_input[e+1]+2, 40);
+                if(i_cmp > 0){
+                    ptr_data = ptr_collateral_input[e];
+                    ptr_collateral_input[e] = ptr_collateral_input[e+1];
+                    ptr_collateral_input[e+1] = ptr_data;
                 }
             }
         }
@@ -413,31 +443,32 @@ std::uint16_t const & TransactionsInputs::getWitnessMapcountbit() const{
     return witnessmap_countbit;
 }
 
-std::uint8_t const TransactionsInputs::getReferencesStriptsType() const{
+std::uint8_t const TransactionsInputs::getGlobalReferencesScriptsType() const{
     return static_cast<std::uint8_t>(globalreferencescript);
 }
 
-std::uint16_t const & TransactionsInputs::getInputCount() const{
+std::uint16_t const & TransactionsInputs::getInputsCount() const{
     return tx_input_count;
 }
-std::uint16_t const & TransactionsInputs::getReferenceInputCount() const{
+std::uint16_t const & TransactionsInputs::getInputsReferencesCount() const{
     return reference_input_count;
-}std::uint16_t const & TransactionsInputs::getCollateralInputCount() const{
+}
+std::uint16_t const & TransactionsInputs::getCollateralCount() const{
     return collateral_input_count;
 }
-std::uint16_t const & TransactionsInputs::getDatumInputCount() const{
+std::uint16_t const & TransactionsInputs::getSpendingDatumsCount() const{
     return datum_input_count;
 }
-std::uint16_t const & TransactionsInputs::getRedeemerInputCount() const{
+std::uint16_t const & TransactionsInputs::getSpendingRedeemersCount() const{
     return redeemer_input_count;
 }
-std::uint16_t const & TransactionsInputs::getPlutusV1InputCount() const{
+std::uint16_t const & TransactionsInputs::getPlutusV1ScriptsCount() const{
     return plutusscript1_input_count;
 }
-std::uint16_t const & TransactionsInputs::getPlutusV2InputCount() const{
+std::uint16_t const & TransactionsInputs::getPlutusV2ScriptsCount() const{
     return plutusscript2_input_count;
 }
-std::uint16_t const & TransactionsInputs::getNativeScriptInputCount() const{
+std::uint16_t const & TransactionsInputs::getNativeScriptsCount() const{
     return nativescript_input_count;
 }
 
@@ -445,24 +476,27 @@ std::uint16_t const & TransactionsInputs::getNativeScriptInputCount() const{
 std::vector<std::uint8_t> const & TransactionsInputs::getInputs() const{
     return tx_input;
 }
-std::vector<std::uint8_t> const & TransactionsInputs::getReferenceInputs() const{
+std::vector<std::uint8_t> const & TransactionsInputs::getInputsReferences() const{
     return reference_input;
 }
-std::vector<std::uint8_t> const & TransactionsInputs::getCollateralInputs() const{
+std::vector<std::uint8_t> const & TransactionsInputs::getCollateral() const{
     return collateral_input;
 }
-std::vector<std::uint8_t> const & TransactionsInputs::getDatums() const{
+std::vector<std::uint8_t> const & TransactionsInputs::getSpendingDatums() const{
     return datum_input;
 }
-std::vector<std::uint8_t> const & TransactionsInputs::getRedeemers() const{
+std::vector<std::uint8_t> const & TransactionsInputs::getSpendingRedeemers() const{
     return redeemer_input;
 }
-std::vector<std::uint8_t> const & TransactionsInputs::getPlutusV1Scripts() const{
+std::vector<std::uint8_t> const & TransactionsInputs::getPlutusV1Scripts() {
+    replaceUint16toVector(plutusscript1_input.data(),plutusscript1_input_count);
     return plutusscript1_input;
 }
-std::vector<std::uint8_t> const & TransactionsInputs::getgetPlutusV2Scripts() const{
+std::vector<std::uint8_t> const & TransactionsInputs::getgetPlutusV2Scripts() {
+    replaceUint16toVector(plutusscript2_input.data(),plutusscript2_input_count);
     return plutusscript2_input;
 }
-std::vector<std::uint8_t> const & TransactionsInputs::getNativeScripts() const{
+std::vector<std::uint8_t> const & TransactionsInputs::getNativeScripts() {
+    replaceUint16toVector(nativescript_input.data(),nativescript_input_count);
     return nativescript_input;
 }

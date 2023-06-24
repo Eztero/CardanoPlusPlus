@@ -34,6 +34,7 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <cstring>
 #include "../Utils/txutils.hpp"
 #include "../Utils/plutusjsonschema.hpp"
 #include "../Utils/cbor_lite.hpp"
@@ -58,37 +59,40 @@ public:
     /// Agregar un bloqueo para que solo acepte un datum y un redeemer por direccion , ademas incorporar una excepcion que avise cuando se agrega un datum o reedeemer antes de ingresar
     /// la primera direccion
     TransactionsInputs & addInput( std::string const & TxHash, std::uint64_t const TxIx );  // -> addScript() || addReferenceInput -> addDatum() -> addRedeemer()
-    TransactionsInputs & addReferenceInput( std::string const & TxHash, std::uint64_t const TxIx ); // <- con el setReferenceStriptType se determina el tipo de input y se vera si es necesario el datum y redeemer
-    TransactionsInputs & addCollateralInput( std::string const & TxHash, std::uint64_t const TxIx );
+    TransactionsInputs & addSpendingReference( std::string const & TxHash, std::uint64_t const TxIx ); // <- con el setReferenceStriptType se determina el tipo de input y se vera si es necesario el datum y redeemer
+    TransactionsInputs & addWithdrawalReference( std::string const & TxHash, std::uint64_t const TxIx ); // <- con el setReferenceStriptType se determina el tipo de input y se vera si es necesario el datum y redeemer
+    TransactionsInputs & addCertificateReference( std::string const & TxHash, std::uint64_t const TxIx );
     TransactionsInputs & setGlobalReferencesStriptsType( TransactionsInputs::ScriptType const script_type); // necesario para el calculo del scriptdatahash , se debe especificar por obligacion
-    TransactionsInputs & addDatum( std::string & json_datum );  // Se usa para el witness y el scriptdatahash
-    TransactionsInputs & addRedeemer( TransactionsInputs::RTag const r_tag, std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits );  // Se usa para el witness y el scriptdatahash
+    TransactionsInputs & addCollateral( std::string const & TxHash, std::uint64_t const TxIx );
+    TransactionsInputs & addSpendingDatum( std::string & json_datum );  // Se usa para el witness y el scriptdatahash
+    TransactionsInputs & addSpendingRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits );  // Se usa para el witness y el scriptdatahash
     TransactionsInputs & addScript( TransactionsInputs::ScriptType const script_type, std::uint8_t const * const & script, std::size_t & script_len ); // Se usa para el witness y el scriptdatahash (solo el script_type)
     TransactionsInputs & addScript( TransactionsInputs::ScriptType const script_type, std::string const & script );
+
     std::uint32_t const & getBodyMapcountbit() const;
     std::uint16_t const & getWitnessMapcountbit() const;
 
     void alphanumeric_organization();  // ordena los index  de los utxos, redeemer y datum de manera alfanumerica
-    std::uint16_t const & getInputCount() const;
-    std::uint16_t const & getReferenceInputCount() const;
-    std::uint16_t const & getCollateralInputCount() const;
-    std::uint16_t const & getDatumInputCount() const;
-    std::uint16_t const & getRedeemerInputCount() const;
-    std::uint16_t const & getPlutusV1InputCount() const;
-    std::uint16_t const & getPlutusV2InputCount() const;
-    std::uint16_t const & getNativeScriptInputCount() const;
+    std::uint16_t const & getInputsCount() const;
+    std::uint16_t const & getInputsReferencesCount() const;
+    std::uint16_t const & getCollateralCount() const;
+    std::uint16_t const & getSpendingDatumsCount() const;
+    std::uint16_t const & getSpendingRedeemersCount() const;
+    std::uint16_t const & getPlutusV1ScriptsCount() const;
+    std::uint16_t const & getPlutusV2ScriptsCount() const;
+    std::uint16_t const & getNativeScriptsCount() const;
 
 
-    std::uint8_t const getReferencesStriptsType() const;
+    std::uint8_t const getGlobalReferencesScriptsType() const;
 
     std::vector<std::uint8_t> const & getInputs() const;
-    std::vector<std::uint8_t> const & getReferenceInputs() const;
-    std::vector<std::uint8_t> const & getCollateralInputs() const;
-    std::vector<std::uint8_t> const & getDatums() const;
-    std::vector<std::uint8_t> const & getRedeemers() const;
-    std::vector<std::uint8_t> const & getPlutusV1Scripts() const;
-    std::vector<std::uint8_t> const & getgetPlutusV2Scripts() const;
-    std::vector<std::uint8_t> const & getNativeScripts() const;
+    std::vector<std::uint8_t> const & getInputsReferences() const;
+    std::vector<std::uint8_t> const & getCollateral() const;
+    std::vector<std::uint8_t> const & getSpendingDatums() const;
+    std::vector<std::uint8_t> const & getSpendingRedeemers() const;
+    std::vector<std::uint8_t> const & getPlutusV1Scripts();
+    std::vector<std::uint8_t> const & getgetPlutusV2Scripts();
+    std::vector<std::uint8_t> const & getNativeScripts();
 
 private:
     bool addUtxoInput( std::uint8_t const t_selector, std::uint8_t const * const & TxHash, std::uint64_t const & TxIx );
