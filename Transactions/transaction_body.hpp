@@ -40,6 +40,7 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "../Hash/bech32.hpp"
 #include "transactionoutput.hpp"
 #include "transactioninput.hpp"
+#include "withdrawal.hpp"
 
 class TransactionBody : private Certificates, Multiassets {
 
@@ -49,12 +50,12 @@ public:
     virtual ~TransactionBody();
     TransactionsOutputs TransactionOutput;
     TransactionsInputs TransactionInput;
+    Certificates Certificate;
+    Withdrawals Withdrawal;
     TransactionBody & addFee(std::uint64_t const amount);
     TransactionBody & addInvalidAfter(std::uint64_t const number);
     TransactionBody & addInvalidBefore(std::uint64_t const number);
     TransactionBody & addAuxiliaryDataHash(std::uint8_t const *const hash_32bytes);
-    TransactionBody & addWithdrawals(std::uint8_t const *const stake_address_keyhash, std::uint64_t const amount);
-    TransactionBody & addWithdrawals(std::string &stake_address, std::uint64_t const amount);
     TransactionBody & addTotalCollateral(std::uint64_t const amount);
     std::vector<std::uint8_t> const & Build();
     std::vector<std::uint8_t> const & getcborDatums_afterBuild() const;
@@ -70,7 +71,6 @@ private:
     std::uint16_t addr_keyhash_buffer_len;
     std::uint32_t bodymapcountbit; // pone un bits a 1 si existe la variable, en la posisicion correspondiente al map de el transaccion body
     std::uint16_t witnessmapcountbit; // pone un bits a 1 si existe la variable, en la posisicion correspondiente al map de el transaccion witness
-    std::uint16_t withdrawals_count; //maximo 65534
     std::uint64_t fee;
     std::uint64_t ttl;  // time to alive
     std::uint64_t vis;  // validity interval start
@@ -78,7 +78,6 @@ private:
     CborSerialize cbor;
     std::vector <std::uint8_t>cbor_redeemers{};
     std::vector <std::uint8_t>cbor_datums{};
-    std::vector <std::uint8_t>withdrawals{};
     std::vector <std::uint8_t>update{};
     std::vector <std::uint8_t>auxiliary_data_hash{};
     std::vector <std::uint8_t>validity_interval_start{};

@@ -52,7 +52,7 @@ TransactionBody::TransactionBody() : Certificates(),
     addr_keyhash_buffer_len = 0;
     bodymapcountbit = 0;
     witnessmapcountbit = 0;
-    withdrawals_count = 0;
+    //withdrawals_count = 0;
     fee = 0;
     ttl = 0;
     vis = 0;
@@ -81,9 +81,11 @@ TransactionBody &TransactionBody::addInvalidBefore(std::uint64_t const number){ 
     return *this;
 }
 
-TransactionBody &TransactionBody::addWithdrawals(std::uint8_t const *const stake_address_keyhash, std::uint64_t const amount){ // ? 5 : withdrawals
+
+/**
+TransactionBody &TransactionBody::addWithdrawals(std::uint8_t const *const raw_stake_address, std::uint64_t const amount){ // ? 5 : withdrawals
     /// 29 (stake addr keyhash) + 8 (amount) = 37
-    if(withdrawals_count < UINT16_MAX && !existen_coincidencias(stake_address_keyhash,withdrawals.data(),29,withdrawals_count, 37) ){ // Comprueba de que no se repitan las direcciones, si hay coincidencia se omite la direccion
+    if(withdrawals_count < UINT16_MAX && !existen_coincidencias(raw_stake_address, withdrawals.data(), 29, withdrawals_count, 37) ){ // Comprueba de que no se repitan las direcciones, si hay coincidencia se omite la direccion
 
         buff_sizet = static_cast<std::size_t>( withdrawals.capacity() ) - static_cast<std::size_t>( withdrawals.size() );
 
@@ -93,7 +95,7 @@ TransactionBody &TransactionBody::addWithdrawals(std::uint8_t const *const stake
         }
 
         withdrawals_count++;
-        withdrawals.insert(withdrawals.end(), stake_address_keyhash, stake_address_keyhash + 29);
+        withdrawals.insert(withdrawals.end(), raw_stake_address, raw_stake_address + 29);
         addUint64toVector(withdrawals, amount);
 
         bodymapcountbit |= 0x0020;
@@ -116,6 +118,8 @@ TransactionBody &TransactionBody::addWithdrawals(std::string &stake_address, std
 
     return *this;
 }
+
+**/
 
 TransactionBody &TransactionBody::addTotalCollateral(std::uint64_t const amount){
     totalcollateral = amount;
@@ -140,13 +144,16 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
     cbor.clearCbor();
     std::uint64_t contador = 0;
     witnessmapcountbit = TransactionInput.getWitnessMapcountbit();
+    witnessmapcountbit |= Certificate.getWitnessMapcountbit();
+    witnessmapcountbit |= Withdrawal.getWitnessMapcountbit();
     bodymapcountbit |= TransactionOutput.getBodyMapcountbit();
     bodymapcountbit |= TransactionInput.getBodyMapcountbit();
-    TransactionInput.alphanumeric_organization();
+    bodymapcountbit |= Certificate.getBodyMapcountbit();
+    bodymapcountbit |= Withdrawal.getBodyMapcountbit();
 
-    if(arethereCertificates()){
-        bodymapcountbit |= 0x0010;
-    }
+    TransactionInput.alphanumeric_organization();
+    Withdrawal.alphanumeric_organization();
+
 
     if(bodymapcountbit > 0){ //Condicion que salta el proceso en caso de que no hayan datos
 
@@ -164,7 +171,7 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                 switch(x){
                 case 0 :{
                     ptrvec = TransactionInput.getInputs().data();
-                    std::uint16_t const & input_count = TransactionInput.getInputCount();
+                    std::uint16_t const & input_count = TransactionInput.getInputsCount();
 
                     cbor.addIndexMap(static_cast<std::uint64_t>(0));   /// 0:
                     cbor.createArray(input_count);                     /// [  ]
@@ -176,9 +183,9 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                     }
 
 
-                    std::uint16_t const & collateralinput_count = TransactionInput.getCollateralInputCount();
+                    std::uint16_t const & collateralinput_count = TransactionInput.getCollateralCount();
                     if(collateralinput_count > 0){
-                        ptrvec = TransactionInput.getCollateralInputs().data();
+                        ptrvec = TransactionInput.getCollateral().data();
 
                         cbor.addIndexMap(13);                              /// 13:
                         cbor.createArray(collateralinput_count);           /// [  ]
@@ -191,9 +198,9 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
 
 
                     }
-                    std::uint16_t const & referenceinput_count = TransactionInput.getReferenceInputCount();
+                    std::uint16_t const & referenceinput_count = TransactionInput.getInputsReferencesCount();
                     if(referenceinput_count > 0){
-                        ptrvec = TransactionInput.getReferenceInputs().data();
+                        ptrvec = TransactionInput.getInputsReferences().data();
                         cbor.addIndexMap(18);                              /// 18:
                         cbor.createArray(referenceinput_count);           /// [  ]
                         for(std::uint16_t t = 0; t < referenceinput_count; t++){
@@ -327,17 +334,19 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                     cbor.addUint(ttl);                                   /// ttl
                 };break;
                 case 4 :{
-                    cbor.addIndexMap(4);                                 /// 4:
-                    cbor.bypassVectorCbor(getCborCertificates());        /// certificates
+                    cbor.addIndexMap(4);                                       /// 4:
+                    cbor.createArray(static_cast<std::uint64_t>(Certificate.getCborCertificatesCount()));
+                    cbor.bypassVectorCbor(Certificate.getCborCertificates());  /// certificates
                 };break;
                 case 5 :{
-                    ptrvec = withdrawals.data();
+                    std::uint16_t const & withdrawals_count = Withdrawal.getWithdrawalsCount();
+                    ptrvec = Withdrawal.getWithdrawals().data();
                     cbor.addIndexMap(5);                                 /// 5:
                     cbor.createMap(withdrawals_count);                   /// {  }
                     for(std::uint8_t i = 0; i < withdrawals_count; i++){
-                        cbor.addIndexMap(&ptrvec[0], 29);                /// stake_address_keyhash :
-                        cbor.addUint(&ptrvec[29]);                       /// stake_address_keyhash : amount
-                        ptrvec += 37;
+                        cbor.addIndexMap(&ptrvec[2], 29);                /// stake_address_keyhash :
+                        cbor.addUint(&ptrvec[31]);                       /// stake_address_keyhash : amount
+                        ptrvec += 39;
                     }
                 };break;
                 case 6 :{};break;
@@ -354,46 +363,82 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                 case 11 :{   // redeemers | datums | laguage views
 
                     std::unique_ptr<CborSerialize> script_data(new CborSerialize);
-                    std::vector<std::uint8_t>buff_vector{};
-                    std::uint16_t const & datum_data_count = TransactionInput.getDatumInputCount();
-                    std::uint16_t const & redeemer_data_count = TransactionInput.getRedeemerInputCount();
+                    std::uint16_t const & datum_data_count = TransactionInput.getSpendingDatumsCount();
+                    std::uint16_t const & spendredeemer_data_count = TransactionInput.getSpendingRedeemersCount();
+                    std::uint16_t const & certredeemer_data_count = Certificate.getCertificateRedeemersCount();
+                    std::uint16_t const & rewardredeemer_data_count = Withdrawal.getWithdrawalRedeemersCount();
 
-                    if(redeemer_data_count == 0 && datum_data_count > 0 ){           ///  80 | datums | A0
+                    switch((witnessmapcountbit & 0x30)){
+                    case 0x10:{
 
-                        ptrvec = TransactionInput.getDatums().data();
+                        ptrvec = TransactionInput.getSpendingDatums().data();
                         script_data->createArray(0);                                                       //  80
                         script_data->createArray(static_cast<std::uint64_t>(datum_data_count));            //  [datums]
                         for(std::uint16_t t = 0; t < datum_data_count;t++){
                             script_data->bypassPtrUint8Cbor( ptrvec+10, extract8bytestoUint64(ptrvec+2) );
                             ptrvec += extract8bytestoUint64(ptrvec+2) + 10;
                         }
-                        script_data->createMap(0);                                                        //  A0
+                        script_data->createMap(0);                                                          //  A0
 
                         std::vector<std::uint8_t> const &buff_getCbor = script_data->getCbor();  // se agrega la serializacion a la variable cbor_datums (se usa en witnnes)
                         cbor_datums.assign(buff_getCbor.begin()+1, buff_getCbor.end()-1 );
 
+                    };break;
+                    case 0x30:
+                    case 0x20:{
+                        std::uint16_t const redeemer_data_count = spendredeemer_data_count + certredeemer_data_count + rewardredeemer_data_count;
 
+                        script_data->createArray(static_cast<std::uint64_t>(redeemer_data_count));                // [ ]
 
-                    }else if(redeemer_data_count > 0 && TransactionInput.getReferencesStriptsType() > 1){ ///  redeemer | datums | language views
+                        if(spendredeemer_data_count){
+                            ptrvec = TransactionInput.getSpendingRedeemers().data();
+                            for(std::uint16_t t = 0; t < spendredeemer_data_count;t++){
+                                script_data->createArray(4);                                                           // [ , , , ]
+                                script_data->addUint( *( ptrvec + 2 ) );                                               // tag
+                                script_data->addUint(extract2bytestoUint16( ptrvec ));                                 // index
+                                script_data->bypassPtrUint8Cbor( ptrvec + 11, extract8bytestoUint64( ptrvec + 3 ) );   // plutus_data
+                                ptrvec += extract8bytestoUint64( ptrvec + 3 ) + 11;                                    // cambio al posicion de ptrvec
+                                script_data->bypassPtrUint8Cbor(ptrvec + 8, extract8bytestoUint64( ptrvec ));          // ex_units
+                                ptrvec += extract8bytestoUint64( ptrvec ) + 8;
+                            }
 
-                        script_data->createArray(static_cast<std::uint64_t>(redeemer_data_count));                        // [ ]
-                        ptrvec = TransactionInput.getRedeemers().data();
-                        for(std::uint16_t t = 0; t < redeemer_data_count;t++){
-                            script_data->createArray(4);                                                           // [ , , , ]
-                            script_data->addUint(extract2bytestoUint16( ptrvec + 2 ));                             // tag
-                            script_data->addUint(extract2bytestoUint16( ptrvec ));                                 // index
-                            script_data->bypassPtrUint8Cbor( ptrvec + 11, extract8bytestoUint64( ptrvec + 3 ) );   // plutus_data
-                            ptrvec += extract8bytestoUint64( ptrvec + 3 ) + 11;                                    // cambio al posicion de ptrvec
-                            script_data->bypassPtrUint8Cbor(ptrvec + 8, extract8bytestoUint64( ptrvec ));          //  ex_units
-                            ptrvec += extract8bytestoUint64( ptrvec ) + 8;
                         }
+
+                        if(certredeemer_data_count){
+                            ptrvec = Certificate.getCertificateRedeemers().data();
+                            for(std::uint16_t t = 0; t < certredeemer_data_count;t++){
+                                script_data->createArray(4);                                                           // [ , , , ]
+                                script_data->addUint( *( ptrvec + 2 ) );                                               // tag
+                                script_data->addUint(extract2bytestoUint16( ptrvec ));                                 // index
+                                script_data->bypassPtrUint8Cbor( ptrvec + 11, extract8bytestoUint64( ptrvec + 3 ) );   // plutus_data
+                                ptrvec += extract8bytestoUint64( ptrvec + 3 ) + 11;                                    // cambio al posicion de ptrvec
+                                script_data->bypassPtrUint8Cbor(ptrvec + 8, extract8bytestoUint64( ptrvec ));          // ex_units
+                                ptrvec += extract8bytestoUint64( ptrvec ) + 8;
+                            }
+
+                        }
+
+                        if(rewardredeemer_data_count){
+                            ptrvec = Withdrawal.getWithdrawalRedeemers().data();
+                            for(std::uint16_t t = 0; t < certredeemer_data_count;t++){
+                                script_data->createArray(4);                                                           // [ , , , ]
+                                script_data->addUint( *( ptrvec + 2 ) );                                               // tag
+                                script_data->addUint(extract2bytestoUint16( ptrvec ));                                 // index
+                                script_data->bypassPtrUint8Cbor( ptrvec + 11, extract8bytestoUint64( ptrvec + 3 ) );   // plutus_data
+                                ptrvec += extract8bytestoUint64( ptrvec + 3 ) + 11;                                    // cambio al posicion de ptrvec
+                                script_data->bypassPtrUint8Cbor(ptrvec + 8, extract8bytestoUint64( ptrvec ));          // ex_units
+                                ptrvec += extract8bytestoUint64( ptrvec ) + 8;
+                            }
+
+                        }
+
 
                         std::vector<std::uint8_t> const &buff_getCbor = script_data->getCbor();  // se agrega la serializacion a la variable cbor_redeemers (se usa en witnnes)
                         cbor_redeemers.assign(buff_getCbor.begin(), buff_getCbor.end());
 
-                        if(datum_data_count > 0){
-                            ptrvec = TransactionInput.getDatums().data();
-                            script_data->createArray(static_cast<std::uint64_t>(datum_data_count));                       //  [datums]
+                        if(datum_data_count){
+                            ptrvec = TransactionInput.getSpendingDatums().data();
+                            script_data->createArray(static_cast<std::uint64_t>(datum_data_count));                 //  [datums]
                             for(std::uint16_t t = 0; t < datum_data_count;t++){
                                 script_data->bypassPtrUint8Cbor( ptrvec+10, extract8bytestoUint64(ptrvec+2) );
                                 ptrvec += extract8bytestoUint64(ptrvec+2) + 10;
@@ -403,29 +448,26 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
 
                         cbor_datums.assign(buff_getCbor.begin()+cbor_redeemers.size(), buff_getCbor.end() );   // se agrega la serializacion a la variable cbor_datums (se usa en witnnes)
 
-                        switch(TransactionInput.getReferencesStriptsType()){                                               //  language views
+                        switch(TransactionInput.getGlobalReferencesScriptsType()){                                //  language views
                         case 2: {script_data->bypassPtrUint8Cbor(V1language_views,444);};break;
                         case 3: {script_data->bypassPtrUint8Cbor(V2language_views,467);};break;
+                            /// poner un error en el default si no se selecciono un tipo
                         }
 
-                    }else{
-                        /// ERROR
-                        cbor.addIndexMap(11);
-                        cbor.addBytesArray();
 
-                        break;
+                    };break;
                     }
 
                     std::vector<std::uint8_t> const  & cbor_script_data = script_data->getCbor();
                     std::uint8_t script_data_hash[32];
 
-                    /**
+
                     std::cout <<"\n cbor_script_data: ";
                     for (std::uint8_t i : cbor_script_data){
                         std::cout << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(i);
                     }
                     std::cout <<std::endl;
-                    **/
+
 
                     crypto_generichash_blake2b(script_data_hash, 32, cbor_script_data.data(), cbor_script_data.size(), nullptr, 0); //blake2b256(cbor_script_data)
                     cbor.addIndexMap(11);                         /// 11:
