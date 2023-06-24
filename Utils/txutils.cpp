@@ -12,30 +12,6 @@ void addUint64toVector(std::vector <std::uint8_t> & bytesvector, std::uint64_t c
     bytesvector.push_back( ( numero ) & 0xff );
 }
 
-void insertUint64toVector(std::vector <std::uint8_t> & bytesvector, std::vector<std::uint8_t>::iterator & it, std::uint64_t const & numero){
-    std::vector <std::uint8_t> bytes_numero;
-    bytes_numero.push_back( ( numero >> 56 ) & 0xff );
-    bytes_numero.push_back( ( numero >> 48 ) & 0xff );
-    bytes_numero.push_back( ( numero >> 40 ) & 0xff );
-    bytes_numero.push_back( ( numero >> 32 ) & 0xff );
-    bytes_numero.push_back( ( numero >> 24 ) & 0xff );
-    bytes_numero.push_back( ( numero >> 16 ) & 0xff );
-    bytes_numero.push_back( ( numero >> 8 ) & 0xff );
-    bytes_numero.push_back( ( numero ) & 0xff );
-    bytesvector.insert(it, bytes_numero.begin(),bytes_numero.end());
-}
-
-void replaceUint64toVector(std::vector<std::uint8_t>::iterator & bytesvector, std::uint64_t const & numero){
-    *bytesvector =( ( numero >> 56 ) & 0xff );
-    *(bytesvector + 1) =( ( numero >> 48 ) & 0xff );
-    *(bytesvector + 2) =( ( numero >> 40 ) & 0xff );
-    *(bytesvector + 3) =( ( numero >> 32 ) & 0xff );
-    *(bytesvector + 4) =( ( numero >> 24 ) & 0xff );
-    *(bytesvector + 5) =( ( numero >> 16 ) & 0xff );
-    *(bytesvector + 6) =( ( numero >> 8 ) & 0xff );
-    *(bytesvector + 7) =( ( numero ) & 0xff );
-}
-
 void addUint16toVector(std::vector <std::uint8_t> & bytesvector, std::uint16_t const & numero){
     bytesvector.push_back( ( numero >> 8 ) & 0xff );
     bytesvector.push_back( ( numero ) & 0xff );
@@ -44,11 +20,6 @@ void addUint16toVector(std::vector <std::uint8_t> & bytesvector, std::uint16_t c
 void addUint16toVector(std::vector <std::uint8_t> *& bytesvector, std::uint16_t *& numero){
     bytesvector->push_back( ( *numero >> 8 ) & 0xff );
     bytesvector->push_back( ( *numero ) & 0xff );
-}
-
-void replaceUint16toVector(std::vector<std::uint8_t>::iterator & bytesvector, std::uint16_t const & numero){
-    *bytesvector = ( ( numero >> 8 ) & 0xff );
-    *( bytesvector + 1 ) = ( ( numero ) & 0xff );
 }
 
 void replaceUint16toVector(std::uint8_t * bytesvector, std::uint16_t const & numero){

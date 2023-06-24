@@ -39,7 +39,7 @@ public:
     explicit TransactionWitness();
     virtual ~TransactionWitness();
     TransactionWitness & addVkeyWitness( std::uint8_t const * const public_key, std::uint8_t const * const signature_transactionbody );
-    TransactionWitness & addNativeScript( std::uint8_t const * const cborNativeScript, std::size_t const cborNativeScript_len );
+    //TransactionWitness & addNativeScript( std::uint8_t const * const cborNativeScript, std::size_t const cborNativeScript_len );
     TransactionWitness & addNativeScript( std::vector<std::uint8_t> const & cborNativeScript );
     TransactionWitness & addRedeemer( std::vector <std::uint8_t> const & cborRedeemers);
     TransactionWitness & addDatum(std::vector <std::uint8_t> const & cborDatums);
@@ -52,13 +52,16 @@ private:
     std::size_t buff_sizet;
     std::uint8_t witnessmapcountbit;
     std::uint16_t vkeywitness_count; //maximo 65534
+    std::uint16_t cbor_plutusv1scripts_count{0};
+    std::uint16_t cbor_plutusv2scripts_count{0};
+    std::uint16_t cbor_native_script_count{0};
     CborSerialize cbor;
     std::vector <std::uint8_t> vkeywitness{};
     std::vector <std::uint8_t> cbor_datums{};
     std::vector <std::uint8_t> cbor_redeemers{};
-    std::vector <std::uint8_t> cbor_plutusv1scripts{};
-    std::vector <std::uint8_t> cbor_plutusv2scripts{};
-    std::vector <std::uint8_t> cbor_native_script{};
+    std::vector <std::uint8_t> const *cbor_plutusv1scripts{};
+    std::vector <std::uint8_t> const *cbor_plutusv2scripts{};
+    std::vector <std::uint8_t> const *cbor_native_script{};
 
 };
 

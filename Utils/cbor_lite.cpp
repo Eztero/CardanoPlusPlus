@@ -177,7 +177,7 @@ CborSerialize &CborSerialize::bypassVectorCbor(std::vector<std::uint8_t> const &
     return *this;
 }
 
-CborSerialize &CborSerialize::bypassIteratorVectorCbor(std::vector<std::uint8_t>::iterator const &it_begin, std::vector<std::uint8_t>::iterator const &it_end){
+CborSerialize &CborSerialize::bypassIteratorVectorCbor(std::vector<std::uint8_t>::const_iterator it_begin, std::vector<std::uint8_t>::const_iterator it_end){
     bytes_cbor_data.insert(bytes_cbor_data.end(), it_begin, it_end);
     return *this;
 }

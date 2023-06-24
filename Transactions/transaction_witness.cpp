@@ -34,16 +34,16 @@ TransactionWitness &TransactionWitness::addVkeyWitness( std::uint8_t const * con
 // y todos ellos iran incluido en un array de datos por lo que solo se necesita la cantidad de elementos de este array
 // |cantidad | nativescript1 |  nativescript2 | ... |
 // Recibe los native_script de las transacciones input
-TransactionWitness &TransactionWitness::addNativeScript( std::uint8_t const *const cborNativeScript, std::size_t const cborNativeScript_len ){
 
-    cbor_native_script.assign(cborNativeScript, cborNativeScript + cborNativeScript_len );
-
-    return *this;
-}
+//TransactionWitness &TransactionWitness::addNativeScript( std::uint8_t const *const cborNativeScript, std::size_t const cborNativeScript_len ){
+//    cbor_native_script.assign(cborNativeScript, cborNativeScript + cborNativeScript_len );
+//    return *this;
+//}
 
 TransactionWitness & TransactionWitness::addNativeScript( std::vector<std::uint8_t> const & cborNativeScript ){
 
-    addNativeScript(cborNativeScript.data(), cborNativeScript.size());
+    cbor_native_script = &cborNativeScript;
+    witnessmapcountbit |= 0x02;
 
     return *this;
 }
@@ -75,7 +75,9 @@ TransactionWitness & TransactionWitness::addDatum(std::vector <std::uint8_t> con
 // esquema:  |cantidad | plutus_v1_script1 | plutus_v1_script2 | ... |
 // Recibe los plutus_v1_script de las transacciones input
 TransactionWitness & TransactionWitness::addPlutusV1Script(std::vector <std::uint8_t> const & cborPlutusV1Scripts){
-    cbor_plutusv1scripts.assign(cborPlutusV1Scripts.begin(), cborPlutusV1Scripts.end());
+    cbor_plutusv1scripts = &cborPlutusV1Scripts;
+    //cbor_plutusv1scripts.assign(cborPlutusV1Scripts.begin(), cborPlutusV1Scripts.end());
+    witnessmapcountbit |= 0x08;
     return *this;
 }
 
@@ -83,7 +85,9 @@ TransactionWitness & TransactionWitness::addPlutusV1Script(std::vector <std::uin
 // esquema:  |cantidad | plutus_v2_script1 | plutus_v2_script2 | ... |
 // Recibe los plutus_v2_script de las transacciones input
 TransactionWitness & TransactionWitness::addPlutusV2Script(std::vector <std::uint8_t> const & cborPlutusV2Scripts){
-    cbor_plutusv2scripts.assign(cborPlutusV2Scripts.begin(), cborPlutusV2Scripts.end());
+    cbor_plutusv2scripts = &cborPlutusV2Scripts;
+    //cbor_plutusv2scripts.assign(cborPlutusV2Scripts.begin(), cborPlutusV2Scripts.end());
+    witnessmapcountbit |= 0x40;
     return *this;
 }
 
@@ -117,12 +121,16 @@ std::vector<std::uint8_t> const & TransactionWitness::Build(){
                 };break;
                 case 1:{
                     cbor.addIndexMap(static_cast<uint64_t>(1));                 /// ? 1:
+                    cbor.createArray(extract2bytestoUint16(cbor_native_script->data()));
+                    cbor.bypassIteratorVectorCbor(cbor_native_script->begin() + 2,cbor_native_script->end());
                 };break;
                 case 2:{
 
                 };break;
                 case 3:{
                     cbor.addIndexMap(static_cast<uint64_t>(3));                 /// ? 3:
+                    cbor.createArray(extract2bytestoUint16(cbor_plutusv1scripts->data()));
+                    cbor.bypassIteratorVectorCbor(cbor_plutusv1scripts->begin() + 2, cbor_plutusv1scripts->end());
                 };break;
                 case 4:{
                     cbor.addIndexMap(static_cast<uint64_t>(4));                 /// ? 4:
@@ -134,6 +142,8 @@ std::vector<std::uint8_t> const & TransactionWitness::Build(){
                 };break;
                 case 6:{
                     cbor.addIndexMap(static_cast<uint64_t>(6));                 /// ? 6:
+                    cbor.createArray(extract2bytestoUint16(cbor_plutusv2scripts->data()));
+                    cbor.bypassIteratorVectorCbor(cbor_plutusv2scripts->begin() + 2, cbor_plutusv2scripts->end());
                 };break;
                 }
             }
