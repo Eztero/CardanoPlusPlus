@@ -22,23 +22,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Documentation:
-https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
+https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-suite/cddl-files/babbage.cddl
 **/
 
+#ifndef AUXILIARY_DATA
+#define AUXILIARY_DATA
 
-#ifndef BIP39_HPP
-#define BIP39_HPP
-#include <sodium.h> ///library libsodium ,init with sodium_init()
-#include <cstring>
+#include <vector>
 #include <cstdint>
-#include <cstdlib>
-#include "diccionary.hpp"
+#include "../Utils/cbor_lite.hpp"
+#include "metadata.hpp"
 
-///Returns its entropy and its length in bytes ; if there is an error it returns a nullptr; free memory with free()
-std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary[][2048], std::size_t *const entropy_length_bytes);
+class AuxiliaryData : private Metadatas{
+public:
+    explicit AuxiliaryData();
+    bool arethereAuxiliaryData() const;
+    std::vector<std::uint8_t> const &Build();
 
-///Returns its mnemotics and its length in bytes, valid entropy range 128 - 256 bits ; if there is an error it returns a nullptr; free memory with free()
-char *entropy2mnemotic(std::uint8_t const *const entropy, std::size_t const *const entropy_length_bytes, char const diccionary[][2048], std::size_t *const mnemotic_length);
+private:
+    std::uint8_t auxiliarymapcountbit;
+    CborSerialize cbor;
+    //std::vector <std::uint8_t> cborAuxiliaryData;
 
+};
 
 #endif

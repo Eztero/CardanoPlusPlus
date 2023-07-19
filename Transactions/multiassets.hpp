@@ -22,23 +22,33 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Documentation:
-https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
+https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-suite/cddl-files/babbage.cddl
 **/
 
+#ifndef MULTIASSETS_HPP
+#define MULTIASSETS_HPP
 
-#ifndef BIP39_HPP
-#define BIP39_HPP
-#include <sodium.h> ///library libsodium ,init with sodium_init()
-#include <cstring>
 #include <cstdint>
-#include <cstdlib>
-#include "diccionary.hpp"
+#include <vector>
+#include <string>
+#include <new>
 
-///Returns its entropy and its length in bytes ; if there is an error it returns a nullptr; free memory with free()
-std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary[][2048], std::size_t *const entropy_length_bytes);
+#include "../Utils/cbor_lite.hpp"
 
-///Returns its mnemotics and its length in bytes, valid entropy range 128 - 256 bits ; if there is an error it returns a nullptr; free memory with free()
-char *entropy2mnemotic(std::uint8_t const *const entropy, std::size_t const *const entropy_length_bytes, char const diccionary[][2048], std::size_t *const mnemotic_length);
+class Multiassets{
+public:
+    explicit Multiassets();
+    virtual ~Multiassets();
+    Multiassets &addAsset(std::uint8_t const *const policyID, std::uint8_t const *const assetname, std::size_t const &assetname_len, std::uint64_t const amount);
+    Multiassets &addAsset(std::uint8_t const *const policyID, std::string assetname, std::uint64_t const amount);
+    //std::uint8_t const &minUTXORequired();
+    std::vector<std::uint8_t> const &getCborMultiassets();
+private:
 
+    //std::vector<std::uint8_t> buffer_cbor;
+    std::vector< std::vector<std::uint8_t> > capsula;
+    //CborSerialize *cbor; //se usa buffer_cbor para serializar en cbor
+    CborSerialize cbor;
+};
 
 #endif

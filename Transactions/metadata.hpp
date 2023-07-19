@@ -21,24 +21,29 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-Documentation:
-https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
 **/
 
+#ifndef METADATA_HPP
+#define METADATA_HPP
 
-#ifndef BIP39_HPP
-#define BIP39_HPP
-#include <sodium.h> ///library libsodium ,init with sodium_init()
-#include <cstring>
+#include <vector>
 #include <cstdint>
-#include <cstdlib>
-#include "diccionary.hpp"
+#include "../Utils/cbor_lite.hpp"
+#include "../Utils/txutils.hpp"
 
-///Returns its entropy and its length in bytes ; if there is an error it returns a nullptr; free memory with free()
-std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary[][2048], std::size_t *const entropy_length_bytes);
-
-///Returns its mnemotics and its length in bytes, valid entropy range 128 - 256 bits ; if there is an error it returns a nullptr; free memory with free()
-char *entropy2mnemotic(std::uint8_t const *const entropy, std::size_t const *const entropy_length_bytes, char const diccionary[][2048], std::size_t *const mnemotic_length);
-
+class Metadatas{
+public:
+    explicit Metadatas();
+void addMetadata(std::uint64_t const keytag, std::vector<std::uint8_t> const &CborMetadata);
+//Metadatas &addMetadata(std::uint64_t const keytag, std::string const metadata);  ///SIN TERMINAR
+bool arethereMetadatas() const;
+std::vector<std::uint8_t> const &getCborMetadatas();
+private:
+std::uint8_t * ptrvec;
+std::uint16_t metadata_count;
+std::vector <std::uint8_t> metadata;
+CborSerialize cbor;
+//std::vector <std::uint8_t> metadata_cbor;
+};
 
 #endif
