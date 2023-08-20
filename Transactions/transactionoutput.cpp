@@ -14,6 +14,10 @@
 ///    1(address_keyhash_len) + 57(address_keyhash) + 8(amount)
 /// 94+n bytes maximo de largo cada output
 
+namespace Cardano{
+
+
+
 TransactionsOutputs::TransactionsOutputs(){
     //cbor.reset(new CborSerialize( &cbor_array ));
     outputmap_countbit = 0;
@@ -31,7 +35,7 @@ TransactionsOutputs &TransactionsOutputs::addOutput(std::uint8_t const * const a
     if(outputmap_countbit & 0x02){ // si tiene un asset previo, se borran los datos
             std::vector<std::uint8_t> const & cbor_array = getCborMultiassets();
             tx_output.push_back(0x01); //separador
-            addUint64toVector(tx_output, cbor_array.size()); // se agrega el largo de la cadena data_cbor
+            Utils::addUint64toVector(tx_output, cbor_array.size()); // se agrega el largo de la cadena data_cbor
             tx_output.insert(tx_output.end(),cbor_array.begin(),cbor_array.end()); // se agrega data_cbor
             outputmap_countbit &= 0xfb;  // se pone a cero el outputmap_countbit para asset, en caso de un error evita que se vuelva a copiar
             tx_output[pos_registro_elementos] += 1;  // se agrega el conteo a asset
@@ -62,7 +66,7 @@ TransactionsOutputs &TransactionsOutputs::addOutput(std::uint8_t const * const a
             tx_output.push_back(1); // agrega el indicador que define la existencia de assets en este output, 1 = no hay
             tx_output.push_back(static_cast<std::uint8_t>(address_keyhash_len)); //Agrega el address_keyhash_len en un bytes antes del address_keyhash
             tx_output.insert(tx_output.end(), address_keyhash, address_keyhash + address_keyhash_len); //Agrega el array address_keyhash
-            addUint64toVector(tx_output, amount); //Agrega el amount en 8 bytes
+            Utils::addUint64toVector(tx_output, amount); //Agrega el amount en 8 bytes
             //tx_output.push_back(0); // cierra esta transaccion
             bodymap_countbit |= 0x0002;
             outputmap_countbit |= 0x01;
@@ -76,7 +80,7 @@ TransactionsOutputs &TransactionsOutputs::addOutput(std::uint8_t const * const a
 
 TransactionsOutputs &TransactionsOutputs::addOutput(std::string const payment_address, std::uint64_t const amount){
 
-    if(bech32_decode(payment_address.c_str(), addr_keyhash_buffer, &addr_keyhash_buffer_len)){
+    if(Hash::bech32_decode(payment_address.c_str(), addr_keyhash_buffer, &addr_keyhash_buffer_len)){
         addOutput(addr_keyhash_buffer, addr_keyhash_buffer_len, amount);
     }
 
@@ -105,7 +109,7 @@ if((outputmap_countbit & 0x10) == 0){   // si no existe un returncolateral
             tx_output.push_back(5); // separador, indica que es el inicio de esta transaccion
             tx_output.push_back(static_cast<std::uint8_t>(address_keyhash_len)); //Agrega el address_keyhash_len en un bytes antes del address_keyhash
             tx_output.insert(tx_output.end(), address_keyhash, address_keyhash + address_keyhash_len); //Agrega el array address_keyhash
-            addUint64toVector(tx_output, amount); //Agrega el amount en 8 bytes
+            Utils::addUint64toVector(tx_output, amount); //Agrega el amount en 8 bytes
             //tx_output.push_back(0); // cierra esta transaccion
             bodymap_countbit |= 0x10000;  // indica a txbody que existe un return colateral
             outputmap_countbit |= 0x10;
@@ -120,7 +124,7 @@ if((outputmap_countbit & 0x10) == 0){   // si no existe un returncolateral
 
 TransactionsOutputs &TransactionsOutputs::addColateralReturn(std::string const payment_address, std::uint64_t const amount){
 
-    if(bech32_decode(payment_address.c_str(), addr_keyhash_buffer, &addr_keyhash_buffer_len)){
+    if(Hash::bech32_decode(payment_address.c_str(), addr_keyhash_buffer, &addr_keyhash_buffer_len)){
         addColateralReturn(addr_keyhash_buffer, addr_keyhash_buffer_len, amount);
     }
 
@@ -152,7 +156,7 @@ TransactionsOutputs &TransactionsOutputs::addAsset(std::uint8_t const *const pol
         posicion += 1;                  // se pasa a la siguiente posicion (columna)
         igual = 0;
         for(int a = 0; a < 28 ;a++){  // compara en largos de 28bytes, revisa si se repiten los policyID
-            it++;                     // inicia saltando a la primera posicion
+            ++it;                     // inicia saltando a la primera posicion
             if(*it == policyID[a]){
                 igual++;
             }
@@ -196,16 +200,24 @@ TransactionsOutputs &TransactionsOutputs::addAsset(std::uint8_t const *const pol
     return *this;
 
     }
-TransactionsOutputs &TransactionsOutputs::addAsset(std::uint8_t const *const policyID, std::string assetname, std::uint64_t const amount){
+
+TransactionsOutputs &TransactionsOutputs::addAsset(std::string  policyID, std::string assetname, std::uint64_t const amount){
 
     std::uint8_t assetname_len = assetname.size();
+    std::size_t policy_id_len = 0;
     std::uint8_t asset_name[assetname_len]{};
     for(std::uint8_t a = 0; a < assetname_len; a ++){
         asset_name[a] = static_cast<uint8_t>(assetname[a]);
 
     }
-    addAsset(policyID, asset_name, assetname_len, amount);
 
+    std::uint8_t const *policy_id =  Utils::hexchararray2uint8array(policyID, &policy_id_len);
+    if(policy_id_len != 28){
+            delete[] policy_id;
+            throw std::invalid_argument("addAsset error, PolicyID is not a 28 byte array ");
+    }
+    addAsset(policy_id, asset_name, assetname_len, amount);
+    delete[] policy_id;
     return *this;
 }
 
@@ -217,7 +229,7 @@ TransactionsOutputs &TransactionsOutputs::addDatumHash(std::uint8_t const *const
  std::vector<std::uint8_t> const & cbor_array = cbor.getCbor();
 
  tx_output.push_back(2); //separador
- addUint64toVector(tx_output, cbor_array.size());               // cantidad de bytes del datumhash
+ Utils::addUint64toVector(tx_output, cbor_array.size());               // cantidad de bytes del datumhash
  tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end()); // datumhash
  outputmap_countbit |= 0x04;             // indica que existe un datum  o un datumhash ligado a una direccion
  tx_output[pos_registro_elementos] +=1; // se aumenta en 1 el contador de elementos en tx_output
@@ -227,7 +239,7 @@ TransactionsOutputs &TransactionsOutputs::addDatumHash(std::uint8_t const *const
 
 // ? datum = h'hash32'
 TransactionsOutputs &TransactionsOutputs::addDatumHashcreatedfromJson(std::string &json_datum){
-std::unique_ptr<PlutusJsonSchema> Json_p(new PlutusJsonSchema());
+std::unique_ptr<Utils::PlutusJsonSchema> Json_p(new Utils::PlutusJsonSchema());
 Json_p->addSchemaJson(json_datum);
 
  if((outputmap_countbit & 0x05) == 1){   // si existe un output y no existe un datumhash
@@ -236,7 +248,7 @@ Json_p->addSchemaJson(json_datum);
  std::vector<std::uint8_t> const & cbor_array = cbor.getCbor();
 
  tx_output.push_back(2); //separador
- addUint64toVector(tx_output, cbor_array.size());               // cantidad de bytes del datumhash
+ Utils::addUint64toVector(tx_output, cbor_array.size());               // cantidad de bytes del datumhash
  tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end()); // datumhash
  outputmap_countbit |= 0x04;            // indica que existe un datum  o un datumhash ligado a una direccion
  tx_output[pos_registro_elementos] +=1; // se aumenta en 1 el contador de elementos en tx_output
@@ -245,7 +257,7 @@ Json_p->addSchemaJson(json_datum);
 }
 
 // ? datum = 24(h'datum_value cbor')]
-TransactionsOutputs &TransactionsOutputs::addDatumIntValue(std::uint64_t const integer_datum){
+TransactionsOutputs &TransactionsOutputs::addReferenceDatumIntValue(std::uint64_t const integer_datum){
  if((outputmap_countbit & 0x05) == 1 ){  // si existe un output y no existe un datumvalue
  cbor.clearCbor();
  cbor.addTag(24);
@@ -253,7 +265,7 @@ TransactionsOutputs &TransactionsOutputs::addDatumIntValue(std::uint64_t const i
  std::vector<std::uint8_t> const & cbor_array = cbor.getCbor();
 
  tx_output.push_back(3); //separador
- addUint64toVector(tx_output, cbor_array.size()); // cantidad de bytes del datum
+ Utils::addUint64toVector(tx_output, cbor_array.size()); // cantidad de bytes del datum
  tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end()); // datum
  outputmap_countbit |= 0x04;             // indica que existe un datum  o un datumhash ligado a una direccion
  tx_output[pos_registro_elementos] +=1; // se aumenta en 1 el contador de elementos en tx_output
@@ -262,8 +274,8 @@ TransactionsOutputs &TransactionsOutputs::addDatumIntValue(std::uint64_t const i
 }
 
 // ? datum = 24(h'datum_value cbor')]
-TransactionsOutputs &TransactionsOutputs::addDatum(std::string &json_datum){
-std::unique_ptr<PlutusJsonSchema> Json_p(new PlutusJsonSchema());
+TransactionsOutputs &TransactionsOutputs::addReferenceDatum(std::string &json_datum){
+std::unique_ptr<Utils::PlutusJsonSchema> Json_p(new Utils::PlutusJsonSchema());
 Json_p->addSchemaJson(json_datum);
  if((outputmap_countbit & 0x05) == 1 ){  // si existe un output y no existe un datumvalue
  cbor.clearCbor();
@@ -272,7 +284,7 @@ Json_p->addSchemaJson(json_datum);
  std::vector<std::uint8_t> const & cbor_array = cbor.getCbor();
 
  tx_output.push_back(3); //separador
- addUint64toVector(tx_output, cbor_array.size()); // cantidad de bytes del datum
+ Utils::addUint64toVector(tx_output, cbor_array.size()); // cantidad de bytes del datum
  tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end());  // datum
  outputmap_countbit |= 0x04;            // indica que existe un datum  o un datumhash ligado a una direccion
  tx_output[pos_registro_elementos] +=1; // se aumenta en 1 el contador de elementos en tx_output
@@ -281,7 +293,10 @@ Json_p->addSchemaJson(json_datum);
 }
 
 //? script_ref = 24(h'script')
-TransactionsOutputs &TransactionsOutputs::addReferenceScript(TransactionsOutputs::ScriptType script_type, std::uint8_t const *const script_, std::size_t &script_len ){
+TransactionsOutputs &TransactionsOutputs::addReferenceScript(Cardano::ScriptType const script_type, std::uint8_t const *const script_, std::size_t &script_len ){
+if(script_type == ScriptType::None){
+throw std::invalid_argument("error in addReferenceScript(): ScriptType not valid");
+}
 if((outputmap_countbit & 0x09) == 1 ){ // si existe un output y no existe un scriptref
 std::vector<std::uint8_t> buff_vector;
 cbor.clearCbor();
@@ -296,12 +311,22 @@ cbor.addTag(24);
 cbor.addBytesArray(buff_vector.data(),buff_vector.size());
 
 tx_output.push_back(4); //separador
-addUint64toVector(tx_output, cbor_array.size());
+Utils::addUint64toVector(tx_output, cbor_array.size());
 tx_output.insert(tx_output.end(), cbor_array.begin(),cbor_array.end());
 outputmap_countbit |= 0x08;
 tx_output[pos_registro_elementos] +=1;
 
 }
+return *this;
+}
+
+TransactionsOutputs &TransactionsOutputs::addReferenceScript(Cardano::ScriptType const script_type, std::string & script_){
+
+std::size_t script_tipo_len = 0;
+std::uint8_t const *script_tipo = Utils::hexchararray2uint8array(script_, &script_tipo_len);
+addReferenceScript(script_type, script_tipo, script_tipo_len);
+delete[] script_tipo;
+
 return *this;
 }
 
@@ -335,7 +360,7 @@ std::vector<std::uint8_t> const & TransactionsOutputs::getTransactionsOutputs() 
     if(outputmap_countbit & 0x02){    // en caso de que no se cree una nueva salida (addOutput), se escriben los asset almacenados en memoria a la ultima salida
             std::vector<std::uint8_t> const & cbor_array = getCborMultiassets();
             tx_output.push_back(0x01); //separador
-            addUint64toVector(tx_output, cbor_array.size()); // se agrega el largo de la cadena data_cbor
+            Utils::addUint64toVector(tx_output, cbor_array.size()); // se agrega el largo de la cadena data_cbor
             tx_output.insert(tx_output.end(),cbor_array.begin(),cbor_array.end()); // se agrega data_cbor
             outputmap_countbit &= 0xfb;  // se pone a cero el outputmap_countbit para asset, en caso de un error evita que se vuelva a copiar
             tx_output[pos_registro_elementos] += 1;  // se agrega el conteo a assets
@@ -347,4 +372,6 @@ std::vector<std::uint8_t> const & TransactionsOutputs::getTransactionsOutputs() 
 
 std::uint16_t const &TransactionsOutputs::getAmountTransactionsOutputs() const {
 return tx_output_count;
+}
+
 }

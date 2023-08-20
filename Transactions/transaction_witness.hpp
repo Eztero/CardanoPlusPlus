@@ -33,6 +33,8 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "../Utils/cbor_lite.hpp"
 #include "../Utils/txutils.hpp"
 
+namespace Cardano{
+
 class TransactionWitness {
 
 public:
@@ -55,7 +57,7 @@ private:
     std::uint16_t cbor_plutusv1scripts_count{0};
     std::uint16_t cbor_plutusv2scripts_count{0};
     std::uint16_t cbor_native_script_count{0};
-    CborSerialize cbor;
+    Utils::CborSerialize cbor;
     std::vector <std::uint8_t> vkeywitness{};
     std::vector <std::uint8_t> cbor_datums{};
     std::vector <std::uint8_t> cbor_redeemers{};
@@ -64,5 +66,5 @@ private:
     std::vector <std::uint8_t> const *cbor_native_script{};
 
 };
-
+}
 #endif

@@ -32,12 +32,12 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "../Utils/cbor_lite.hpp"
 #include "../Hash/bech32.hpp"
 #include "../Utils/txutils.hpp"
-
+namespace Cardano{
 class NativeScripts{
 public:
     explicit NativeScripts();
     NativeScripts & SignatureOf(std::uint8_t const *const vk_hash);                // Argumento
-    NativeScripts & SignatureOf(std::string const payment_address);                      // Argumento
+    NativeScripts & SignatureOf(std::string const payment_address);                // Argumento
     NativeScripts & requireAllOf();                                                // Condicionales
     NativeScripts & requireAnyOf();                                                // Condicionales
     NativeScripts & requireAtLeastNOf(std::uint64_t const n);                      // Condicionales
@@ -52,9 +52,10 @@ private:
     std::uint8_t pec; // posicion en capsula
     std::uint8_t bufferbech32[BECH32_MAX_LENGTH]{};
     std::vector< std::vector<std::uint8_t> > capsula; // guarda el contenido de las firmas y tiempo
-    std::vector<std::uint8_t> condiciones; //Guarda las condicionantes como All, Any, N de K. Endrequire
-    std::vector<std::uint8_t> ppec; // posicion previa en capsula
-    CborSerialize cbor;
+    std::vector<std::uint8_t> condiciones{}; //Guarda las condicionantes como All, Any, N de K. Endrequire
+    std::vector<std::uint8_t> ppec{}; // posicion previa en capsula
+    Utils::CborSerialize cbor;
     //std::vector<std::uint8_t> cbornativescript;  // recibe los datos serializados en Cbor
     //std::vector<std::uint8_t> vector_buffer;
 };
+}

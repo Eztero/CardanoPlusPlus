@@ -1,5 +1,5 @@
 #include "multiassets.hpp"
-
+namespace Cardano{
 Multiassets::Multiassets(){
 //cbor = new CborSerialize( &buffer_cbor ); ///si no puede asignar memoria que lanze un error
 }
@@ -21,7 +21,7 @@ Multiassets &Multiassets::addAsset(std::uint8_t const *const policyID, std::uint
         posicion += 1; // se pasa a la siguiente posicion (columna)
         igual = 0;
         for(int a = 0; a < 28 ;a++){  // compara en largos de 28bytes, revisa si se repiten los policyID
-            it++;  // inicia saltando a la primera posicion
+            ++it;  // inicia saltando a la primera posicion
             if(*it == policyID[a]){
                 igual++;
             }
@@ -90,4 +90,5 @@ std::vector<std::uint8_t> const &Multiassets::getCborMultiassets(){
     }
     }
     return cbor.getCbor();
+}
 }

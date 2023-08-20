@@ -9,6 +9,14 @@
 /// +n (ex_units) (previamente serializado en cbor)
 /// 19+n bytes maximo de largo minimo
 
+/// Vector<std::uint8_t> withdrawals (withdrawals) :
+/// + 2 (index)
+/// + 29 (raw stake address)
+/// + 8 (amount)
+/// + 39 bytes de largo minimo
+
+namespace Cardano{
+
 Withdrawals::Withdrawals(){
 
     withdrawals_count = 0; //maximo 65534
@@ -25,7 +33,7 @@ Withdrawals::~Withdrawals(){
 
 Withdrawals & Withdrawals::addWithdrawals(std::uint8_t const * const raw_stake_address, std::uint64_t const amount){ // ? 5 : withdrawals
     /// 2(index) + 29 (raw stake address) + 8 (amount) = 39
-    if(withdrawals_count < UINT16_MAX && !existen_coincidencias(raw_stake_address, withdrawals.data(), 29, withdrawals_count, 41) ){ // Comprueba de que no se repitan las direcciones, si hay coincidencia se omite la direccion
+    if(withdrawals_count < UINT16_MAX && !Utils::existen_coincidencias(raw_stake_address, withdrawals.data(), 29, withdrawals_count, 41) ){ // Comprueba de que no se repitan las direcciones, si hay coincidencia se omite la direccion
 
         buff_sizet = static_cast<std::size_t>( withdrawals.capacity() ) - static_cast<std::size_t>( withdrawals.size() );
 
@@ -33,9 +41,9 @@ Withdrawals & Withdrawals::addWithdrawals(std::uint8_t const * const raw_stake_a
         if(buff_sizet < 39){
             withdrawals.reserve(withdrawals.size() + 39);
         }
-        addUint16toVector(withdrawals, withdrawals_count);  // Index
+        Utils::addUint16toVector(withdrawals, withdrawals_count);  // Index
         withdrawals.insert(withdrawals.end(), raw_stake_address, raw_stake_address + 29);
-        addUint64toVector(withdrawals, amount);
+        Utils::addUint64toVector(withdrawals, amount);
 
         bodymapcountbit |= 0x0020;
         ++withdrawals_count;
@@ -50,7 +58,7 @@ Withdrawals & Withdrawals::addWithdrawals(std::uint8_t const * const raw_stake_a
 Withdrawals & Withdrawals::addWithdrawals(std::string & stake_address, std::uint64_t const amount){ // ? 5 : withdrawals
     /// 2 (index) + 29 (raw stake address)  + 8 (amount) = 39
     std::uint16_t buffbech32_len = 0;
-    if(bech32_decode(stake_address.c_str(), buffbech32, &buffbech32_len)){
+    if(Hash::bech32_decode(stake_address.c_str(), buffbech32, &buffbech32_len)){
         if(buffbech32_len == 29){
             addWithdrawals(buffbech32, amount);
         }
@@ -61,9 +69,9 @@ Withdrawals & Withdrawals::addWithdrawals(std::string & stake_address, std::uint
 }
 
 void Withdrawals::addWithdrawalRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
-    std::unique_ptr<CborSerialize> rcbor(new CborSerialize);
-    std::unique_ptr<CborSerialize> unitscbor(new CborSerialize);
-    std::unique_ptr<PlutusJsonSchema> Json_p(new PlutusJsonSchema);
+    std::unique_ptr<Utils::CborSerialize> rcbor(new Utils::CborSerialize);
+    std::unique_ptr<Utils::CborSerialize> unitscbor(new Utils::CborSerialize);
+    std::unique_ptr<Utils::PlutusJsonSchema> Json_p(new Utils::PlutusJsonSchema);
 
     unitscbor->createArray(2);
     unitscbor->addUint(memoryunits); // mem
@@ -74,17 +82,16 @@ void Withdrawals::addWithdrawalRedeemer( std::string & json_redeemer, std::uint6
     std::vector<std::uint8_t> const & cbor_units = unitscbor->getCbor();
     std::vector<std::uint8_t> const & cbor_plutusdata = Json_p->getCborSchemaJson();
 
-    addUint16toVector( redeemer_withdrawals, (withdrawals_count - 1 ) );                                  /// Index_redeemer , LANZAR ERROR SI withdrawals_count=0
+    Utils::addUint16toVector( redeemer_withdrawals, (withdrawals_count - 1 ) );                            /// Index_redeemer , LANZAR ERROR SI withdrawals_count=0
     redeemer_withdrawals.push_back(static_cast<std::uint8_t>(3));                                          // tag = 3
-    addUint64toVector(redeemer_withdrawals,cbor_plutusdata.size());                                        // plutusdata_len
+    Utils::addUint64toVector(redeemer_withdrawals,cbor_plutusdata.size());                                 // plutusdata_len
     redeemer_withdrawals.insert(redeemer_withdrawals.end(),cbor_plutusdata.begin(),cbor_plutusdata.end()); // plutusdata
-    addUint64toVector(redeemer_withdrawals,cbor_units.size());                                             // cbor_ex_units_len
+    Utils::addUint64toVector(redeemer_withdrawals,cbor_units.size());                                      // cbor_ex_units_len
     redeemer_withdrawals.insert(redeemer_withdrawals.end(),cbor_units.begin(),cbor_units.end());           // cbor_ex_units
 
     ++redeemer_withdrawals_count;
     witnessmap_countbit |= 0x20;
 }
-
 
 void Withdrawals::alphanumeric_organization(){
 
@@ -121,15 +128,15 @@ void Withdrawals::alphanumeric_organization(){
         ptr_data = redeemer_withdrawals.data();
         for(std::uint16_t  i= 0; i<redeemer_withdrawals_count;i++ ){ // asigno las localizaciones a punteros
             ptr_redeemers[i] = ptr_data;
-            ptr_data += extract8bytestoUint64(ptr_data + 3) + 11;
-            ptr_data += extract8bytestoUint64(ptr_data) + 8;
+            ptr_data += Utils::extract8bytestoUint64(ptr_data + 3) + 11;
+            ptr_data += Utils::extract8bytestoUint64(ptr_data) + 8;
 
         }
         // reasigna los index
         for(std::uint16_t  i = 0; i < redeemer_withdrawals_count; i++ ){
             for(std::uint16_t  e = 0; e < withdrawals_count;e++ ){
                 if(ptr_redeemers[i][0] == ptr_wdrl[e][0] && ptr_redeemers[i][1] == ptr_wdrl[e][1]){
-                    replaceUint16toVector(ptr_redeemers[i], e );
+                    Utils::replaceUint16toVector(ptr_redeemers[i], e );
                     break;
                 }
             }
@@ -138,7 +145,7 @@ void Withdrawals::alphanumeric_organization(){
         countmenosuno = redeemer_withdrawals_count-1;
         for(std::uint16_t  i = 0; i < countmenosuno; i++ ){
             for(std::uint16_t  c = 0; c < countmenosuno; c++ ){
-                if(extract2bytestoUint16(ptr_redeemers[c]) > extract2bytestoUint16(ptr_redeemers[c+1])){
+                if(Utils::extract2bytestoUint16(ptr_redeemers[c]) > Utils::extract2bytestoUint16(ptr_redeemers[c+1])){
                     ptr_data = ptr_redeemers[c];
                     ptr_redeemers[c] = ptr_redeemers[c+1];
                     ptr_redeemers[c+1] = ptr_data;
@@ -163,8 +170,8 @@ void Withdrawals::alphanumeric_organization(){
     if(redeemer_withdrawals_count > 0){
         vector_data->clear();
         for(std::uint16_t  i = 0; i < redeemer_withdrawals_count; i++ ){
-            std::size_t ptr_redeeemers_len = extract8bytestoUint64(ptr_redeemers[i] + 3) + 11;
-            ptr_redeeemers_len += extract8bytestoUint64(ptr_redeemers[i] + ptr_redeeemers_len) + 8;
+            std::size_t ptr_redeeemers_len = Utils::extract8bytestoUint64(ptr_redeemers[i] + 3) + 11;
+            ptr_redeeemers_len += Utils::extract8bytestoUint64(ptr_redeemers[i] + ptr_redeeemers_len) + 8;
             vector_data->insert(vector_data->end(),ptr_redeemers[i] ,ptr_redeemers[i] + ptr_redeeemers_len);
         }
         redeemer_withdrawals.assign(vector_data->begin(), vector_data->end());
@@ -194,4 +201,6 @@ std::vector<std::uint8_t> const & Withdrawals::getWithdrawals() const{
 
 std::vector<std::uint8_t> const & Withdrawals::getWithdrawalRedeemers() const{
     return redeemer_withdrawals;
+}
+
 }

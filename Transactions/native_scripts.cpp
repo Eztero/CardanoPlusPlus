@@ -1,9 +1,10 @@
 #include "native_scripts.hpp"
-
+namespace Cardano{
 NativeScripts::NativeScripts(){
     eoc = 0; //espacio ocupado en capsula
     pec = 0; // posicion en capsula
     condiciones.reserve(100);
+    ppec.reserve(100);
     //vector_buffer.reserve(42);
 }
 
@@ -63,7 +64,7 @@ NativeScripts & NativeScripts::requireAtLeastNOf(std::uint64_t const n){
     eoc ++;
     pec = eoc;
     condiciones.push_back(0x13);
-    addUint64toVector(condiciones, n); //agrega 8 bytes referente a la cantidad K de "N de K"
+    Utils::addUint64toVector(condiciones, n); //agrega 8 bytes referente a la cantidad K de "N de K"
     condiciones.push_back( eoc );
     capsula[eoc].reserve(224); //reserva 224 bytes para trabajar
     capsula[eoc].push_back(0); //inicia el array de la capsula en cero, el primer array indica la cantidad de elementos de la capsula
@@ -109,7 +110,7 @@ NativeScripts & NativeScripts::SignatureOf(std::uint8_t const *const vk_hash){
 
 NativeScripts & NativeScripts::SignatureOf(std::string const payment_address){
     std::uint16_t bufferbech32_len = 0;
-    if(bech32_decode(payment_address.c_str(), bufferbech32, &bufferbech32_len) && bufferbech32_len == 29){
+    if(Hash::bech32_decode(payment_address.c_str(), bufferbech32, &bufferbech32_len) && bufferbech32_len == 29){
         SignatureOf( &bufferbech32[1] );
     }
 
@@ -129,21 +130,21 @@ std::vector<std::uint8_t> const &NativeScripts::getCborNativeScripts(){
     while(it != condiciones.end()){
         switch(*it){
         case 0x11:{
-            it++; //pasa a donde muestra la posicion de los datos de la capsula
+            ++it; //pasa a donde muestra la posicion de los datos de la capsula
             cbor.createArray(2);
             cbor.addUint(1);
             cbor.createArray( capsula[*it][0] ); //agrega al array la cantidad de elementos que tiene la capsula
             cbor.bypassIteratorVectorCbor( capsula[*it].begin()+1, capsula[*it].end() );
         };break;
         case 0x12:{
-            it++;
+            ++it;
             cbor.createArray(2);
             cbor.addUint(2);
             cbor.createArray( capsula[*it][0] ); //agrega al array la cantidad de elementos que tiene la capsula
             cbor.bypassIteratorVectorCbor( capsula[*it].begin()+1, capsula[*it].end() );
         };break;
         case 0x13:{
-            it++;
+            ++it;
             cbor.createArray(3);
             cbor.addUint(3);
             cbor.addUint(&(*it)); //Crea una referencia uint8t al valor entregado por It, segun la funcion solo leera los primeros 8 bytes del vector
@@ -152,12 +153,12 @@ std::vector<std::uint8_t> const &NativeScripts::getCborNativeScripts(){
             cbor.bypassIteratorVectorCbor( capsula[*it].begin()+1, capsula[*it].end() );
         };break;
         default:{
-            it++;
+            ++it;
         };break;
         }
     }
     return cbor.getCbor();
     //return cbornativescript;
 }
-
+}
 

@@ -1,9 +1,8 @@
 #include "transaction_body.hpp"
 //https://www.rfc-editor.org/rfc/rfc8610
 #include <iomanip>
-
-
-TransactionBody::TransactionBody() : Certificates(),
+namespace Cardano{
+TransactionBody::TransactionBody() : Multiassets(),
     V1language_views{
         0xa1,0x41,0x00,0x59,0x01,0xb6,0x9f,0x1a,0x00,0x03,0x23,0x61,0x19,0x03,0x2c,0x01,0x01,0x19,0x03,0xe8,0x19,0x02,0x3b,0x00,
         0x01,0x19,0x03,0xe8,0x19,0x5e,0x71,0x04,0x01,0x19,0x03,0xe8,0x18,0x20,0x1a,0x00,0x01,0xca,0x76,0x19,0x28,0xeb,0x04,0x19,
@@ -53,6 +52,7 @@ TransactionBody::TransactionBody() : Certificates(),
     bodymapcountbit = 0;
     witnessmapcountbit = 0;
     //withdrawals_count = 0;
+    totalcollateral = 0;
     fee = 0;
     ttl = 0;
     vis = 0;
@@ -251,22 +251,22 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                             case 0x01:{   //"addAsset
                                 ptrvec += 1;
                                 pos_map_transaccion_output[1] = ptrvec;
-                                ptrvec += extract8bytestoUint64(ptrvec) + 8; //el numero 8, es un buffer de 8 bytes que almacena el largo en bytes del la variable
+                                ptrvec += Utils::extract8bytestoUint64(ptrvec) + 8; //el numero 8, es un buffer de 8 bytes que almacena el largo en bytes del la variable
                             };break;
                             case 0x02:{   //addDatumHash
                                 ptrvec += 1;
                                 pos_map_transaccion_output[2] = ptrvec;
-                                ptrvec += extract8bytestoUint64(ptrvec) + 8;
+                                ptrvec += Utils::extract8bytestoUint64(ptrvec) + 8;
                             };break;
-                            case 0x03:{   //addDatumValue
+                            case 0x03:{   //addReferenceDatum
                                 ptrvec += 1;
                                 pos_map_transaccion_output[3] = ptrvec;
-                                ptrvec += extract8bytestoUint64(ptrvec) + 8;
+                                ptrvec += Utils::extract8bytestoUint64(ptrvec) + 8;
                             };break;
                             case 0x04:{  //addReferenceScript
                                 ptrvec += 1;
                                 pos_map_transaccion_output[4] = ptrvec;
-                                ptrvec += extract8bytestoUint64(ptrvec) + 8;
+                                ptrvec += Utils::extract8bytestoUint64(ptrvec) + 8;
                             };break;
                             case 0x05:{  //addReturnColateral
                                 ptrvec += 1;
@@ -292,24 +292,24 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
 
                                 };break;
                                 case 1:{                                                                        ///  1: [amount, ? assets] ,
-                                    buff_uint32t = extract8bytestoUint64(pos_map_transaccion_output[c]);
+                                    buff_uint32t = Utils::extract8bytestoUint64(pos_map_transaccion_output[c]);
                                     cbor.bypassPtrUint8Cbor(pos_map_transaccion_output[c]+8, buff_uint32t);
                                 };break;
                                 case 2:{                                                                        /// ? 2: [0,hash32] ,
                                     cbor.addIndexMap(2).createArray(2).addUint(static_cast<std::uint64_t>(0));
 
-                                    buff_uint32t = extract8bytestoUint64(pos_map_transaccion_output[c]);
+                                    buff_uint32t = Utils::extract8bytestoUint64(pos_map_transaccion_output[c]);
                                     cbor.bypassPtrUint8Cbor(pos_map_transaccion_output[c]+8, buff_uint32t);
 
                                 };break;
                                 case 3:{                                                                        /// ? 2: [1,data] ,
                                     cbor.addIndexMap(2).createArray(2).addUint(1);
-                                    buff_uint32t = extract8bytestoUint64(pos_map_transaccion_output[c]);
+                                    buff_uint32t = Utils::extract8bytestoUint64(pos_map_transaccion_output[c]);
                                     cbor.bypassPtrUint8Cbor(pos_map_transaccion_output[c]+8, buff_uint32t);
                                 };break;
                                 case 4:{                                                                        /// ? 3: script_ref,
                                     cbor.addIndexMap(3);
-                                    buff_uint32t = extract8bytestoUint64(pos_map_transaccion_output[c]);
+                                    buff_uint32t = Utils::extract8bytestoUint64(pos_map_transaccion_output[c]);
                                     cbor.bypassPtrUint8Cbor(pos_map_transaccion_output[c]+8, buff_uint32t);};break;
                                 }
                             }
@@ -362,7 +362,7 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                 case 10 :{};break;
                 case 11 :{   // redeemers | datums | laguage views
 
-                    std::unique_ptr<CborSerialize> script_data(new CborSerialize);
+                    std::unique_ptr<Utils::CborSerialize> script_data(new Utils::CborSerialize);
                     std::uint16_t const & datum_data_count = TransactionInput.getSpendingDatumsCount();
                     std::uint16_t const & spendredeemer_data_count = TransactionInput.getSpendingRedeemersCount();
                     std::uint16_t const & certredeemer_data_count = Certificate.getCertificateRedeemersCount();
@@ -375,8 +375,8 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                         script_data->createArray(0);                                                       //  80
                         script_data->createArray(static_cast<std::uint64_t>(datum_data_count));            //  [datums]
                         for(std::uint16_t t = 0; t < datum_data_count;t++){
-                            script_data->bypassPtrUint8Cbor( ptrvec+10, extract8bytestoUint64(ptrvec+2) );
-                            ptrvec += extract8bytestoUint64(ptrvec+2) + 10;
+                            script_data->bypassPtrUint8Cbor( ptrvec+10, Utils::extract8bytestoUint64(ptrvec+2) );
+                            ptrvec += Utils::extract8bytestoUint64(ptrvec+2) + 10;
                         }
                         script_data->createMap(0);                                                          //  A0
 
@@ -395,11 +395,11 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                             for(std::uint16_t t = 0; t < spendredeemer_data_count;t++){
                                 script_data->createArray(4);                                                           // [ , , , ]
                                 script_data->addUint( *( ptrvec + 2 ) );                                               // tag
-                                script_data->addUint(extract2bytestoUint16( ptrvec ));                                 // index
-                                script_data->bypassPtrUint8Cbor( ptrvec + 11, extract8bytestoUint64( ptrvec + 3 ) );   // plutus_data
-                                ptrvec += extract8bytestoUint64( ptrvec + 3 ) + 11;                                    // cambio al posicion de ptrvec
-                                script_data->bypassPtrUint8Cbor(ptrvec + 8, extract8bytestoUint64( ptrvec ));          // ex_units
-                                ptrvec += extract8bytestoUint64( ptrvec ) + 8;
+                                script_data->addUint(Utils::extract2bytestoUint16( ptrvec ));                                 // index
+                                script_data->bypassPtrUint8Cbor( ptrvec + 11, Utils::extract8bytestoUint64( ptrvec + 3 ) );   // plutus_data
+                                ptrvec += Utils::extract8bytestoUint64( ptrvec + 3 ) + 11;                                    // cambio al posicion de ptrvec
+                                script_data->bypassPtrUint8Cbor(ptrvec + 8, Utils::extract8bytestoUint64( ptrvec ));          // ex_units
+                                ptrvec += Utils::extract8bytestoUint64( ptrvec ) + 8;
                             }
 
                         }
@@ -409,11 +409,11 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                             for(std::uint16_t t = 0; t < certredeemer_data_count;t++){
                                 script_data->createArray(4);                                                           // [ , , , ]
                                 script_data->addUint( *( ptrvec + 2 ) );                                               // tag
-                                script_data->addUint(extract2bytestoUint16( ptrvec ));                                 // index
-                                script_data->bypassPtrUint8Cbor( ptrvec + 11, extract8bytestoUint64( ptrvec + 3 ) );   // plutus_data
-                                ptrvec += extract8bytestoUint64( ptrvec + 3 ) + 11;                                    // cambio al posicion de ptrvec
-                                script_data->bypassPtrUint8Cbor(ptrvec + 8, extract8bytestoUint64( ptrvec ));          // ex_units
-                                ptrvec += extract8bytestoUint64( ptrvec ) + 8;
+                                script_data->addUint(Utils::extract2bytestoUint16( ptrvec ));                                 // index
+                                script_data->bypassPtrUint8Cbor( ptrvec + 11, Utils::extract8bytestoUint64( ptrvec + 3 ) );   // plutus_data
+                                ptrvec += Utils::extract8bytestoUint64( ptrvec + 3 ) + 11;                                    // cambio al posicion de ptrvec
+                                script_data->bypassPtrUint8Cbor(ptrvec + 8, Utils::extract8bytestoUint64( ptrvec ));          // ex_units
+                                ptrvec += Utils::extract8bytestoUint64( ptrvec ) + 8;
                             }
 
                         }
@@ -423,11 +423,11 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                             for(std::uint16_t t = 0; t < certredeemer_data_count;t++){
                                 script_data->createArray(4);                                                           // [ , , , ]
                                 script_data->addUint( *( ptrvec + 2 ) );                                               // tag
-                                script_data->addUint(extract2bytestoUint16( ptrvec ));                                 // index
-                                script_data->bypassPtrUint8Cbor( ptrvec + 11, extract8bytestoUint64( ptrvec + 3 ) );   // plutus_data
-                                ptrvec += extract8bytestoUint64( ptrvec + 3 ) + 11;                                    // cambio al posicion de ptrvec
-                                script_data->bypassPtrUint8Cbor(ptrvec + 8, extract8bytestoUint64( ptrvec ));          // ex_units
-                                ptrvec += extract8bytestoUint64( ptrvec ) + 8;
+                                script_data->addUint(Utils::extract2bytestoUint16( ptrvec ));                                 // index
+                                script_data->bypassPtrUint8Cbor( ptrvec + 11, Utils::extract8bytestoUint64( ptrvec + 3 ) );   // plutus_data
+                                ptrvec += Utils::extract8bytestoUint64( ptrvec + 3 ) + 11;                                    // cambio al posicion de ptrvec
+                                script_data->bypassPtrUint8Cbor(ptrvec + 8, Utils::extract8bytestoUint64( ptrvec ));          // ex_units
+                                ptrvec += Utils::extract8bytestoUint64( ptrvec ) + 8;
                             }
 
                         }
@@ -440,8 +440,8 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                             ptrvec = TransactionInput.getSpendingDatums().data();
                             script_data->createArray(static_cast<std::uint64_t>(datum_data_count));                 //  [datums]
                             for(std::uint16_t t = 0; t < datum_data_count;t++){
-                                script_data->bypassPtrUint8Cbor( ptrvec+10, extract8bytestoUint64(ptrvec+2) );
-                                ptrvec += extract8bytestoUint64(ptrvec+2) + 10;
+                                script_data->bypassPtrUint8Cbor( ptrvec+10, Utils::extract8bytestoUint64(ptrvec+2) );
+                                ptrvec += Utils::extract8bytestoUint64(ptrvec+2) + 10;
 
                             }
                         }
@@ -449,8 +449,9 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                         cbor_datums.assign(buff_getCbor.begin()+cbor_redeemers.size(), buff_getCbor.end() );   // se agrega la serializacion a la variable cbor_datums (se usa en witnnes)
 
                         switch(TransactionInput.getGlobalReferencesScriptsType()){                                //  language views
-                        case 2: {script_data->bypassPtrUint8Cbor(V1language_views,444);};break;
-                        case 3: {script_data->bypassPtrUint8Cbor(V2language_views,467);};break;
+                        case ScriptType::Plutus_Script_V1: {script_data->bypassPtrUint8Cbor(V1language_views,444);};break;
+                        case ScriptType::Plutus_Script_V2: {script_data->bypassPtrUint8Cbor(V2language_views,467);};break;
+                        default:{throw std::invalid_argument("error in ScriptType: type not valid , for input references, set script with setGlobalReferencesStriptsType()");};break;
                             /// poner un error en el default si no se selecciono un tipo
                         }
 
@@ -461,12 +462,14 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                     std::vector<std::uint8_t> const  & cbor_script_data = script_data->getCbor();
                     std::uint8_t script_data_hash[32];
 
-
+                    /**
                     std::cout <<"\n cbor_script_data: ";
                     for (std::uint8_t i : cbor_script_data){
                         std::cout << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(i);
                     }
                     std::cout <<std::endl;
+                    **/
+
 
 
                     crypto_generichash_blake2b(script_data_hash, 32, cbor_script_data.data(), cbor_script_data.size(), nullptr, 0); //blake2b256(cbor_script_data)
@@ -517,3 +520,4 @@ std::uint16_t const & TransactionBody::getWitnessMapcountbit() const{
     return witnessmapcountbit;
 }
 
+}

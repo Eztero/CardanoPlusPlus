@@ -1,5 +1,5 @@
 #include "auxiliary_data.hpp"
-
+namespace Cardano{
 AuxiliaryData::AuxiliaryData() : Metadatas(){
     auxiliarymapcountbit = 0;
 }
@@ -44,4 +44,5 @@ std::vector<std::uint8_t> const &AuxiliaryData::Build(){
         cbor.addNull();
     }
 return cbor.getCbor();
+}
 }

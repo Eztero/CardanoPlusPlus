@@ -37,6 +37,8 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "../Utils/plutusjsonschema.hpp"
 #include "../Hash/bech32.hpp"
 
+namespace Cardano{
+    
 class Withdrawals{
 public:
 explicit Withdrawals();
@@ -63,7 +65,7 @@ std::vector <std::uint8_t>withdrawals{};
 std::vector <std::uint8_t> redeemer_withdrawals{};
 
 };
-
+}
 
 
 #endif

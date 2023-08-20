@@ -30,7 +30,7 @@ SOFTWARE.
 #include <cstdint>
 #include "../Utils/cbor_lite.hpp"
 #include "../Utils/txutils.hpp"
-
+namespace Cardano{
 class Metadatas{
 public:
     explicit Metadatas();
@@ -42,8 +42,8 @@ private:
 std::uint8_t * ptrvec;
 std::uint16_t metadata_count;
 std::vector <std::uint8_t> metadata;
-CborSerialize cbor;
+Utils::CborSerialize cbor;
 //std::vector <std::uint8_t> metadata_cbor;
 };
-
+}
 #endif

@@ -1,4 +1,5 @@
 #include "transaction_witness.hpp"
+namespace Cardano{
 
 TransactionWitness::TransactionWitness(){
     ptrvec = nullptr;
@@ -14,7 +15,7 @@ TransactionWitness::~TransactionWitness(){
 TransactionWitness &TransactionWitness::addVkeyWitness( std::uint8_t const * const public_key, std::uint8_t const * const signature_transactionbody ){
     //32 (public_key) + 64 (signature) = 96 bytes
 
-    if(vkeywitness_count < UINT16_MAX && !existen_coincidencias(public_key,vkeywitness.data(),32,vkeywitness_count,96)){ //comprueba de que no se repitan los publickey
+    if(vkeywitness_count < UINT16_MAX && !Utils::existen_coincidencias(public_key,vkeywitness.data(),32,vkeywitness_count,96)){ //comprueba de que no se repitan los publickey
         buff_sizet = static_cast<std::size_t>( vkeywitness.capacity() ) - static_cast<std::size_t>( vkeywitness.size() );
         if(buff_sizet < 28){
             vkeywitness.reserve(vkeywitness.size() + 96);
@@ -48,7 +49,6 @@ TransactionWitness & TransactionWitness::addNativeScript( std::vector<std::uint8
     return *this;
 }
 
-
 // ? 5: [*redeemer]
 // redeemer = [ tag: redeemer_tag, index: uint, data: plutus_data, ex_units: ex_units ]
 // esquema:  |cantidad | redeemer1 |  redeemer2 | ... |
@@ -71,6 +71,7 @@ TransactionWitness & TransactionWitness::addDatum(std::vector <std::uint8_t> con
 
     return *this;
 }
+
 // ? 3: [* plutus_v1_script ]
 // esquema:  |cantidad | plutus_v1_script1 | plutus_v1_script2 | ... |
 // Recibe los plutus_v1_script de las transacciones input
@@ -121,7 +122,7 @@ std::vector<std::uint8_t> const & TransactionWitness::Build(){
                 };break;
                 case 1:{
                     cbor.addIndexMap(static_cast<uint64_t>(1));                 /// ? 1:
-                    cbor.createArray(extract2bytestoUint16(cbor_native_script->data()));
+                    cbor.createArray(Utils::extract2bytestoUint16(cbor_native_script->data()));
                     cbor.bypassIteratorVectorCbor(cbor_native_script->begin() + 2,cbor_native_script->end());
                 };break;
                 case 2:{
@@ -129,7 +130,7 @@ std::vector<std::uint8_t> const & TransactionWitness::Build(){
                 };break;
                 case 3:{
                     cbor.addIndexMap(static_cast<uint64_t>(3));                 /// ? 3:
-                    cbor.createArray(extract2bytestoUint16(cbor_plutusv1scripts->data()));
+                    cbor.createArray(Utils::extract2bytestoUint16(cbor_plutusv1scripts->data()));
                     cbor.bypassIteratorVectorCbor(cbor_plutusv1scripts->begin() + 2, cbor_plutusv1scripts->end());
                 };break;
                 case 4:{
@@ -142,7 +143,7 @@ std::vector<std::uint8_t> const & TransactionWitness::Build(){
                 };break;
                 case 6:{
                     cbor.addIndexMap(static_cast<uint64_t>(6));                 /// ? 6:
-                    cbor.createArray(extract2bytestoUint16(cbor_plutusv2scripts->data()));
+                    cbor.createArray(Utils::extract2bytestoUint16(cbor_plutusv2scripts->data()));
                     cbor.bypassIteratorVectorCbor(cbor_plutusv2scripts->begin() + 2, cbor_plutusv2scripts->end());
                 };break;
                 }
@@ -153,4 +154,6 @@ std::vector<std::uint8_t> const & TransactionWitness::Build(){
         cbor.createMap(0);
     }
     return cbor.getCbor();
+}
+
 }

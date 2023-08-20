@@ -32,7 +32,7 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include <cstdint>
 #include "../Utils/cbor_lite.hpp"
 #include "metadata.hpp"
-
+namespace Cardano{
 class AuxiliaryData : private Metadatas{
 public:
     explicit AuxiliaryData();
@@ -41,9 +41,9 @@ public:
 
 private:
     std::uint8_t auxiliarymapcountbit;
-    CborSerialize cbor;
+    Utils::CborSerialize cbor;
     //std::vector <std::uint8_t> cborAuxiliaryData;
 
 };
-
+}
 #endif

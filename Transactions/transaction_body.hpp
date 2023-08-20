@@ -42,7 +42,8 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "transactioninput.hpp"
 #include "withdrawal.hpp"
 
-class TransactionBody : private Certificates, Multiassets {
+namespace Cardano{
+class TransactionBody : private  Multiassets {
 
 public:
 
@@ -75,7 +76,7 @@ private:
     std::uint64_t ttl;  // time to alive
     std::uint64_t vis;  // validity interval start
     std::uint64_t totalcollateral;  // validity interval start
-    CborSerialize cbor;
+    Utils::CborSerialize cbor;
     std::vector <std::uint8_t>cbor_redeemers{};
     std::vector <std::uint8_t>cbor_datums{};
     std::vector <std::uint8_t>update{};
@@ -91,6 +92,6 @@ private:
     std::uint8_t V1language_views[444];
     std::uint8_t V2language_views[467];
 };
-
+}
 
 #endif

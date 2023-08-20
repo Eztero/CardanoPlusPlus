@@ -1,5 +1,5 @@
 #include "certificates.hpp"
-
+namespace Cardano{
 /// Vector<std::uint8_t> redeemer_cert (redeeemer) :
 /// +2 (index_redemer)  // index_redemer = index (cbor_certificates_count), indica la posicion del hash en cbor_certificates despues ser ordenado
 /// +1 (tag)
@@ -19,9 +19,9 @@ Certificates::Certificates(){
 Certificates::~Certificates(){
 }
 
-void Certificates::addStakeRegistration(Certificates::Credential ckey, std::uint8_t const *const stake_credential_hash){
-    // stake_credential_hash(28bytes)
-
+void Certificates::addStakeRegistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk){
+    // stake_credential_vk(28bytes)
+    crypto_generichash_blake2b(blake224, 28, stake_credential_vk, 32, nullptr, 0);
     cert_cbor.clearCbor();
     cert_cbor.createArray(2);                                                       // [ , ]
     cert_cbor.addUint(static_cast<uint64_t>(0));                                    // [0,   ]
@@ -29,12 +29,12 @@ void Certificates::addStakeRegistration(Certificates::Credential ckey, std::uint
     switch(ckey){
     case Credential::KeyHash:{
     cert_cbor.addUint(static_cast<uint64_t>(0));                                    // [0,[0, ] ]
-    cert_cbor.addBytesArray(stake_credential_hash, 28);                             // [0,[0, addr_keyhash ] ]
+    cert_cbor.addBytesArray(blake224, 28);                               // [0,[0, addr_keyhash ] ]
 
     };break;
     case Credential::ScriptHash:{
     cert_cbor.addUint(static_cast<uint64_t>(1));                                    // [0,[1, ] ]
-    cert_cbor.addBytesArray(stake_credential_hash, 28);                             // [0,[1, scripthash ] ]
+    cert_cbor.addBytesArray(blake224, 28);                             // [0,[1, scripthash ] ]
     };break;
     }
 
@@ -47,8 +47,9 @@ void Certificates::addStakeRegistration(Certificates::Credential ckey, std::uint
 
 }
 
-void Certificates::addStakeDeregistration(Certificates::Credential ckey, std::uint8_t const *const stake_credential_hash){
-    // stake_credential_hash(28bytes)
+void Certificates::addStakeDeregistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk){
+    // stake_credential_vk(28bytes)
+    crypto_generichash_blake2b(blake224, 28, stake_credential_vk, 32, nullptr, 0);
     cert_cbor.clearCbor();
     cert_cbor.createArray(2);                                                       // [ , ]
     cert_cbor.addUint(1);                                                           // [1,   ]
@@ -56,12 +57,12 @@ void Certificates::addStakeDeregistration(Certificates::Credential ckey, std::ui
     switch(ckey){
     case Credential::KeyHash:{
     cert_cbor.addUint(static_cast<uint64_t>(0));                                    // [1,[0, ] ]
-    cert_cbor.addBytesArray(stake_credential_hash, 28);                             // [1,[0, addr_keyhash ] ]
+    cert_cbor.addBytesArray(blake224, 28);                             // [1,[0, addr_keyhash ] ]
 
     };break;
     case Credential::ScriptHash:{
     cert_cbor.addUint(static_cast<uint64_t>(1));                                    // [1,[1, ] ]
-    cert_cbor.addBytesArray(stake_credential_hash, 28);                             // [1,[1, scripthash ] ]
+    cert_cbor.addBytesArray(blake224, 28);                             // [1,[1, scripthash ] ]
     };break;
     }
 
@@ -72,22 +73,22 @@ void Certificates::addStakeDeregistration(Certificates::Credential ckey, std::ui
     bodymap_countbit = 0x10;
 }
 
-void Certificates::addStakeDelegation(Certificates::Credential ckey, std::uint8_t const *const stake_credential_hash, std::uint8_t const *const pool_keyhash){
-    // stake_credential_hash(28bytes) + addr_poolkeyhash(28bytes) = 56 bytes
+void Certificates::addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk, std::uint8_t const *const pool_keyhash){
+    // stake_credential_vk(28bytes) + addr_poolkeyhash(28bytes) = 56
+    crypto_generichash_blake2b(blake224, 28, stake_credential_vk, 32, nullptr, 0);
     cert_cbor.clearCbor();
     cert_cbor.createArray(3);                                                       // [ , , ]
     cert_cbor.addUint(2);                                                           // [2, , ]
     cert_cbor.createArray(2);                                                       // [2,[ , ], ]
-    cert_cbor.addUint(static_cast<uint64_t>(0));                                    // [2,[0, ], ]
     switch(ckey){
     case Credential::KeyHash:{
     cert_cbor.addUint(static_cast<uint64_t>(0));                                    // [2,[0, ] ]
-    cert_cbor.addBytesArray(stake_credential_hash, 28);                             // [2,[0, addr_keyhash ] ]
+    cert_cbor.addBytesArray(blake224, 28);                             // [2,[0, addr_keyhash ] ]
 
     };break;
     case Credential::ScriptHash:{
     cert_cbor.addUint(static_cast<uint64_t>(1));                                    // [2,[1, ] ]
-    cert_cbor.addBytesArray(stake_credential_hash, 28);                             // [2,[1, scripthash ] ]
+    cert_cbor.addBytesArray(blake224, 28);                             // [2,[1, scripthash ] ]
     };break;
     }
     cert_cbor.addBytesArray(pool_keyhash, 28);                                      // [2,[ 0/1, keyhash/scripthash ], poolkeyhash ]
@@ -99,12 +100,20 @@ void Certificates::addStakeDelegation(Certificates::Credential ckey, std::uint8_
     bodymap_countbit = 0x10;
 }
 
+void Certificates::addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk, std::string const & pool_bech32){
+std::uint8_t bech32_buff[BECH32_MAX_LENGTH]{};
+std::uint16_t bech32_buff_len = 0;
+if(!Hash::bech32_decode(pool_bech32.data(),bech32_buff,&bech32_buff_len) && bech32_buff_len != 28){
+    throw std::invalid_argument("addStakeDelegation error, pool_bech32 is not a valid bech32");
+}
+addStakeDelegation(ckey, stake_credential_vk, bech32_buff);
+}
 // redeemer = [ tag: redeemer_tag, index: uint, data: plutus_data, ex_units: ex_units ]
 void Certificates::addCertificateRedeemer(std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
 
-    std::unique_ptr<CborSerialize> rcbor(new CborSerialize);
-    std::unique_ptr<CborSerialize> unitscbor(new CborSerialize);
-    std::unique_ptr<PlutusJsonSchema> Json_p(new PlutusJsonSchema);
+    std::unique_ptr<Utils::CborSerialize> rcbor(new Utils::CborSerialize);
+    std::unique_ptr<Utils::CborSerialize> unitscbor(new Utils::CborSerialize);
+    std::unique_ptr<Utils::PlutusJsonSchema> Json_p(new Utils::PlutusJsonSchema);
 
     unitscbor->createArray(2);
     unitscbor->addUint(memoryunits); // mem
@@ -115,11 +124,11 @@ void Certificates::addCertificateRedeemer(std::string & json_redeemer, std::uint
     std::vector<std::uint8_t> const & cbor_units = unitscbor->getCbor();
     std::vector<std::uint8_t> const & cbor_plutusdata = Json_p->getCborSchemaJson();
 
-    addUint16toVector( redeemer_cert, (cbor_certificates_count - 1 ) );                       /// Index_redeemer , LANZAR ERROR SI tx_input_count=0
+    Utils::addUint16toVector( redeemer_cert, (cbor_certificates_count - 1 ) );                /// Index_redeemer , LANZAR ERROR SI tx_input_count=0
     redeemer_cert.push_back(static_cast<std::uint8_t>(2));                                    // tag = 2
-    addUint64toVector(redeemer_cert,cbor_plutusdata.size());                                  // plutusdata_len
+    Utils::addUint64toVector(redeemer_cert,cbor_plutusdata.size());                                  // plutusdata_len
     redeemer_cert.insert(redeemer_cert.end(),cbor_plutusdata.begin(),cbor_plutusdata.end());  // plutusdata
-    addUint64toVector(redeemer_cert,cbor_units.size());                                       // cbor_ex_units_len
+    Utils::addUint64toVector(redeemer_cert,cbor_units.size());                                       // cbor_ex_units_len
     redeemer_cert.insert(redeemer_cert.end(),cbor_units.begin(),cbor_units.end());            // cbor_ex_units
 
     ++redeemer_cert_count;
@@ -149,4 +158,5 @@ return witnessmap_countbit;
 
 std::vector<std::uint8_t> const & Certificates::getCborCertificates() const {
 return cbor_certificates;
+}
 }

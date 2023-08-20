@@ -35,6 +35,8 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 
 #include "../Utils/cbor_lite.hpp"
 
+namespace Cardano{
+
 class Multiassets{
 public:
     explicit Multiassets();
@@ -48,7 +50,7 @@ private:
     //std::vector<std::uint8_t> buffer_cbor;
     std::vector< std::vector<std::uint8_t> > capsula;
     //CborSerialize *cbor; //se usa buffer_cbor para serializar en cbor
-    CborSerialize cbor;
+    Utils::CborSerialize cbor;
 };
-
+}
 #endif

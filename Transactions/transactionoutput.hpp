@@ -37,17 +37,15 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "../Utils/txutils.hpp"
 #include "../Hash/bech32.hpp"
 #include "../Utils/plutusjsonschema.hpp"
+#include "../Utils/cenum.hpp"
 
+namespace Cardano{
 
 class TransactionsOutputs {
 public:
     explicit TransactionsOutputs();
     //TransactionsOutputs ~TransactionsOutputs();
-    enum class ScriptType{
-    Native_Script = 0,
-    Plutus_Script_V1,
-    Plutus_Script_V2
-    };
+
     TransactionsOutputs &addOutput(std::uint8_t const * const address_keyhash, std::size_t const & address_keyhash_len, std::uint64_t const & amount);
     TransactionsOutputs &addColateralReturn(std::uint8_t const * const address_keyhash, std::size_t const & address_keyhash_len, std::uint64_t const & amount);
 
@@ -55,12 +53,13 @@ public:
     TransactionsOutputs &addOutput(std::string const payment_address, std::uint64_t const amount);
 
     TransactionsOutputs &addAsset(std::uint8_t const *const policyID, std::uint8_t const *const assetname, std::size_t const &assetname_len, std::uint64_t const amount);
-    TransactionsOutputs &addAsset(std::uint8_t const *const policyID, std::string assetname, std::uint64_t const amount);
+    TransactionsOutputs &addAsset(std::string policyID, std::string assetname, std::uint64_t const amount);
     TransactionsOutputs &addDatumHash(std::uint8_t const *const datum_hash, std::size_t const &datum_hash_len);
     TransactionsOutputs &addDatumHashcreatedfromJson(std::string &json_datum);
-    TransactionsOutputs &addReferenceScript(TransactionsOutputs::ScriptType script_type, std::uint8_t const *const script_, std::size_t &script_len ); //native, plutus script
-    TransactionsOutputs &addDatumIntValue(std::uint64_t const integer_datum);
-    TransactionsOutputs &addDatum(std::string &json_datum);
+    TransactionsOutputs &addReferenceScript(Cardano::ScriptType const script_type, std::uint8_t const *const script_, std::size_t &script_len ); //native, plutus script
+    TransactionsOutputs &addReferenceScript(Cardano::ScriptType const script_type, std::string & script_);
+    TransactionsOutputs &addReferenceDatumIntValue(std::uint64_t const integer_datum);
+    TransactionsOutputs &addReferenceDatum(std::string &json_datum);
     std::uint32_t const &getBodyMapcountbit() const;
     std::vector<std::uint8_t> const &getTransactionsOutputs();
     std::uint16_t const &getAmountTransactionsOutputs() const;
@@ -79,11 +78,10 @@ private:
     //std::vector<std::uint8_t> cbor_datum_array; /// VER SI ACTIVAR ESTA FUNCION O REALIZARLA DESDE EL BODY
     std::vector< std::vector<std::uint8_t> > capsula;
     //std::vector<std::uint8_t> cbor_array;
-    CborSerialize cbor;
+    Utils::CborSerialize cbor;
     std::vector<std::uint8_t> const & getCborMultiassets();
 
 };
-
-
+}
 
 #endif

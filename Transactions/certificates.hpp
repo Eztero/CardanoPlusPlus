@@ -30,9 +30,13 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 
 #include <vector>
 #include <cstdint>
+#include "../Utils/cenum.hpp"
 #include "../Utils/cbor_lite.hpp"
 #include "../Utils/txutils.hpp"
 #include "../Utils/plutusjsonschema.hpp"
+#include "../Hash/bech32.hpp"
+
+namespace Cardano{
 
 class Certificates {
 
@@ -40,14 +44,12 @@ public:
     explicit Certificates();
     virtual ~Certificates();
 
-    enum class Credential{
-KeyHash = 0,
-ScriptHash
-};
 
-    void addStakeRegistration(Certificates::Credential ckey, std::uint8_t const *const stake_credential_hash);
-    void addStakeDeregistration(Certificates::Credential ckey, std::uint8_t const *const stake_credential_hash);
-    void addStakeDelegation(Certificates::Credential ckey, std::uint8_t const *const stake_credential_hash, std::uint8_t const *const pool_keyhash);
+
+    void addStakeRegistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk);
+    void addStakeDeregistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk);
+    void addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk, std::uint8_t const *const pool_keyhash);
+    void addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk, std::string const & pool_bech32);
     void addCertificateRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits );
     std::vector<std::uint8_t> const & getCertificateRedeemers() const;
 
@@ -60,13 +62,14 @@ private:
 
     std::uint16_t redeemer_cert_count;
     std::uint16_t cbor_certificates_count;
+    std::uint8_t blake224[28]{};
     std::vector <std::uint8_t> redeemer_cert{};
     std::vector <std::uint8_t> cbor_certificates{};
-    CborSerialize cert_cbor;
+    Utils::CborSerialize cert_cbor;
     std::uint32_t bodymap_countbit;      ///  0x0001 , Tiene que iniciar con cero
     std::uint16_t witnessmap_countbit;      ///  0x0001 , Tiene que iniciar con cero
 
 };
-
+}
 
 #endif

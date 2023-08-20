@@ -38,36 +38,26 @@ https://github.com/input-output-hk/cardano-ledger/blob/master/eras/babbage/test-
 #include "../Utils/txutils.hpp"
 #include "../Utils/plutusjsonschema.hpp"
 #include "../Utils/cbor_lite.hpp"
+#include "../Utils/cenum.hpp"
+
+
+namespace Cardano{
 
 class TransactionsInputs {
 public:
     explicit TransactionsInputs();
 
-    enum class ScriptType{
-        None = 0,
-        Native_Script,
-        Plutus_Script_V1,
-        Plutus_Script_V2,
 
-    };
-    enum class RTag{
-        Spend = 0,
-        Mint,
-        Cert,
-        Reward
-    };
     /// Agregar un bloqueo para que solo acepte un datum y un redeemer por direccion , ademas incorporar una excepcion que avise cuando se agrega un datum o reedeemer antes de ingresar
     /// la primera direccion
     TransactionsInputs & addInput( std::string const & TxHash, std::uint64_t const TxIx );  // -> addScript() || addReferenceInput -> addDatum() -> addRedeemer()
-    TransactionsInputs & addSpendingReference( std::string const & TxHash, std::uint64_t const TxIx ); // <- con el setReferenceStriptType se determina el tipo de input y se vera si es necesario el datum y redeemer
-    TransactionsInputs & addWithdrawalReference( std::string const & TxHash, std::uint64_t const TxIx ); // <- con el setReferenceStriptType se determina el tipo de input y se vera si es necesario el datum y redeemer
-    TransactionsInputs & addCertificateReference( std::string const & TxHash, std::uint64_t const TxIx );
-    TransactionsInputs & setGlobalReferencesStriptsType( TransactionsInputs::ScriptType const script_type); // necesario para el calculo del scriptdatahash , se debe especificar por obligacion
+    TransactionsInputs & addReferenceScript(Cardano::ScriptReference const reference_type, std::string const & TxHash, std::uint64_t const TxIx);
+    TransactionsInputs & setGlobalReferencesStriptsType( Cardano::ScriptType const script_type); // necesario para el calculo del scriptdatahash , se debe especificar por obligacion
     TransactionsInputs & addCollateral( std::string const & TxHash, std::uint64_t const TxIx );
     TransactionsInputs & addSpendingDatum( std::string & json_datum );  // Se usa para el witness y el scriptdatahash
     TransactionsInputs & addSpendingRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits );  // Se usa para el witness y el scriptdatahash
-    TransactionsInputs & addScript( TransactionsInputs::ScriptType const script_type, std::uint8_t const * const & script, std::size_t & script_len ); // Se usa para el witness y el scriptdatahash (solo el script_type)
-    TransactionsInputs & addScript( TransactionsInputs::ScriptType const script_type, std::string const & script );
+    TransactionsInputs & addScript( Cardano::ScriptType const script_type, std::uint8_t const * const & script, std::size_t & script_len ); // Se usa para el witness y el scriptdatahash (solo el script_type)
+    TransactionsInputs & addScript( Cardano::ScriptType const script_type, std::string const & script );
 
     std::uint32_t const & getBodyMapcountbit() const;
     std::uint16_t const & getWitnessMapcountbit() const;
@@ -83,7 +73,7 @@ public:
     std::uint16_t const & getNativeScriptsCount() const;
 
 
-    std::uint8_t const getGlobalReferencesScriptsType() const;
+    ScriptType const getGlobalReferencesScriptsType() const;
 
     std::vector<std::uint8_t> const & getInputs() const;
     std::vector<std::uint8_t> const & getInputsReferences() const;
@@ -118,6 +108,6 @@ private:
     std::uint16_t witnessmap_countbit;      ///  0x0001 , Tiene que iniciar con cero
 };
 
-
+}
 
 #endif

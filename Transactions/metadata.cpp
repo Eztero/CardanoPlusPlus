@@ -1,4 +1,5 @@
 #include "metadata.hpp"
+namespace Cardano{
 Metadatas::Metadatas(){
     metadata_count = 0;
     ptrvec = nullptr;
@@ -8,8 +9,8 @@ void Metadatas::addMetadata(std::uint64_t const keytag, std::vector<std::uint8_t
 // 8 (keytag) + 8(CborMetadata.size) + UINT16_MAX (CborMetadata) = 16bytes + UINT16_MAX bytes
 
 if(metadata_count < UINT16_MAX && CborMetadata.size() < UINT16_MAX){
-    addUint64toVector(metadata, keytag);
-    addUint64toVector(metadata, CborMetadata.size());
+    Utils::addUint64toVector(metadata, keytag);
+    Utils::addUint64toVector(metadata, CborMetadata.size());
     metadata.insert(metadata.end(),CborMetadata.begin(),CborMetadata.end());
     metadata_count++;
 }
@@ -43,4 +44,5 @@ std::vector<std::uint8_t> const & Metadatas::getCborMetadatas(){
         }
     }
     return cbor.getCbor();
+}
 }
