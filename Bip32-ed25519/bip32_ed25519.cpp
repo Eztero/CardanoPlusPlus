@@ -1,7 +1,8 @@
 #include "bip32_ed25519.hpp"
 
+namespace Cardano{
 
-static void hmac512_sodium( std::uint8_t const *const key, std::size_t const key_len, std::uint8_t const *const data, std::size_t const data_len, std::uint8_t *const out) //out[64]
+static void hmac512_sodium( std::uint8_t const * const key, std::size_t const key_len, std::uint8_t const * const data, std::size_t const data_len, std::uint8_t * const out ) noexcept //out[64]
 {
     crypto_auth_hmacsha512_state hctx;
     crypto_auth_hmacsha512_init(&hctx, key, key_len);
@@ -10,7 +11,7 @@ static void hmac512_sodium( std::uint8_t const *const key, std::size_t const key
 };
 
 
-inline void normalize_bytes_icarusmethod( std::uint8_t *const kl ){
+static inline void normalize_bytes_icarusmethod( std::uint8_t *const kl ) noexcept {
     kl[0] &= 0xf8;  //0b1111_1000;
     kl[31] &= 0x1f; //0b0001_1111;
     kl[31] |= 0x40; //0b0100_0000;
@@ -18,7 +19,7 @@ inline void normalize_bytes_icarusmethod( std::uint8_t *const kl ){
 }
 
 ///store32 litleendian
-inline void store32_le( std::uint32_t const index, std::uint8_t *const out ){
+static inline void store32_le( std::uint32_t const index, std::uint8_t *const out ) noexcept {
     out[0] = static_cast<std::uint8_t>(index);
     out[1] = static_cast<std::uint8_t>(index >> 8);
     out[2] = static_cast<std::uint8_t>(index >> 16);
@@ -26,7 +27,7 @@ inline void store32_le( std::uint32_t const index, std::uint8_t *const out ){
 }
 
 /// kl_out = kparentl + 8 * trunc28(zl)
-static void add_28_mul8( std::uint8_t const *const kparentl, std::uint8_t const *const zl, std::uint8_t *const kl_out ){
+static void add_28_mul8( std::uint8_t const * const kparentl, std::uint8_t const * const zl, std::uint8_t * const kl_out ) noexcept {
 
     std::uint16_t carry = 0;
     std::uint16_t entero = 0;
@@ -44,7 +45,7 @@ static void add_28_mul8( std::uint8_t const *const kparentl, std::uint8_t const 
 }
 
 /// kr_out = zr + kparentr
-static void add_256bits( std::uint8_t const *const kparentr, std::uint8_t const *const zr, std::uint8_t *const kr_out ){
+static void add_256bits( std::uint8_t const * const kparentr, std::uint8_t const * const zr, std::uint8_t * const kr_out ) noexcept {
     std::uint16_t carry = 0;
     std::uint16_t entero = 0;
 
@@ -56,7 +57,7 @@ static void add_256bits( std::uint8_t const *const kparentr, std::uint8_t const 
 }
 
 /// ai_out = aparent + (8*trunc28(zl))*B
-static bool point_plus( std::uint8_t const *const aparent, std::uint8_t *const zl, std::uint8_t *const ai_out ){
+static bool point_plus( std::uint8_t const * const aparent, std::uint8_t * const zl, std::uint8_t * const ai_out ) noexcept {
     std::uint8_t cero[32]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     std::uint8_t zl_8[32];
     std::uint8_t azl_8[32];
@@ -65,7 +66,7 @@ static bool point_plus( std::uint8_t const *const aparent, std::uint8_t *const z
     add_28_mul8(cero, zl, zl_8);
     sodium_memzero(zl, 64);
 
-    //zl_8(private key) ; verifica si ultimo byte
+    //zl_8(private key) ; verifica su ultimo byte
     if(zl_8[31] > 127){
         return false;
     }
@@ -87,8 +88,7 @@ static bool point_plus( std::uint8_t const *const aparent, std::uint8_t *const z
     return true;
 }
 
-
-bool valid_ed25519_sk(std::uint8_t const *const raw_privatekey_sk){ //si en a[0] sus tres bit mas bajos no son cero y a[31] su bit mas alto no es cero entonces la llave no es valida
+bool valid_ed25519_sk( std::uint8_t const * const raw_privatekey_sk ) noexcept { //si en a[0] sus tres bit mas bajos no son cero y a[31] su bit mas alto no es cero entonces la llave no es valida
 
 if(raw_privatekey_sk[31] <= 127 && ( (raw_privatekey_sk[0] & 0x07) == 0x00 ) ){
         return true;
@@ -98,20 +98,21 @@ return false;
 }
 
 /// root_privatekey/extended_mastersecretkey[96] = pbkdf2_hmac512(entropy)
-bool raw_masterkeys_generation( std::uint8_t const *const entropy, std::size_t entropy_len, std::uint8_t const *const password, std::size_t password_len, std::uint8_t *const extended_mastersecretkey ){
-
-    pbkdf2_hmac512_libsodium( password, password_len, entropy, entropy_len, 4096, EXTENDED_MASTERSECRETKEY_LENGTH, extended_mastersecretkey );
-
-    normalize_bytes_icarusmethod(extended_mastersecretkey); // se establecen los bits segun la norma icarus
-
-    return true;
+bool getRawMasterKey( std::uint8_t const *const entropy, std::size_t entropy_len, std::uint8_t const * const password, std::size_t password_len, std::uint8_t * const mastersecretkey_out ) noexcept {
+    if(entropy != nullptr){
+    if(Hash::pbkdf2_hmac512_libsodium( password, password_len, entropy, entropy_len, 4096, MASTERSECRETKEY_LENGTH, mastersecretkey_out )){
+        normalize_bytes_icarusmethod(mastersecretkey_out); // se establecen los bits segun la norma icarus
+        return true;
+    }
+}
+    return false;
 }
 
 /// (A/extended_publickey)[64] = kl[32] * B || k_chaincode[32]
-bool raw_privatekey_to_publickey( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t *const raw_publickey_xvk ){
+bool rawprivatekey_to_rawpublickey( std::uint8_t const * const raw_privatekey_xsk, std::uint8_t * const raw_publickey_xvk ) noexcept{
 
     if(!valid_ed25519_sk(raw_privatekey_xsk) || crypto_scalarmult_ed25519_base_noclamp(raw_publickey_xvk, raw_privatekey_xsk) != 0){
-        std::memset(raw_publickey_xvk, 0 ,XVK_LENGTH);
+        sodium_memzero(raw_publickey_xvk, XVK_LENGTH);
         return false;
     }
 
@@ -124,10 +125,10 @@ bool raw_privatekey_to_publickey( std::uint8_t const *const raw_privatekey_xsk, 
 
 
 /// extended_privatekey_child[96] = kli || kri || Ci
-bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, std::uint32_t const index, std::uint8_t *const raw_child_privatekey_xsk ){
+bool raw_child_privatekey( std::uint8_t const * const raw_parent_privatekey_xsk, std::uint32_t const index, std::uint8_t * const raw_child_privatekey_xsk ) noexcept {
 
     if(!valid_ed25519_sk(raw_parent_privatekey_xsk)){
-        std::memset(raw_child_privatekey_xsk, 0, XSK_LENGTH);
+        sodium_memzero(raw_child_privatekey_xsk, XSK_LENGTH);
         return false;
     }
 
@@ -140,7 +141,7 @@ bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, 
 
         //parent public key (Big-endian)
         if(crypto_scalarmult_ed25519_base_noclamp(&data_raw[1], raw_parent_privatekey_xsk) != 0){ // se obtiene la llave publica
-            std::memset(raw_child_privatekey_xsk, 0, XSK_LENGTH);
+            sodium_memzero(raw_child_privatekey_xsk, XSK_LENGTH);
             return false;
         }
 
@@ -205,7 +206,7 @@ bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, 
 };
 
 /// extended_publickey_child[64] = Ai[32] || Ci[32]
-bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, std::uint32_t const index, std::uint8_t *const raw_child_public_key_xvk ){
+bool raw_child_publickey( std::uint8_t const * const raw_parent_public_key_xvk, std::uint32_t const index, std::uint8_t * const raw_child_public_key_xvk ) noexcept {
 
     if(index < 2147483648U){//de 0x00000000 a 0x7fffffff; de 0 a (2^31)-1
         std::uint8_t data_raw[37]; //1byte(0x02)+32byte(raw_public_key_littleendian)+4byte(index)
@@ -236,12 +237,12 @@ bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, s
 
         //Ai = parent publickey + trunc28(Zl)B
         if(point_plus(raw_parent_public_key_xvk, data_z, raw_child_public_key_xvk) == false) {
-            std::memset(raw_child_public_key_xvk, 0 ,XVK_LENGTH);
+            sodium_memzero(raw_child_public_key_xvk, XVK_LENGTH);
             return false;
         }
     }
     else{
-        std::memset(raw_child_public_key_xvk, 0 ,XVK_LENGTH);
+        sodium_memzero(raw_child_public_key_xvk, XVK_LENGTH);
         return false;
     }
 
@@ -249,7 +250,9 @@ bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, s
 }
 
 /// signature_extended[64] = R[32] || S[32]
-bool signature( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t const *const message,std::size_t const message_len, std::uint8_t *const out){
+bool signature( std::uint8_t const * const raw_privatekey_xsk, std::uint8_t const * const message,std::size_t const message_len, std::uint8_t * const out ) noexcept {
+
+    sodium_memzero(out, 64);
 
     if(!valid_ed25519_sk(raw_privatekey_xsk)){
         return false;
@@ -305,9 +308,11 @@ bool signature( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t const
 }
 
 
-bool verify( std::uint8_t const *const raw_publickey, std::uint8_t const *const message, const std::uint8_t message_len, std::uint8_t const *const signature){
+bool verify( std::uint8_t const * const raw_publickey, std::uint8_t const * const message, const std::uint8_t message_len, std::uint8_t const * const signature ) noexcept {
     if(crypto_sign_verify_detached(signature, message, message_len, raw_publickey) != 0){
         return false;
     }
     return true;
+}
+
 }

@@ -33,12 +33,7 @@ https://libsodium.gitbook.io/doc/advanced/point-arithmetic
 #ifndef BIP32_ED25519_HPP
 #define BIP32_ED25519_HPP
 
-                                                       // || = concatenar
-#define XSK_LENGTH 96U                                 // Extended Private Key (64 bytes) || Chain Code (32 bytes)
-#define XVK_LENGTH 64U                                 // Public Key (32 bytes) || Chain Code (32 bytes)
-#define EXTENDED_MASTERSECRETKEY_LENGTH 96U            // Extended Private Key (64 bytes) || Chain Code (32 bytes)
-#define SIGNATURE_LENGTH 64U
-
+#include "../Utils/cmacros.hpp"
 #include "../Hash/pbkdf2_hmac512_libsodium.hpp"
 #include <cstdint>
 #include <cstring>
@@ -47,18 +42,22 @@ https://libsodium.gitbook.io/doc/advanced/point-arithmetic
 
 ///las llaves se codificaran ahora en el formato xsk y xvk propuesto en https://cips.cardano.org/cips/cip16/
 
-bool raw_masterkeys_generation( std::uint8_t const *const entropy, std::size_t const entropy_len, std::uint8_t const *const password, std::size_t const password_len, std::uint8_t *const extended_mastersecretkey );
+namespace Cardano{
 
-bool raw_privatekey_to_publickey( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t *const raw_publickey_xvk );
+bool getRawMasterKey( std::uint8_t const * const entropy, std::size_t const entropy_len, std::uint8_t const * const password, std::size_t const password_len, std::uint8_t * const mastersecretkey_out ) noexcept;
 
-bool raw_child_privatekey( std::uint8_t const *const raw_parent_privatekey_xsk, std::uint32_t const index, std::uint8_t *const raw_child_privatekey_xsk );
+bool rawprivatekey_to_rawpublickey( std::uint8_t const * const raw_privatekey_xsk, std::uint8_t * const raw_publickey_xvk ) noexcept;
 
-bool raw_child_publickey( std::uint8_t const *const raw_parent_public_key_xvk, std::uint32_t const index, std::uint8_t *const raw_child_public_key_xvk );
+bool raw_child_privatekey( std::uint8_t const * const raw_parent_privatekey_xsk, std::uint32_t const index, std::uint8_t * const raw_child_privatekey_xsk ) noexcept;
 
-bool signature( std::uint8_t const *const raw_privatekey_xsk, std::uint8_t const *const message,std::size_t const message_len, std::uint8_t *const out);
+bool raw_child_publickey( std::uint8_t const * const raw_parent_public_key_xvk, std::uint32_t const index, std::uint8_t * const raw_child_public_key_xvk ) noexcept;
 
-bool verify( std::uint8_t const *const raw_publickey, std::uint8_t const *const message, const std::uint8_t message_len, std::uint8_t const *const signature );
+bool signature( std::uint8_t const * const raw_privatekey_xsk, std::uint8_t const * const message, std::size_t const message_len, std::uint8_t * const out ) noexcept;
 
-bool valid_ed25519_sk(std::uint8_t const *const raw_privatekey_sk);
+bool verify( std::uint8_t const * const raw_publickey, std::uint8_t const * const message, const std::uint8_t message_len, std::uint8_t const * const signature ) noexcept;
+
+bool valid_ed25519_sk( std::uint8_t const * const raw_privatekey_sk ) noexcept;
+
+}
 
 #endif // BIP32_ED25519_HPP

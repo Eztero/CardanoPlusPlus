@@ -1,6 +1,9 @@
 #include "pbkdf2_hmac512_libsodium.hpp"
 
-inline void store32_be( std::uint32_t const index, std::uint8_t *const out) // store32 bigendian
+namespace Cardano{
+namespace Hash{
+
+static inline void store32_be( std::uint32_t const index, std::uint8_t * const out) noexcept // store32 bigendian
 {
     out[3] = static_cast<std::uint8_t>(index);
     out[2] = static_cast<std::uint8_t>(index >> 8);
@@ -8,10 +11,10 @@ inline void store32_be( std::uint32_t const index, std::uint8_t *const out) // s
     out[0] = static_cast<std::uint8_t>(index >> 24);
 }
 
-bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::size_t key_len,
-                               std::uint8_t const *const salt, std::size_t salt_len,
+bool const pbkdf2_hmac512_libsodium( std::uint8_t const * const key, std::size_t key_len,
+                               std::uint8_t const * const salt, std::size_t salt_len,
                                std::uint64_t const iterations,
-                               std::size_t out_len , std::uint8_t *const out ){
+                               std::size_t out_len , std::uint8_t * const out ) noexcept {
 
     std::memset(out, 0, out_len);
 
@@ -67,4 +70,7 @@ bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::size_t key_le
     }
     sodium_memzero(&init_hctx, sizeof(init_hctx));
     return true;
+}
+
+}
 }

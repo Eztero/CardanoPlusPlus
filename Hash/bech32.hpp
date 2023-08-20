@@ -30,20 +30,27 @@ https://github.com/sipa/bech32/tree/master/ref/c++
 
 #ifndef BECH32_HPP_INCLUDED
 #define BECH32_HPP_INCLUDED
+#include <sodium.h>
+#include <new>
 #include <string>
 #include <cstring>
 #include <cstdlib>
+#include "../Utils/cmacros.hpp"
 
 #define SEPARATOR_BECH32 '1' //Bech32
-#define BECH32_MAX_LENGTH 57U
 
 ///'hrp'(human readable part) es el prefijo ejemplo addr_,acct_
 ///'data' son los datos que se codificaran o decodificaran en bech32, como por ejemplo una llave publica en formato hex
+namespace Cardano{
+namespace Hash{
+
 
 ///  bech32_encode { (string)hrp | (uint8_t)data[data_len] } = (string)encode_out
-bool bech32_encode(char const *const hrp, std::uint8_t const *const data, std::uint16_t const data_len, std::string &encode_out);
+bool const bech32_encode(char const *const hrp, std::uint8_t const *const data, std::uint16_t const data_len, std::string &encode_out) noexcept;
 
 ///  bech32_decode { (char)bech32_code } = (uint8_t)data[data_len] ; data_len puede ser nullprt, data_len <= 57 bytes
-bool bech32_decode(char const *const bech32_code,std::uint8_t *const data,std::uint16_t *const data_len);
+bool const bech32_decode(char const *const bech32_code,std::uint8_t *const data_out,std::uint16_t *const data_out_len) noexcept;
+}
+}
 
 #endif // BECH32_HPP_INCLUDED

@@ -1,6 +1,8 @@
 #include "bip39.hpp"
 
-static std::uint16_t *word2bits(char const *const mnemotic, char const diccionary[][2048], std::size_t *const word_bits_length) //suport at 255 word, limited to 24 word (128 - 256 bits)
+namespace Cardano{
+
+static std::uint16_t * word2bits(char const * const mnemotic, char const diccionary[][2048], std::size_t * const word_bits_length) noexcept //suport at 255 word, limited to 24 word (128 - 256 bits)
 {
     if(mnemotic == nullptr){  // condicion de seguridad
         return nullptr;
@@ -31,8 +33,8 @@ static std::uint16_t *word2bits(char const *const mnemotic, char const diccionar
         return nullptr;
     }
 
-    //std::uint16_t *word2bits_out = new (std::nothrow) std::uint16_t[*word_bits_length](); // #include <new>, alternativa con new, cambiar free() por delete[]
-    std::uint16_t *word2bits_out = static_cast<std::uint16_t*>(std::calloc(*word_bits_length,sizeof(std::uint16_t))); ///se asigna el espacio de memoria requerido para almacenar los bits
+    std::uint16_t *word2bits_out = new (std::nothrow) std::uint16_t[*word_bits_length](); // #include <new>, alternativa con new, cambiar free() por delete[]
+    //std::uint16_t *word2bits_out = static_cast<std::uint16_t*>(std::calloc(*word_bits_length,sizeof(std::uint16_t))); ///se asigna el espacio de memoria requerido para almacenar los bits
     *word_bits_length = 0;
 
     if(word2bits_out != nullptr){ //sigue solo si se puede asignar memoria
@@ -73,7 +75,8 @@ static std::uint16_t *word2bits(char const *const mnemotic, char const diccionar
                     }
                     if(word_is_found == false ){ //en caso de que no encuentre la palabra en el diccionario;
                         sodium_memzero(word2bits_out, *word_bits_length);/// Pone a Cero la Memoria antes de liberarla
-                        std::free(word2bits_out);
+                        //std::free(word2bits_out);
+                        delete[] word2bits_out;
                         word2bits_out = nullptr;
                         *word_bits_length = 0;
                         while_true = false;
@@ -88,7 +91,7 @@ static std::uint16_t *word2bits(char const *const mnemotic, char const diccionar
 };
 
 
-std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary[][2048], std::size_t *const entropy_length_bytes)
+std::uint8_t * mnemotic2entropy(char const * const mnemotic, char const diccionary[][2048], std::size_t * const entropy_length_bytes) noexcept
 {
     std::size_t word_bin_length;
     std::uint8_t *entropy = nullptr;
@@ -96,8 +99,8 @@ std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary
 
     if(entropy_length_bytes != nullptr && word_bin != nullptr){ // aqui se comienza a reconstruir la entropia con la numeracion las palabras
         *entropy_length_bytes = (word_bin_length * 44) / 33; //se pasan la cantidad de bytes que tiene la entropy
-        //entropy = new (std::nothrow) std::uint8_t[*entropy_length_bytes](); // #include <new>, alternativa con new, cambiar free() por delete[]
-        entropy = static_cast<std::uint8_t*>(std::calloc(*entropy_length_bytes, sizeof(std::uint8_t))); ///se asigan un espacio de memoria a entropy
+        entropy = new (std::nothrow) std::uint8_t[*entropy_length_bytes](); // #include <new>, alternativa con new, cambiar free() por delete[]
+        //entropy = static_cast<std::uint8_t*>(std::calloc(*entropy_length_bytes, sizeof(std::uint8_t))); ///se asigan un espacio de memoria a entropy
         if(entropy != nullptr){ //sigue solo si se puede asignar memoria
             std::uint8_t cbe = 8; //conteo bit entropia
             std::uint8_t cbw = 11; //conteo bit word_bin
@@ -134,18 +137,20 @@ std::uint8_t *mnemotic2entropy(char const *const mnemotic, char const diccionary
 
             if(word_bin_cs_bits != cs_bits){ ///Se comparan los cs_bits de ambos para ver si la entropia es replicable (valida)
                 sodium_memzero(entropy, *entropy_length_bytes); /// Pone a Cero la Memoria
-                free(entropy);
+                //free(entropy);
+                delete[] entropy;
                 entropy = nullptr;
             }
         }
         sodium_memzero(word_bin, word_bin_length);/// Pone a Cero la Memoria antes de liberarla
-        std::free(word_bin);
+        delete[] word_bin;
+        //std::free(word_bin);
     }
     return entropy;
 }
 
 
-char *entropy2mnemotic(std::uint8_t const *const entropy, std::size_t const *const entropy_length_bytes, char const diccionary[][2048], std::size_t *const mnemotic_length)
+char * entropy2mnemotic(std::uint8_t const * const entropy, std::size_t const *const entropy_length_bytes, char const diccionary[][2048], std::size_t * const mnemotic_length) noexcept
 {
     std::uint16_t entropy_length_bits = 0;
     std::uint8_t checksumsha256[crypto_hash_sha256_BYTES]; //almacena el hash de la entropia
@@ -165,8 +170,8 @@ char *entropy2mnemotic(std::uint8_t const *const entropy, std::size_t const *con
     }
 
     std::uint8_t ms_length = static_cast<std::uint8_t>((entropy_length_bits + static_cast<std::uint16_t>(cs_length)) / static_cast<std::uint16_t>(11)); // indica la cantida de palabras a generar
-    //std::uint16_t *ms = new (std::nothrow) std::uint16_t[ms_length](); // #include <new>, alternativa con new, cambiar free() por delete[]
-    std::uint16_t *ms = static_cast<std::uint16_t*>(std::calloc(ms_length, sizeof(std::uint16_t))); /// crea un array dinamico rellenado con ceros, para almacenar la numeracion de las palabras
+    std::uint16_t *ms = new (std::nothrow) std::uint16_t[ms_length](); // #include <new>, alternativa con new, cambiar free() por delete[]
+    //std::uint16_t *ms = static_cast<std::uint16_t*>(std::calloc(ms_length, sizeof(std::uint16_t))); /// crea un array dinamico rellenado con ceros, para almacenar la numeracion de las palabras
     if(ms == nullptr){ ///si no puede reservar memoria
         return nullptr;
     }
@@ -199,11 +204,12 @@ char *entropy2mnemotic(std::uint8_t const *const entropy, std::size_t const *con
     if(mnemotic_length != nullptr){
         *mnemotic_length = words_length;
     }
-    //std::uint16_t *words = new (std::nothrow) std::uint16_t[words_length](); // #include <new>, alternativa con new, cambiar free() por delete[]
-    char *words = static_cast<char*>(std::calloc(words_length, sizeof(char))); ///Crea un array dinamico iniciado en ceros para almacenar las paladras
+    char *words = new (std::nothrow) char[words_length](); // #include <new>, alternativa con new, cambiar free() por delete[]
+    //char *words = static_cast<char*>(std::calloc(words_length, sizeof(char))); ///Crea un array dinamico iniciado en ceros para almacenar las paladras
     if(words == nullptr){ ///si no puede reservar memoria
         sodium_memzero(ms, ms_length); /// Pone a Cero la Memoria antes de liberarla
-        std::free(ms);
+        //std::free(ms);
+        delete[] ms;
         return nullptr;
     }
     for(std::uint8_t i = 0; i< ms_length; i++){
@@ -211,6 +217,9 @@ char *entropy2mnemotic(std::uint8_t const *const entropy, std::size_t const *con
         std::strcat(words, " ");
     }
     sodium_memzero(ms, ms_length); /// Pone a Cero la Memoria antes de liberarla
-    std::free(ms);
+    //std::free(ms);
+    delete[] ms;
     return words;
+}
+
 }

@@ -71,6 +71,7 @@ raw_derivekey(input_key, InputKey::ExtendedMasterKey, Wallet::HD, OutputKey::Pri
 #define H1854 2147485502U
 #define H0 2147483648U
 
+#include "../Utils/cenum.hpp"
 #include "../Bip32-ed25519/bip32_ed25519.hpp"
 #include "../Hash/bech32.hpp"
 #include <string>
@@ -78,45 +79,28 @@ raw_derivekey(input_key, InputKey::ExtendedMasterKey, Wallet::HD, OutputKey::Pri
 
 #include <cstdint>
 
-enum class Wallet : std::uint8_t{
-HD,
-MultiSignHD
-};
-
-enum class Role : std::uint8_t{
-Extern,
-Intern,
-Staking,
-OnlyAccount
-};
-
-enum class OutputKey : std::uint8_t{
-Private,
-Public
-};
-
-enum class InputKey : std::uint8_t{
-ExtendedMasterKey,
-AccountKey_xvk,
-AccountKey_xsk
-};
+namespace Cardano{
 
 //for generate all key
-bool raw_derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
-                    std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
-                    std::uint8_t *const output_key);
+bool getRawKey(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+                    std::uint32_t const account_path, Cardano::Role role_path, std::uint32_t const address_index_path,
+                    std::uint8_t * const output_key) noexcept;
 
 //for generate only key account
-bool raw_derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
-                   std::uint32_t const account_path, Role role_path, std::uint8_t *const output_key);
+//mandatory, role_path = Cardano::Role::OnlyAccount
+bool getRawKey(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+                   std::uint32_t const account_path, Cardano::Role role_path, std::uint8_t * const output_key) noexcept;
 
 //for generate all key
-bool derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
-                    std::uint32_t const account_path, Role role_path, std::uint32_t const address_index_path,
-                    std::string& bech32_output_key);
+bool getBech32key(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+                    std::uint32_t const account_path, Cardano::Role role_path, std::uint32_t const address_index_path,
+                    std::string & bech32_output_key) noexcept;
 
 //for generate only key account
-bool derivekey(std::uint8_t const *const input_key ,InputKey input_key_type, Wallet wallet_type, OutputKey output_key_type,
-               std::uint32_t const account_path, Role role_path, std::string& bech32_output_key);
+//mandatory, role_path = Cardano::Role::OnlyAccount
+bool getBech32key(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+               std::uint32_t const account_path, Cardano::Role role_path, std::string & bech32_output_key) noexcept;
+
+}
 
 #endif // BIP44_ED25519_HPP

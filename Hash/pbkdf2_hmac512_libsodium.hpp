@@ -35,11 +35,15 @@ https://github.com/jedisct1/libsodium/blob/master/src/libsodium/crypto_pwhash/sc
 #include <cmath>
 #include <sodium.h>
 
+namespace Cardano{
+namespace Hash{
 
-
-bool pbkdf2_hmac512_libsodium( std::uint8_t const *const key, std::size_t key_len,
-                               std::uint8_t const *const salt, std::size_t salt_len,
+bool const pbkdf2_hmac512_libsodium( std::uint8_t const * const key, std::size_t key_len,
+                               std::uint8_t const * const salt, std::size_t salt_len,
                                std::uint64_t const iterations,
-                               std::size_t out_len , std::uint8_t *const out );
+                               std::size_t out_len , std::uint8_t *const out ) noexcept ;
+
+}
+}
 
 #endif

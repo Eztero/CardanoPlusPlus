@@ -1,5 +1,6 @@
+namespace Cardano{
 namespace Diccionary{
-const char English[][2048]
+constexpr char English[][2048]
 {
     u8"abandon",
     u8"ability",
@@ -2051,7 +2052,7 @@ const char English[][2048]
     u8"zoo"
 };
 
-const char Spanish[][2048]{
+constexpr char Spanish[][2048]{
     u8"ábaco",
     u8"abdomen",
     u8"abeja",
@@ -4101,4 +4102,6 @@ const char Spanish[][2048]{
     u8"zumo",
     u8"zurdo"
 };
+
+}
 };

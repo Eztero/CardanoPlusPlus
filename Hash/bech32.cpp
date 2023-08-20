@@ -1,8 +1,11 @@
 #include "bech32.hpp"
 
-char const B32Chars_encode[33] = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+namespace Cardano{
+namespace Hash{
 
-std::int8_t const B32Chars_decode[128] = {
+char constexpr B32Chars_encode[33] = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+
+std::int8_t constexpr B32Chars_decode[128] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -14,9 +17,10 @@ std::int8_t const B32Chars_decode[128] = {
 };
 
 ///concat_data= data1 || data2 || add_bytes
-static std::uint8_t *concat_data(std::uint8_t const *const data1,std::uint16_t const *const data1_len, std::uint8_t const *const data2, std::uint16_t const *const data2_len, uint16_t const add_bytes, std::uint16_t *const data_out_len){
+static std::uint8_t * const concat_data(std::uint8_t const * const data1, std::uint16_t const * const data1_len, std::uint8_t const * const data2, std::uint16_t const * const data2_len, std::uint16_t const add_bytes, std::uint16_t * const data_out_len) noexcept {
     *data_out_len = (*data2_len) + (*data1_len) + add_bytes;  // se espera que el valor no supere los 65535 bytes de largo
-    std::uint8_t *data_out = static_cast<std::uint8_t*>(std::calloc(*data_out_len, sizeof(std::uint8_t)));
+    std::uint8_t *data_out = new (std::nothrow) std::uint8_t[*data_out_len]();
+    //std::uint8_t *data_out = static_cast<std::uint8_t*>(std::calloc(*data_out_len, sizeof(std::uint8_t)));
     if(data_out != nullptr){
         for(std::uint16_t i = 0; i < (*data_out_len); i++){
             if(i < (*data1_len)){
@@ -31,13 +35,14 @@ static std::uint8_t *concat_data(std::uint8_t const *const data1,std::uint16_t c
 }
 
 /// Encode
-static std::uint8_t *convert_bits(std::uint8_t const *const data,std::uint16_t const *const data_len , std::uint16_t const fromBits, std::uint16_t const toBits, std::uint16_t *const convert_bits_len){
+static std::uint8_t * const convert_bits(std::uint8_t const * const data, std::uint16_t const * const data_len , std::uint16_t const fromBits, std::uint16_t const toBits, std::uint16_t * const convert_bits_len) noexcept {
     std::uint16_t acc = 0;
     std::uint16_t bits = 0;
     std::uint16_t maxv = (1 << toBits) - 1;
     std::uint16_t maxacc = (1 << (fromBits + toBits - 1)) - 1;
     std::uint16_t cv_bits_len = (*data_len) * 2;
-    std::uint8_t *cv_bits = static_cast<std::uint8_t*>(std::calloc(cv_bits_len, sizeof(std::uint8_t)));
+    std::uint8_t *cv_bits = new (std::nothrow) std::uint8_t[cv_bits_len]();
+    //std::uint8_t *cv_bits = static_cast<std::uint8_t*>(std::calloc(cv_bits_len, sizeof(std::uint8_t)));
     if(cv_bits != nullptr){
         *convert_bits_len = 0;
 
@@ -45,8 +50,9 @@ static std::uint8_t *convert_bits(std::uint8_t const *const data,std::uint16_t c
             if ((data[i] >> fromBits) > 0)
             {
                 *convert_bits_len = 0;
-                std::memset(cv_bits, 0, cv_bits_len);
-                std::free(cv_bits);
+                sodium_memzero(cv_bits, cv_bits_len);
+                delete[] cv_bits;
+                //std::free(cv_bits);
                 return nullptr;
             }
             acc = ((acc << fromBits) | data[i]) & maxacc;
@@ -69,7 +75,7 @@ static std::uint8_t *convert_bits(std::uint8_t const *const data,std::uint16_t c
 }
 
 ///Decode cardano addr
-static bool decode_bits( std::uint8_t const *const data,std::uint16_t const data_len, std::uint16_t const fromBits, std::uint16_t const toBits, std::uint8_t *const bits_out ,std::uint16_t *const bits_out_len ){
+static bool const decode_bits( std::uint8_t const * const data, std::uint16_t const data_len, std::uint16_t const fromBits, std::uint16_t const toBits, std::uint8_t * const bits_out ,std::uint16_t * const bits_out_len ) noexcept {
     std::uint16_t blen = 0;
     std::uint16_t acc = 0;
     std::uint16_t bits = 0;
@@ -108,7 +114,7 @@ static bool decode_bits( std::uint8_t const *const data,std::uint16_t const data
     return true;
 }
 
-static bool IsValidHrp(char const *const hrp, std::uint8_t *const hrp_len){
+static bool const IsValidHrp(char const * const hrp, std::uint8_t * const hrp_len) noexcept {
     *hrp_len = 0;
     //comprueba si el largo de la cadena esta entre 1 a 83
     while(hrp[*hrp_len] != '\0'){
@@ -130,7 +136,7 @@ static bool IsValidHrp(char const *const hrp, std::uint8_t *const hrp_len){
     return true;
 }
 
-static bool IsValidStringBench32(char const *const bech32_code, std::uint16_t *const bech32_code_pos_separator, std::uint16_t *const bech32_code_lenght){
+static bool const IsValidStringBench32(char const * const bech32_code, std::uint16_t * const bech32_code_pos_separator, std::uint16_t * const bech32_code_lenght) noexcept {
     bool lower = false;
     bool upper = false;
     std::uint8_t c = 0;
@@ -164,7 +170,7 @@ static bool IsValidStringBench32(char const *const bech32_code, std::uint16_t *c
     return true;
 }
 
-static void bech32_polymod(std::uint8_t const *const data,std::uint16_t const *const data_len, std::uint32_t *const polymod_out){
+static void bech32_polymod(std::uint8_t const * const data, std::uint16_t const * const data_len, std::uint32_t * const polymod_out) noexcept{
     std::uint8_t b = 0;
     *polymod_out = 1;
     for(std::uint16_t i = 0; i < *data_len; i++){
@@ -179,13 +185,13 @@ static void bech32_polymod(std::uint8_t const *const data,std::uint16_t const *c
     }
 }
 
-
-static std::uint8_t *bech32_hrp_expand(char const *const hrp, std::uint8_t const *const hrp_len, std::uint16_t *const bech32_hrp_expand_len){
+static std::uint8_t * const bech32_hrp_expand(char const * const hrp, std::uint8_t const * const hrp_len, std::uint16_t * const bech32_hrp_expand_len) noexcept{
 
     std::uint16_t len = ((*hrp_len) * 2) + 1;
     *bech32_hrp_expand_len = len;
 
-    std::uint8_t *hrp_e = static_cast<std::uint8_t*>(std::calloc(len, sizeof(std::uint8_t)));
+    std::uint8_t *hrp_e = new (std::nothrow) std::uint8_t[len]();
+    //std::uint8_t *hrp_e = static_cast<std::uint8_t*>(std::calloc(len, sizeof(std::uint8_t)));
     if(hrp_e != nullptr){
         for (std::uint16_t i = 0; i < *hrp_len; ++i) {
             hrp_e[i] = static_cast<std::uint8_t>(hrp[i]) >> 5;
@@ -196,27 +202,30 @@ static std::uint8_t *bech32_hrp_expand(char const *const hrp, std::uint8_t const
     return hrp_e;
 }
 
-static bool bech32_verify_checksum(char const *const hrp, std::uint8_t const *const hrp_len, std::uint8_t const *const data, std::uint16_t const data_len){
+static bool const bech32_verify_checksum(char const * const hrp, std::uint8_t const * const hrp_len, std::uint8_t const * const data, std::uint16_t const data_len) noexcept {
     std::uint16_t hrp_expand_len;
     std::uint16_t v_len = 0;
     std::uint32_t pmod;
 
-    std::uint8_t *hrp_expand = bech32_hrp_expand(hrp, hrp_len, &hrp_expand_len);
+    std::uint8_t * const hrp_expand = bech32_hrp_expand(hrp, hrp_len, &hrp_expand_len);
     if(hrp_expand == nullptr){
         return false;
     }
-    std::uint8_t *v = concat_data(hrp_expand, &hrp_expand_len, data, &data_len, 0, &v_len);
+    std::uint8_t * const v = concat_data(hrp_expand, &hrp_expand_len, data, &data_len, 0, &v_len);
     if(v == nullptr){
-        std::free(hrp_expand);
+        delete[] hrp_expand;
+        //std::free(hrp_expand);
         return false;
     }
 
     bech32_polymod(v, &v_len, &pmod);
 
     //se borra v[] y hrp_expand[]
-    std::memset(v, 0, v_len);
-    std::free(hrp_expand);
-    std::free(v);
+    sodium_memzero(v, v_len);
+    delete[] hrp_expand;
+    delete[] v;
+    //std::free(hrp_expand);
+    //std::free(v);
 
     if(pmod == 1){
         return true;
@@ -225,19 +234,20 @@ static bool bech32_verify_checksum(char const *const hrp, std::uint8_t const *co
 
 }
 
-static bool bech32_create_checksum(char const *const hrp, std::uint8_t const *const hrp_len, std::uint8_t const *const data, std::uint16_t const *const data_len,std::uint8_t *const checksum) {
+static bool const bech32_create_checksum(char const * const hrp, std::uint8_t const * const hrp_len, std::uint8_t const * const data, std::uint16_t const * const data_len,std::uint8_t * const checksum) noexcept {
     std::uint16_t hrp_expand_len;
     std::uint16_t v_len = 0;
     //std::uint16_t enc_len = 0;
     std::uint32_t polymod;
 
-    std::uint8_t *hrp_expand=bech32_hrp_expand(hrp, hrp_len, &hrp_expand_len);
+    std::uint8_t * const hrp_expand = bech32_hrp_expand(hrp, hrp_len, &hrp_expand_len);
     if(hrp_expand == nullptr){
         return false;
     }
-    std::uint8_t *v = concat_data(hrp_expand, &hrp_expand_len, data, data_len, 6, &v_len); //se agregan 6 bytes adicionales al array para el calculo del checksum en bech32_polymod
+    std::uint8_t * const v = concat_data(hrp_expand, &hrp_expand_len, data, data_len, 6, &v_len); //se agregan 6 bytes adicionales al array para el calculo del checksum en bech32_polymod
     if(v == nullptr){
-        std::free(hrp_expand);
+        delete[] hrp_expand;
+        //std::free(hrp_expand);
         return false;
     }
 
@@ -248,14 +258,16 @@ static bool bech32_create_checksum(char const *const hrp, std::uint8_t const *co
     }
 
     //borrar hrp_expand[] y v[]
-    std::memset(v, 0, v_len);
-    std::free(hrp_expand);
-    std::free(v);
+    sodium_memzero(v, v_len);
+    delete[] hrp_expand;
+    delete[] v;
+    //std::free(hrp_expand);
+    //std::free(v);
 
     return true;
 }
 
-bool bech32_encode(char const *const hrp, std::uint8_t const *const data, std::uint16_t const data_len, std::string &encode_out){
+bool const bech32_encode(char const * const hrp, std::uint8_t const * const data, std::uint16_t const data_len, std::string &encode_out) noexcept {
 
     encode_out.clear();
 
@@ -269,21 +281,23 @@ bool bech32_encode(char const *const hrp, std::uint8_t const *const data, std::u
         return false;
     }
 
-    std::uint8_t *c_bit = convert_bits(data, &data_len, 8, 5, &c_bit_len);
+    std::uint8_t * const c_bit = convert_bits(data, &data_len, 8, 5, &c_bit_len);
     if(c_bit == nullptr){
         return false;
     }
 
     if(!bech32_create_checksum(hrp, &hrp_len, c_bit, &c_bit_len, chk)){
-        std::memset(c_bit, 0, c_bit_len);
-        std::free(c_bit);
+        sodium_memzero(c_bit, c_bit_len);
+        delete[] c_bit;
+        //std::free(c_bit);
         return false;
     }
 
-    std::uint8_t *cdata=concat_data(c_bit,&c_bit_len, chk, &chk_len, 0, &cdata_len);
+    std::uint8_t * const cdata = concat_data(c_bit, &c_bit_len, chk, &chk_len, 0, &cdata_len);
     if(cdata == nullptr){
-        std::memset(c_bit, 0, c_bit_len);
-        std::free(c_bit);
+        sodium_memzero(c_bit, c_bit_len);
+        delete[] c_bit;
+        //std::free(c_bit);
         return false;
     }
 
@@ -297,15 +311,17 @@ bool bech32_encode(char const *const hrp, std::uint8_t const *const data, std::u
     }
 
     //Borrar cdata c_bit
-    std::memset(c_bit, 0, c_bit_len);
-    std::memset(cdata, 0, cdata_len);
-    std::free(cdata);
-    std::free(c_bit);
+    sodium_memzero(c_bit, c_bit_len);
+    sodium_memzero(cdata, cdata_len);
+    delete[] cdata;
+    delete[] c_bit;
+    //std::free(cdata);
+    //std::free(c_bit);
 
     return true;
 }
 
-bool bech32_decode(char const *const bech32_code,std::uint8_t *const data,std::uint16_t *const data_len){
+bool const bech32_decode(char const * const bech32_code, std::uint8_t * const data_out,std::uint16_t * const data_out_len) noexcept {
     std::uint16_t bech32_code_lenght = 0;
     std::uint16_t pos_separator = 0;
     std::uint8_t hrp_len = 0;
@@ -324,7 +340,7 @@ bool bech32_decode(char const *const bech32_code,std::uint8_t *const data,std::u
 
     std::uint16_t c_bit_len = bech32_code_lenght-(pos_separator+1);
     std::uint8_t c_bit[c_bit_len];
-    std::memset(c_bit,0,c_bit_len);
+    sodium_memzero(c_bit, c_bit_len);
 
     for (std::uint16_t i = 0; i < c_bit_len; i++)
     {
@@ -332,16 +348,19 @@ bool bech32_decode(char const *const bech32_code,std::uint8_t *const data,std::u
     }
 
     if (!bech32_verify_checksum(hrp, &hrp_len, c_bit, c_bit_len)){
-        std::memset(c_bit, 0, c_bit_len);
+        sodium_memzero(c_bit, c_bit_len);
         return false;
     }
 
-    if(!decode_bits(c_bit, (c_bit_len - 6), 5, 8, data, data_len)){
-        std::memset(c_bit, 0, c_bit_len);
+    if(!decode_bits(c_bit, (c_bit_len - 6), 5, 8, data_out, data_out_len)){
+        sodium_memzero(c_bit, c_bit_len);
         return false;
     }
 
-    std::memset(c_bit, 0, c_bit_len);
+    sodium_memzero(c_bit, c_bit_len);
     return true;
 
+}
+
+}
 }
