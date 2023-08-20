@@ -31,19 +31,27 @@ SOFTWARE.
 #include <string>
 #include <memory>
 #include <stdexcept>
+#include "cenum.hpp"
+
+namespace Cardano{
+    namespace Utils{
+
+unsigned int const bytes_structure_cbornumber(std::uint64_t number) noexcept;
 
 void addUint64toVector(std::vector <std::uint8_t> & bytesvector, std::uint64_t const & numero);
 void addUint16toVector(std::vector <std::uint8_t> & bytesvector, std::uint16_t const & numero);
 void addUint16toVector(std::vector <std::uint8_t> *& bytesvector, std::uint16_t *& numero);
-void replaceUint16toVector(std::uint8_t * bytesvector, std::uint16_t const & numero);
+void replaceUint16toVector(std::uint8_t * bytesvector, std::uint16_t const & numero) noexcept;
 
-std::uint64_t const extract8bytestoUint64(std::uint8_t  const * const array8bytes);
-std::uint16_t const extract2bytestoUint16(std::uint8_t  const * const array2bytes);
+std::uint64_t const extract8bytestoUint64(std::uint8_t  const * const array8bytes) noexcept;
+std::uint16_t const extract2bytestoUint16(std::uint8_t  const * const array2bytes) noexcept;
 
-bool const existen_coincidencias(std::uint8_t const * data1, std::uint8_t const * data2, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto );
+bool const existen_coincidencias(std::uint8_t const * data1, std::uint8_t const * data2, std::uint16_t const data_len, std::uint16_t const ciclos, std::uint16_t const salto ) noexcept;
 
-bool const existen_coincidencias_output(std::uint8_t const * data, std::uint8_t const * output, std::uint16_t const data_len, std::uint16_t const ciclos ,std::uint16_t const salto );
-bool is_only_hex(std::string const & string_hex);
-std::uint8_t const *const hexchararray2uint8array(std::string const & string_hex, std::size_t *hexchararray2uint8array_len); // free memory with delete[]
+bool const existen_coincidencias_output(std::uint8_t const * data, std::uint8_t const * output, std::uint16_t const data_len, std::uint16_t const ciclos, std::uint16_t const salto ) noexcept;
 
+std::uint8_t const * const hexchararray2uint8array(std::string const & string_hex, std::size_t * hexchararray2uint8array_len) noexcept; // free memory with delete[]
+
+    }
+}
 #endif

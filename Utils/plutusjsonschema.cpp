@@ -1,5 +1,8 @@
 #include "plutusjsonschema.hpp"
+#include <iomanip>
 
+namespace Cardano{
+namespace Utils{
 
 PlutusJsonSchema::PlutusJsonSchema(){
     cborschema.reserve(150);
@@ -8,7 +11,6 @@ PlutusJsonSchema::PlutusJsonSchema(){
 PlutusJsonSchema::~PlutusJsonSchema(){
     cborschema.clear();
 };
-
 
 std::size_t PlutusJsonSchema::find_caracter_it(char const caracter, std::string::const_iterator it, std::string::const_iterator it_end){
     std::size_t posicion_it = 0;
@@ -22,7 +24,6 @@ std::size_t PlutusJsonSchema::find_caracter_it(char const caracter, std::string:
 
     return std::string::npos;
 }
-
 
 std::size_t PlutusJsonSchema::pos_primer_caracter_it(char const caracter, std::string::const_iterator it, std::string::const_iterator it_end ){
     std::size_t posicion_it = 0;
@@ -87,7 +88,6 @@ std::size_t PlutusJsonSchema::posfinal_primer_string_it(std::string const frase,
     }
     return posicion_it;
 }
-
 
 bool PlutusJsonSchema::es_igual_ydesplazaIt(std::string const frase, std::string::iterator &it, std::string::const_iterator const &it_end ){ //  busca una igualdad y ademas cambia la posicion de it durante su busqueda
     std::size_t const t = frase.size();
@@ -249,7 +249,6 @@ bool PlutusJsonSchema::obtener_bytes_str(std::string::iterator &it, std::string:
     return false;
 }
 
-
 bool PlutusJsonSchema::obtener_key_value_map(std::string::iterator &it, std::string::const_iterator &it_end, std::vector<std::uint8_t> &key_cbor, std::vector<std::uint8_t> &value_cbor ){
     std::size_t desplazamiento_buffk = posfinal_primer_string_it("{" ,it, it_end );
     std::size_t desplazamiento_buffv = 0;
@@ -362,8 +361,10 @@ std::vector<std::uint8_t> PlutusJsonSchema::obtener_list_cbor(std::string::itera
         pos_corchete_fin = pos_primer_caracter_it(']', it, it_end);
         if(pos_corchete_fin != std::string::npos){
             it += pos_corchete_fin + 1;
-            a->createArray(numero_elementos_lista);
+            //a->createArray(numero_elementos_lista); // las listas de momento se representan como array indefinidos
+            a->createArrayUndefined();
             a->bypassIteratorVectorCbor(listvalue_cbor.begin(),listvalue_cbor.end());
+            a->addBreak();
             return a->getCbor();
         }else{
             throw std::invalid_argument("error in list of element: missing a ( ] )");
@@ -375,7 +376,6 @@ std::vector<std::uint8_t> PlutusJsonSchema::obtener_list_cbor(std::string::itera
 
     return a->getCbor();
 }
-
 
 std::vector<std::uint8_t> PlutusJsonSchema::obtener_tipo( std::string::iterator &it, std::string::const_iterator &it_end ){
     std::unique_ptr<CborSerialize> a(new CborSerialize);
@@ -688,7 +688,6 @@ PlutusJsonSchema::tipo_t PlutusJsonSchema::detectar_tipo(std::string::iterator &
     return tipo_t::tipo_error;
 };
 
-
 void PlutusJsonSchema::addSchemaJson(std::string json){
 
 
@@ -704,11 +703,7 @@ void PlutusJsonSchema::addSchemaJson(std::string json){
         std::cerr<<"Plutus Json Schema: "<<erl.what()<< std::endl;
 
     }
-
-
-
 };
-
 
 std::vector<std::uint8_t> const &PlutusJsonSchema::getCborSchemaJson() const{
 
@@ -723,3 +718,5 @@ std::uint8_t const *const PlutusJsonSchema::getHash32CborSchemaJson(){
     return datum_hash;
 };
 
+        }
+        }

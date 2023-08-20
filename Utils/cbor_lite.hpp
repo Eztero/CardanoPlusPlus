@@ -32,6 +32,8 @@ https://www.rfc-editor.org/rfc/rfc8949
 #include <string>
 #include <vector>
 
+namespace Cardano{
+namespace Utils{
 class CborSerialize
 {
 public:
@@ -75,5 +77,6 @@ private:
     void AddNumber2Vector(std::uint64_t const &size_array, Pos_hex const &pos);
     void AddNumber2Vector(std::uint64_t const &size_array, Pos_hex const &pos, std::vector<std::uint8_t> &Vector_);
 };
-
+}
+}
 #endif // CBOR_LITE_HPP

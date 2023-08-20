@@ -1,4 +1,6 @@
 #include "cbor_lite.hpp"
+namespace Cardano{
+namespace Utils{
 
 CborSerialize::CborSerialize(){
     bytes_cbor_data.reserve(150);
@@ -7,7 +9,7 @@ CborSerialize::CborSerialize(){
 CborSerialize::~CborSerialize(){
     //bytes_cbor_data = nullptr;
     bytes_cbor_data.clear();
-};
+}
 
 void CborSerialize::AddNumber2Vector(std::uint64_t const &size_array, Pos_hex const &pos){
     switch(pos){
@@ -35,7 +37,7 @@ void CborSerialize::AddNumber2Vector(std::uint64_t const &size_array, Pos_hex co
         bytes_cbor_data.push_back( ( size_array ) & 0xff );
     };break;
     }
-};
+}
 
 void CborSerialize::AddNumber2Vector(std::uint64_t const &size_array, Pos_hex const &pos, std::vector<std::uint8_t> &Vector_){
     switch(pos){
@@ -63,7 +65,7 @@ void CborSerialize::AddNumber2Vector(std::uint64_t const &size_array, Pos_hex co
         Vector_.push_back( ( size_array ) & 0xff );
     };break;
     }
-};
+}
 
 CborSerialize &CborSerialize::addBytesArray(std::uint8_t const *const bytes, std::uint64_t bytes_length){
 
@@ -214,7 +216,7 @@ CborSerialize &CborSerialize::addUint(std::uint64_t const number){
         AddNumber2Vector(number, Pos_hex::hff8);
     }
     return *this;
-};
+}
 
 CborSerialize &CborSerialize::addUint(std::uint8_t const * const arraynumbe8byteshex){
     std::uint64_t const number = ( static_cast<std::uint64_t>(arraynumbe8byteshex[0]) << 56 ) | (static_cast<std::uint64_t>(arraynumbe8byteshex[1]) << 48) | (static_cast<std::uint64_t>(arraynumbe8byteshex[2]) << 40) |
@@ -376,7 +378,7 @@ CborSerialize &CborSerialize::addBool(bool const b){
 CborSerialize &CborSerialize::addNull(){
     bytes_cbor_data.push_back( 0xf6 );
     return *this;
-};
+}
 
 CborSerialize &CborSerialize::addBreak(){
     bytes_cbor_data.push_back( 0xff );
@@ -415,27 +417,27 @@ CborSerialize &CborSerialize::addString(std::string const &text){
     bytes_cbor_data.insert(bytes_cbor_data.end(), text.begin(), text.end());
 
     return *this;
-};
+}
 
 CborSerialize &CborSerialize::addIndexMap(std::uint64_t const index){
     addUint(index);
     return *this;
-};
+}
 
 CborSerialize &CborSerialize::addIndexMap(std::string const &text){
     addString(text);
     return *this;
-};
+}
 
 CborSerialize &CborSerialize::addIndexMap(std::uint8_t const *const bytesarray, std::uint64_t bytesarray_length){
     addBytesArray(bytesarray, bytesarray_length);
     return *this;
-};
+}
 
 CborSerialize &CborSerialize::addIndexMap(std::uint8_t const * const arraynumbe8byteshex){
     addUint(arraynumbe8byteshex);
     return *this;
-};
+}
 
 CborSerialize &CborSerialize::addTag(std::uint64_t const number){
     if(number < 0x18){//0...23
@@ -465,13 +467,15 @@ CborSerialize &CborSerialize::addTag(std::uint64_t const number){
     }
 
     return *this;
-};
+}
 
 void CborSerialize::clearCbor(){
     bytes_cbor_data.clear();
-};
+}
 
 std::vector<std::uint8_t> const & CborSerialize::getCbor() const {
     return  bytes_cbor_data;
-};
+}
 
+}
+}

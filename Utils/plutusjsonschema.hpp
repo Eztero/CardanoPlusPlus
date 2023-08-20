@@ -21,6 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+https://github.com/input-output-hk/cardano-node/blob/c1efb2f97134c0607c982246a36e3da7266ac194/cardano-api/src/Cardano/Api/ScriptData.hs#L254
+
 **/
 
 #ifndef PLUTUSJSONSCHEMA
@@ -35,6 +37,8 @@ SOFTWARE.
 #include <cstdint>
 #include "cbor_lite.hpp"
 #include "txutils.hpp"
+namespace Cardano{
+namespace Utils{
 
 class PlutusJsonSchema{
 public:
@@ -76,5 +80,7 @@ private:
 
 };
 
+}
+}
 
 #endif
