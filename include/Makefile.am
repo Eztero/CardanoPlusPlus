@@ -6,8 +6,14 @@ cardanoplusplus/bip39/bip39.hpp \
 cardanoplusplus/bip39/diccionary.hpp \
 cardanoplusplus/bip32_ed25519/bip32_ed25519.hpp \
 cardanoplusplus/bip44_ed25519/bip44_ed25519.hpp \
+cardanoplusplus/utils/cenum.hpp \
+cardanoplusplus/utils/cmacros.hpp \
 cardanoplusplus/utils/cbor_lite.hpp \
 cardanoplusplus/utils/plutusjsonschema.hpp \
+cardanoplusplus/transaction/transaction_body.hpp \
+cardanoplusplus/transaction/transactioninput.hpp \
+cardanoplusplus/transaction/transactionoutput.hpp \
+cardanoplusplus/transaction/withdrawal.hpp \
 cardanoplusplus/transaction/transaction_witness.hpp \
 cardanoplusplus/transaction/auxiliary_data.hpp \
 cardanoplusplus/transaction/certificates.hpp \
