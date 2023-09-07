@@ -73,8 +73,6 @@ void getRawScriptHash(std::uint8_t const * const input_script, std::size_t input
 void getBech32AddressfromScript(std::string const &script, Cardano::ScriptType const script_type,  Cardano::Network const network_id,
                                 Cardano::ScriptAddress const address_type, std::string & address_out );
 
-/// Falta una funcion para crear direcciones de pago Shared , createAddressShared() , createAddressShared_Keyhash()
-
 }
 
 #endif // ADDRESSES_HPP

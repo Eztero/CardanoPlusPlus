@@ -349,5 +349,4 @@ void getBech32AddressfromScript(std::string const &script, Cardano::ScriptType c
     Hash::bech32_encode(hrp, output_29bytesraw, 29, address_out);
 }
 
-
 }

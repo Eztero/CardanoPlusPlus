@@ -38,10 +38,10 @@ https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
 namespace Cardano{
 
 ///Returns its entropy and its length in bytes ; if there is an error it returns a nullptr; free memory with delete[]
-std::uint8_t * mnemotic2entropy(char const *const mnemotic, char const diccionary[][2048], std::size_t *const entropy_length_bytes) noexcept;
+std::uint8_t * mnemotic2entropy(char const *const mnemotic, char const diccionary[][2048], std::size_t *const entropy_len) noexcept;
 
 ///Returns its mnemotics and its length in bytes, valid entropy range 128 - 256 bits ; if there is an error it returns a nullptr; free memory with delete[]
-char * entropy2mnemotic(std::uint8_t const *const entropy, std::size_t const *const entropy_length_bytes, char const diccionary[][2048], std::size_t *const mnemotic_length) noexcept;
+char * entropy2mnemotic(std::uint8_t const *const entropy, std::size_t const *const entropy_len, char const diccionary[][2048], std::size_t *const mnemotic_len) noexcept;
 
 }
 #endif

@@ -30,7 +30,7 @@ Transaction::Transaction( std::uint64_t txfeefixed, std::uint64_t txfeeperbytes 
     bytes_transaction = 0;
 }
 
-Transaction &Transaction::AddExtendedSigningKey(std::uint8_t const *const xsk){
+Transaction &Transaction::addExtendedSigningKey(std::uint8_t const *const xsk){
     if(xsk!=nullptr){
         xskeys_ptr.push_back(xsk);
     }
