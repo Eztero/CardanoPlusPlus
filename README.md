@@ -4,7 +4,7 @@
 ![](https://img.shields.io/github/tag/Eztero/CardanoPlusPlus.svg)
 ![](https://img.shields.io/github/release/Eztero/CardanoPlusPlus.svg)
 
-It is a library written in c++ using the c++11 standard, this library is compatible with the serialization system used to interact with the chain of blocks, among the functions it stands out
+It is a library written in C++ using the C++11 standard, this library is compatible with the serialization system used to interact with the chain of blocks, among the functions it stands out
 
 * Support multi account
 * Send and receive ADAs and tokens
