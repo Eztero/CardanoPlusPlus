@@ -112,7 +112,7 @@ if(!Hash::bech32_decode(pool_bech32.data(),bech32_buff,&bech32_buff_len) && bech
 addStakeDelegation(ckey, stake_credential_vk, bech32_buff);
 }
 // redeemer = [ tag: redeemer_tag, index: uint, data: plutus_data, ex_units: ex_units ]
-void Certificates::addCertificateRedeemer(std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
+void Certificates::addRedeemer(std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
 
     std::unique_ptr<Utils::CborSerialize> rcbor(new Utils::CborSerialize);
     std::unique_ptr<Utils::CborSerialize> unitscbor(new Utils::CborSerialize);
@@ -127,11 +127,16 @@ void Certificates::addCertificateRedeemer(std::string & json_redeemer, std::uint
     std::vector<std::uint8_t> const & cbor_units = unitscbor->getCbor();
     std::vector<std::uint8_t> const & cbor_plutusdata = Json_p->getCborSchemaJson();
 
-    Utils::addUint16toVector( redeemer_cert, (cbor_certificates_count - 1 ) );                /// Index_redeemer , LANZAR ERROR SI tx_input_count=0
+    std::uint16_t numero_certs = cbor_certificates_count - 1;
+    if(numero_certs < 0){
+      throw std::invalid_argument("Error in addRedeemer: no previous Certificates found");
+    }
+
+    Utils::addUint16toVector( redeemer_cert, numero_certs );
     redeemer_cert.push_back(static_cast<std::uint8_t>(2));                                    // tag = 2
-    Utils::addUint64toVector(redeemer_cert,cbor_plutusdata.size());                                  // plutusdata_len
+    Utils::addUint64toVector(redeemer_cert,cbor_plutusdata.size());                           // plutusdata_len
     redeemer_cert.insert(redeemer_cert.end(),cbor_plutusdata.begin(),cbor_plutusdata.end());  // plutusdata
-    Utils::addUint64toVector(redeemer_cert,cbor_units.size());                                       // cbor_ex_units_len
+    Utils::addUint64toVector(redeemer_cert,cbor_units.size());                                // cbor_ex_units_len
     redeemer_cert.insert(redeemer_cert.end(),cbor_units.begin(),cbor_units.end());            // cbor_ex_units
 
     ++redeemer_cert_count;
@@ -162,4 +167,5 @@ return witnessmap_countbit;
 std::vector<std::uint8_t> const & Certificates::getCborCertificates() const {
 return cbor_certificates;
 }
+
 }
