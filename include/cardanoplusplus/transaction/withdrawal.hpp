@@ -43,7 +43,8 @@ explicit Withdrawals();
 virtual ~Withdrawals();
 Withdrawals & addWithdrawals(std::uint8_t const * const raw_stake_address, std::uint64_t const amount);
 Withdrawals & addWithdrawals(std::string & stake_address, std::uint64_t const amount);
-void addWithdrawalRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits );
+void addRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ); // FOR WITHDRAWAL
+
 void alphanumeric_organization();
 std::uint16_t const & getWithdrawalRedeemersCount() const;
 std::uint32_t const & getBodyMapcountbit() const;

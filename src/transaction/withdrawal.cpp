@@ -71,7 +71,7 @@ Withdrawals & Withdrawals::addWithdrawals(std::string & stake_address, std::uint
     return *this;
 }
 
-void Withdrawals::addWithdrawalRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
+void Withdrawals::addRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
     std::unique_ptr<Utils::CborSerialize> rcbor(new Utils::CborSerialize);
     std::unique_ptr<Utils::CborSerialize> unitscbor(new Utils::CborSerialize);
     std::unique_ptr<Utils::PlutusJsonSchema> Json_p(new Utils::PlutusJsonSchema);
@@ -85,7 +85,12 @@ void Withdrawals::addWithdrawalRedeemer( std::string & json_redeemer, std::uint6
     std::vector<std::uint8_t> const & cbor_units = unitscbor->getCbor();
     std::vector<std::uint8_t> const & cbor_plutusdata = Json_p->getCborSchemaJson();
 
-    Utils::addUint16toVector( redeemer_withdrawals, (withdrawals_count - 1 ) );                            /// Index_redeemer , LANZAR ERROR SI withdrawals_count=0
+    std::uint16_t numero_wdrls = withdrawals_count - 1;
+    if(numero_wdrls < 0){
+      throw std::invalid_argument("Error in addRedeemer: no previous Withdrawals found");
+    }
+
+    Utils::addUint16toVector( redeemer_withdrawals, numero_wdrls );
     redeemer_withdrawals.push_back(static_cast<std::uint8_t>(3));                                          // tag = 3
     Utils::addUint64toVector(redeemer_withdrawals,cbor_plutusdata.size());                                 // plutusdata_len
     redeemer_withdrawals.insert(redeemer_withdrawals.end(),cbor_plutusdata.begin(),cbor_plutusdata.end()); // plutusdata
