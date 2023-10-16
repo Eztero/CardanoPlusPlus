@@ -46,14 +46,14 @@ public:
     explicit TransactionsInputs();
 
 
-    /// Agregar un bloqueo para que solo acepte un datum y un redeemer por direccion , ademas incorporar una excepcion que avise cuando se agrega un datum o reedeemer antes de ingresar
-    /// la primera direccion
+    /// Agregar un bloqueo para que solo acepte un datum y un redeemer por direccion
     TransactionsInputs & addInput( std::string const & TxHash, std::uint64_t const TxIx );  // -> addScript() || addReferenceInput -> addDatum() -> addRedeemer()
     TransactionsInputs & addInlineScript(Cardano::ScriptReference const reference_type, std::string const & TxHash, std::uint64_t const TxIx);
     TransactionsInputs & setGlobalReferencesStriptsType( Cardano::ScriptType const script_type); // necesario para el calculo del scriptdatahash , se debe especificar por obligacion
     TransactionsInputs & addCollateral( std::string const & TxHash, std::uint64_t const TxIx );
-    TransactionsInputs & addSpendingDatum( std::string & json_datum );  // Se usa para el witness y el scriptdatahash
-    TransactionsInputs & addSpendingRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits );  // Se usa para el witness y el scriptdatahash
+    TransactionsInputs & addDatum ( std::string & json_datum );  // FOR SPENDING      ;Se usa para el witness y el scriptdatahash
+    //TransactionsInputs & addSpendingDatum( std::string & json_datum );  // Se usa para el witness y el scriptdatahash
+    TransactionsInputs & addRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits );  // FOR SPENDING   ;Se usa para el witness y el scriptdatahash
     TransactionsInputs & addScript( Cardano::ScriptType const script_type, std::uint8_t const * const & script, std::size_t & script_len ); // Se usa para el witness y el scriptdatahash (solo el script_type)
     TransactionsInputs & addScript( Cardano::ScriptType const script_type, std::string const & script );
 
@@ -64,7 +64,7 @@ public:
     std::uint16_t const & getInputsCount() const;
     std::uint16_t const & getInputsReferencesCount() const;
     std::uint16_t const & getCollateralCount() const;
-    std::uint16_t const & getSpendingDatumsCount() const;
+    std::uint16_t const & getDatumsCount() const;
     std::uint16_t const & getSpendingRedeemersCount() const;
     std::uint16_t const & getPlutusV1ScriptsCount() const;
     std::uint16_t const & getPlutusV2ScriptsCount() const;
@@ -76,7 +76,7 @@ public:
     std::vector<std::uint8_t> const & getInputs() const;
     std::vector<std::uint8_t> const & getInputsReferences() const;
     std::vector<std::uint8_t> const & getCollateral() const;
-    std::vector<std::uint8_t> const & getSpendingDatums() const;
+    std::vector<std::uint8_t> const & getDatums() const;
     std::vector<std::uint8_t> const & getSpendingRedeemers() const;
     std::vector<std::uint8_t> const & getPlutusV1Scripts();
     std::vector<std::uint8_t> const & getgetPlutusV2Scripts();

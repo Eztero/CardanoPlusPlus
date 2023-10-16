@@ -127,26 +127,48 @@ TransactionsInputs &TransactionsInputs::addCollateral(std::string const & TxHash
     return *this;
 }
 
-// plutus_data
-TransactionsInputs &TransactionsInputs::addSpendingDatum(std::string & json_datum){
+TransactionsInputs &TransactionsInputs::addDatum ( std::string & json_datum ){
+
     std::unique_ptr<Utils::PlutusJsonSchema> Json_p(new Utils::PlutusJsonSchema());
     Json_p->addSchemaJson(json_datum);
     std::vector<std::uint8_t> const & cbor_datum = Json_p->getCborSchemaJson();
 
-    Utils::addUint16toVector( datum_input, (tx_input_count - 1 ) );                                /// Index_datum , LANZAR ERROR SI tx_input_count=0
-    Utils::addUint64toVector(datum_input,cbor_datum.size());                                       // cbor_datum_len
-
+    std::uint16_t numero_txin = tx_input_count - 1;
+    if(numero_txin < 0){
+      throw std::invalid_argument("Error in addDatum: no previous Tx Input found");
+    }
+    Utils::addUint16toVector( datum_input, numero_txin );
+    Utils::addUint64toVector(datum_input,cbor_datum.size());
     datum_input.insert(datum_input.end(),cbor_datum.begin(),cbor_datum.end());
     ++datum_input_count;
 
     bodymap_countbit |= 0x800;
     witnessmap_countbit |= 0x10;
 
-    return *this;
+
+    return *this;                                   // cbor_datum_len
 }
 
+// plutus_data
+//TransactionsInputs &TransactionsInputs::addSpendingDatum(std::string & json_datum){
+//    std::unique_ptr<Utils::PlutusJsonSchema> Json_p(new Utils::PlutusJsonSchema());
+//    Json_p->addSchemaJson(json_datum);
+//    std::vector<std::uint8_t> const & cbor_datum = Json_p->getCborSchemaJson();
+//
+//    Utils::addUint16toVector( datum_input, (tx_input_count - 1 ) );                                /// Index_datum , LANZAR ERROR SI tx_input_count=0
+//    Utils::addUint64toVector(datum_input,cbor_datum.size());                                       // cbor_datum_len
+//
+//    datum_input.insert(datum_input.end(),cbor_datum.begin(),cbor_datum.end());
+//    ++datum_input_count;
+//
+//    bodymap_countbit |= 0x800;
+//    witnessmap_countbit |= 0x10;
+//
+//    return *this;
+//}
+
 // redeemer = [ tag: redeemer_tag, index: uint, data: plutus_data, ex_units: ex_units ]
-TransactionsInputs &TransactionsInputs::addSpendingRedeemer(std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
+TransactionsInputs &TransactionsInputs::addRedeemer(std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
 
 
     std::unique_ptr<Utils::CborSerialize> rcbor(new Utils::CborSerialize);
@@ -162,7 +184,12 @@ TransactionsInputs &TransactionsInputs::addSpendingRedeemer(std::string & json_r
     std::vector<std::uint8_t> const & cbor_units = unitscbor->getCbor();
     std::vector<std::uint8_t> const & cbor_plutusdata = Json_p->getCborSchemaJson();
 
-    Utils::addUint16toVector( redeemer_input, (tx_input_count - 1 ) );                                /// Index_redeemer , LANZAR ERROR SI tx_input_count=0
+    std::uint16_t numero_txin = tx_input_count - 1;
+    if(numero_txin < 0){
+      throw std::invalid_argument("Error in addRedeemer: no previous Tx Inputs found");
+    }
+
+    Utils::addUint16toVector( redeemer_input, numero_txin );                                /// Index_redeemer , LANZAR ERROR SI tx_input_count=0
     redeemer_input.push_back(static_cast<std::uint8_t>(0));                                    // tag = 0
     Utils::addUint64toVector(redeemer_input,cbor_plutusdata.size());                                  // plutusdata_len
     redeemer_input.insert(redeemer_input.end(),cbor_plutusdata.begin(),cbor_plutusdata.end()); // plutusdata
@@ -178,6 +205,7 @@ TransactionsInputs &TransactionsInputs::addSpendingRedeemer(std::string & json_r
 
 TransactionsInputs &TransactionsInputs::addScript(Cardano::ScriptType const script_type, std::uint8_t const * const & script, std::size_t & script_len){
     switch(script_type){
+
     case ScriptType::Native_Script:{
         if(nativescript_input_count == 0){
             nativescript_input.assign( 2 , 0 );  // crea un espacio con ceros para despues indicar la cantidad de script en el array
@@ -202,7 +230,7 @@ TransactionsInputs &TransactionsInputs::addScript(Cardano::ScriptType const scri
         plutusscript2_input_count++;
         witnessmap_countbit |= 0x40;
     };break;
-
+    default:{throw std::invalid_argument("Error in addScript: ScriptType enum not valid");};break;
     }
     setGlobalReferencesStriptsType(script_type);
     return *this;
@@ -224,7 +252,7 @@ TransactionsInputs & TransactionsInputs::setGlobalReferencesStriptsType( Cardano
 void TransactionsInputs::alphanumeric_organization(){
 
     std::unique_ptr<std::vector<std::uint8_t>> vector_data(new std::vector<std::uint8_t>{});
-    std::uint8_t *ptr_data = nullptr;
+    std::uint8_t *ptr_buffer = nullptr;
     std::uint8_t *ptr_input[tx_input_count];
     std::uint8_t *ptr_reference_input[reference_input_count];
     std::uint8_t *ptr_collateral_input[collateral_input_count];
@@ -233,30 +261,31 @@ void TransactionsInputs::alphanumeric_organization(){
     std::uint16_t countmenosuno;
     int i_cmp = 0;
 
+    // Inputs
     if(tx_input_count > 0){
-        ptr_data = tx_input.data();
-        for(std::uint16_t  i= 0; i<tx_input_count;i++ ){ // asigno las localizaciones a punteros
-            ptr_input[i] = ptr_data;
-            ptr_data += 42;
+        ptr_buffer = tx_input.data();
+        for(std::uint16_t  i = 0; i < tx_input_count; i++ ){ // asigno las localizaciones a punteros
+            ptr_input[i] = ptr_buffer;
+            ptr_buffer += 42;
         }
         countmenosuno = tx_input_count - 1;
         for(std::uint16_t  i = 0; i < countmenosuno; i++ ){
             for(std::uint16_t  e = 0; e < countmenosuno;e++ ){
                 i_cmp = std::memcmp(ptr_input[e]+2, ptr_input[e+1]+2, 40);
                 if(i_cmp > 0){
-                    ptr_data = ptr_input[e];
+                    ptr_buffer = ptr_input[e];
                     ptr_input[e] = ptr_input[e+1];
-                    ptr_input[e+1] = ptr_data;
+                    ptr_input[e+1] = ptr_buffer;
                 }
             }
         }
     }
 
     if(reference_input_count > 0){
-        ptr_data = reference_input.data();
+        ptr_buffer = reference_input.data();
         for(std::uint16_t  i= 0; i<reference_input_count;i++ ){ // asigno las localizaciones a punteros
-            ptr_reference_input[i] = ptr_data;
-            ptr_data += 42;
+            ptr_reference_input[i] = ptr_buffer;
+            ptr_buffer += 42;
         }
 
         countmenosuno = reference_input_count - 1;
@@ -264,20 +293,20 @@ void TransactionsInputs::alphanumeric_organization(){
             for(std::uint16_t  e = 0; e < countmenosuno;e++ ){
                 i_cmp = std::memcmp(ptr_reference_input[e]+2, ptr_reference_input[e+1]+2, 40);
                 if(i_cmp > 0){
-                    ptr_data = ptr_reference_input[e];
+                    ptr_buffer = ptr_reference_input[e];
                     ptr_reference_input[e] = ptr_reference_input[e+1];
-                    ptr_reference_input[e+1] = ptr_data;
+                    ptr_reference_input[e+1] = ptr_buffer;
                 }
             }
         }
 
     }
-
+    // Callateral Inputs
     if(collateral_input_count > 0){
-        ptr_data = collateral_input.data();
+        ptr_buffer = collateral_input.data();
         for(std::uint16_t  i= 0; i<collateral_input_count;i++ ){ // asigno las localizaciones a punteros
-            ptr_collateral_input[i] = ptr_data;
-            ptr_data += 42;
+            ptr_collateral_input[i] = ptr_buffer;
+            ptr_buffer += 42;
         }
 
         countmenosuno = collateral_input_count - 1;
@@ -285,20 +314,21 @@ void TransactionsInputs::alphanumeric_organization(){
             for(std::uint16_t  e = 0; e < countmenosuno;e++ ){
                 i_cmp = std::memcmp(ptr_collateral_input[e]+2, ptr_collateral_input[e+1]+2, 40);
                 if(i_cmp > 0){
-                    ptr_data = ptr_collateral_input[e];
+                    ptr_buffer = ptr_collateral_input[e];
                     ptr_collateral_input[e] = ptr_collateral_input[e+1];
-                    ptr_collateral_input[e+1] = ptr_data;
+                    ptr_collateral_input[e+1] = ptr_buffer;
                 }
             }
         }
 
     }
 
+    // Datums
     if(datum_input_count > 0){
-        ptr_data = datum_input.data();
+        ptr_buffer = datum_input.data();
         for(std::uint16_t  i= 0; i<datum_input_count;i++ ){ // asigno las localizaciones a punteros
-            ptr_datums[i] = ptr_data;
-            ptr_data += Utils::extract8bytestoUint64(ptr_data+2) + 10;
+            ptr_datums[i] = ptr_buffer;
+            ptr_buffer += Utils::extract8bytestoUint64(ptr_buffer+2) + 10;
         }
 
         // reasigna los index
@@ -316,9 +346,9 @@ void TransactionsInputs::alphanumeric_organization(){
         for(std::uint16_t  i = 0; i < countmenosuno; i++ ){
             for(std::uint16_t  c = 0; c < countmenosuno; c++ ){
                 if(Utils::extract2bytestoUint16(ptr_datums[c]) > Utils::extract2bytestoUint16(ptr_datums[c+1])){
-                    ptr_data = ptr_datums[c];
+                    ptr_buffer = ptr_datums[c];
                     ptr_datums[c] = ptr_datums[c+1];
-                    ptr_datums[c+1] = ptr_data;
+                    ptr_datums[c+1] = ptr_buffer;
                     break;
                 }
             }
@@ -326,12 +356,13 @@ void TransactionsInputs::alphanumeric_organization(){
 
     }
 
+    // Redeemer
     if(redeemer_input_count > 0){
-        ptr_data = redeemer_input.data();
+        ptr_buffer = redeemer_input.data();
         for(std::uint16_t  i= 0; i<redeemer_input_count;i++ ){ // asigno las localizaciones a punteros
-            ptr_redeemers[i] = ptr_data;
-            ptr_data += Utils::extract8bytestoUint64(ptr_data + 3) + 11;
-            ptr_data += Utils::extract8bytestoUint64(ptr_data) + 8;
+            ptr_redeemers[i] = ptr_buffer;
+            ptr_buffer += Utils::extract8bytestoUint64(ptr_buffer + 3) + 11;
+            ptr_buffer += Utils::extract8bytestoUint64(ptr_buffer) + 8;
 
         }
         // reasigna los index
@@ -348,9 +379,9 @@ void TransactionsInputs::alphanumeric_organization(){
         for(std::uint16_t  i = 0; i < countmenosuno; i++ ){
             for(std::uint16_t  c = 0; c < countmenosuno; c++ ){
                 if(Utils::extract2bytestoUint16(ptr_redeemers[c]) > Utils::extract2bytestoUint16(ptr_redeemers[c+1])){
-                    ptr_data = ptr_redeemers[c];
+                    ptr_buffer = ptr_redeemers[c];
                     ptr_redeemers[c] = ptr_redeemers[c+1];
-                    ptr_redeemers[c+1] = ptr_data;
+                    ptr_redeemers[c+1] = ptr_buffer;
                     break;
                 }
             }
@@ -434,7 +465,7 @@ std::uint16_t const & TransactionsInputs::getCollateralCount() const{
     return collateral_input_count;
 }
 
-std::uint16_t const & TransactionsInputs::getSpendingDatumsCount() const{
+std::uint16_t const & TransactionsInputs::getDatumsCount() const{
     return datum_input_count;
 }
 
@@ -466,7 +497,7 @@ std::vector<std::uint8_t> const & TransactionsInputs::getCollateral() const{
     return collateral_input;
 }
 
-std::vector<std::uint8_t> const & TransactionsInputs::getSpendingDatums() const{
+std::vector<std::uint8_t> const & TransactionsInputs::getDatums() const{
     return datum_input;
 }
 
