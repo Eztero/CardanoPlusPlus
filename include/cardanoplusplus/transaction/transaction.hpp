@@ -41,13 +41,13 @@ public:
     explicit Transaction(std::uint64_t txfeefixed, std::uint64_t txfeeperbytes);
     virtual ~Transaction();
     TransactionBody Body;
-    TransactionWitness Witness;
     AuxiliaryData Auxiliarydata;
     Transaction &addExtendedSigningKey(std::uint8_t const *const xsk);
     std::uint64_t getFeeTransacion_PostBuild(std::uint64_t const number_of_signatures);
 
     std::vector<std::uint8_t> const &Build();
 private:
+    TransactionWitness Witness;
     std::uint16_t witnessmapcountbit;
     std::uint64_t bytesskyesInwitness;
     std::uint8_t blake256[32];
