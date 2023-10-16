@@ -33,9 +33,8 @@ SOFTWARE.
 namespace Cardano{
 class Metadatas{
 public:
-    explicit Metadatas();
+explicit Metadatas();
 void addMetadata(std::uint64_t const keytag, std::vector<std::uint8_t> const &CborMetadata);
-//Metadatas &addMetadata(std::uint64_t const keytag, std::string const metadata);  ///SIN TERMINAR
 bool arethereMetadatas() const;
 std::vector<std::uint8_t> const &getCborMetadatas();
 private:
@@ -43,7 +42,6 @@ std::uint8_t * ptrvec;
 std::uint16_t metadata_count;
 std::vector <std::uint8_t> metadata;
 Utils::CborSerialize cbor;
-//std::vector <std::uint8_t> metadata_cbor;
 };
 }
 #endif

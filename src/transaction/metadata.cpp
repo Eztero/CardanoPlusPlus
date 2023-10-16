@@ -6,6 +6,7 @@ Metadatas::Metadatas(){
     ptrvec = nullptr;
     }
 
+//CborMetadata contain a metadata in cbor format
 void Metadatas::addMetadata(std::uint64_t const keytag, std::vector<std::uint8_t> const &CborMetadata){
 // 8 (keytag) + 8(CborMetadata.size) + UINT16_MAX (CborMetadata) = 16bytes + UINT16_MAX bytes
 
@@ -25,7 +26,6 @@ std::vector<std::uint8_t> const & Metadatas::getCborMetadatas(){
 
     if(metadata_count > 0){
 
-        //CborSerialize cbor(&metadata_cbor);
         cbor.clearCbor();
         ptrvec = metadata.data();
         std::uint16_t metadataLen = 0;

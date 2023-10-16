@@ -1,6 +1,7 @@
 #include "../../include/cardanoplusplus/transaction/auxiliary_data.hpp"
 
 namespace Cardano{
+
 AuxiliaryData::AuxiliaryData() : Metadatas(){
     auxiliarymapcountbit = 0;
 }
