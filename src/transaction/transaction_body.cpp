@@ -365,7 +365,7 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                 case 11 :{   // redeemers | datums | laguage views
 
                     std::unique_ptr<Utils::CborSerialize> script_data(new Utils::CborSerialize);
-                    std::uint16_t const & datum_data_count = TransactionInput.getSpendingDatumsCount();
+                    std::uint16_t const & datum_data_count = TransactionInput.getDatumsCount();
                     std::uint16_t const & spendredeemer_data_count = TransactionInput.getSpendingRedeemersCount();
                     std::uint16_t const & certredeemer_data_count = Certificate.getCertificateRedeemersCount();
                     std::uint16_t const & rewardredeemer_data_count = Withdrawal.getWithdrawalRedeemersCount();
@@ -373,7 +373,7 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                     switch((witnessmapcountbit & 0x30)){
                     case 0x10:{
 
-                        ptrvec = TransactionInput.getSpendingDatums().data();
+                        ptrvec = TransactionInput.getDatums().data();
                         script_data->createArray(0);                                                       //  80
                         script_data->createArray(static_cast<std::uint64_t>(datum_data_count));            //  [datums]
                         for(std::uint16_t t = 0; t < datum_data_count;t++){
@@ -439,7 +439,7 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                         cbor_redeemers.assign(buff_getCbor.begin(), buff_getCbor.end());
 
                         if(datum_data_count){
-                            ptrvec = TransactionInput.getSpendingDatums().data();
+                            ptrvec = TransactionInput.getDatums().data();
                             script_data->createArray(static_cast<std::uint64_t>(datum_data_count));                 //  [datums]
                             for(std::uint16_t t = 0; t < datum_data_count;t++){
                                 script_data->bypassPtrUint8Cbor( ptrvec+10, Utils::extract8bytestoUint64(ptrvec+2) );

@@ -333,11 +333,9 @@ delete[] script_tipo;
 return *this;
 }
 
-
 std::uint32_t const &TransactionsOutputs::getBodyMapcountbit() const{
    return bodymap_countbit;
 }
-
 
 std::vector<std::uint8_t> const & TransactionsOutputs::getCborMultiassets(){
     cbor.clearCbor();
@@ -357,7 +355,6 @@ std::vector<std::uint8_t> const & TransactionsOutputs::getCborMultiassets(){
     }
     return cbor.getCbor();
 }
-
 
 std::vector<std::uint8_t> const & TransactionsOutputs::getTransactionsOutputs() {
     if(outputmap_countbit & 0x02){    // en caso de que no se cree una nueva salida (addOutput), se escriben los asset almacenados en memoria a la ultima salida
