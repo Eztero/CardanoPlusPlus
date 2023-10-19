@@ -48,7 +48,7 @@ public:
 
     /// Agregar un bloqueo para que solo acepte un datum y un redeemer por direccion
     TransactionsInputs & addInput( std::string const & TxHash, std::uint64_t const TxIx );  // -> addScript() || addReferenceInput -> addDatum() -> addRedeemer()
-    TransactionsInputs & addInlineScript(Cardano::ScriptReference const reference_type, std::string const & TxHash, std::uint64_t const TxIx);
+    TransactionsInputs & addInlineScript(Cardano::ScriptType const script_type, std::string const & TxHash, std::uint64_t const TxIx);
     TransactionsInputs & setGlobalReferencesStriptsType( Cardano::ScriptType const script_type); // necesario para el calculo del scriptdatahash , se debe especificar por obligacion
     TransactionsInputs & addCollateral( std::string const & TxHash, std::uint64_t const TxIx );
     TransactionsInputs & addDatum ( std::string & json_datum );  // FOR SPENDING      ;Se usa para el witness y el scriptdatahash

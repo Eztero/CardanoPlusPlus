@@ -103,7 +103,7 @@ TransactionsInputs &TransactionsInputs::addInput(std::string const &TxHash, std:
 }
 
 // ? 18 : set<transaction_input> ; reference inputs;
-TransactionsInputs &TransactionsInputs::addInlineScript(Cardano::ScriptReference const reference_type, std::string const & TxHash, std::uint64_t const TxIx){
+TransactionsInputs &TransactionsInputs::addInlineScript(Cardano::ScriptType const script_type, std::string const & TxHash, std::uint64_t const TxIx){
     // de momento reference_type no tiene uso, mas alla de ser un tag para indicar el tipo de script que se usa
     std::size_t txhash_len;
     std::uint8_t const * const TxHash_uint8t = Utils::hexchararray2uint8array(TxHash, &txhash_len);
@@ -111,6 +111,11 @@ TransactionsInputs &TransactionsInputs::addInlineScript(Cardano::ScriptReference
         addUtxoInput(1, TxHash_uint8t ,TxIx);
     }
     delete[] TxHash_uint8t;
+    if(script_type == ScriptType::Plutus_Script_V2 ){
+        setGlobalReferencesStriptsType(script_type);
+    }else{
+        throw std::invalid_argument("Error in addInlineScript: Only Plutus v2 scripts allowed");
+    }
 
     return *this;
 }
