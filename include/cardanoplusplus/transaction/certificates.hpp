@@ -44,10 +44,10 @@ public:
 
 
 
-    void addStakeRegistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk);
-    void addStakeDeregistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk);
-    void addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk, std::uint8_t const *const pool_keyhash);
-    void addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk, std::string const & pool_bech32);
+    void addStakeRegistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential);
+    void addStakeDeregistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential);
+    void addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential, std::uint8_t const *const pool_keyhash);
+    void addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential, std::string const & pool_bech32);
     void addRedeemer( std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ); // FOR CERTIFICATE
     std::vector<std::uint8_t> const & getCertificateRedeemers() const;
 

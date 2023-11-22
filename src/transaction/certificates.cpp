@@ -22,22 +22,22 @@ Certificates::Certificates(){
 Certificates::~Certificates(){
 }
 
-void Certificates::addStakeRegistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk){
+void Certificates::addStakeRegistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential){
     // stake_credential_vk(28bytes)
-    crypto_generichash_blake2b(blake224, 28, stake_credential_vk, 32, nullptr, 0);
+    //crypto_generichash_blake2b(blake224, 28, stake_credential_vk, 32, nullptr, 0);
     cert_cbor.clearCbor();
-    cert_cbor.createArray(2);                                                       // [ , ]
-    cert_cbor.addUint(static_cast<uint64_t>(0));                                    // [0,   ]
-    cert_cbor.createArray(2);                                                       // [0,[ ] ]
+    cert_cbor.createArray(2);                                          // [ , ]
+    cert_cbor.addUint(static_cast<uint64_t>(0));                       // [0,   ]
+    cert_cbor.createArray(2);                                          // [0,[ ] ]
     switch(ckey){
-    case Credential::KeyHash:{
-    cert_cbor.addUint(static_cast<uint64_t>(0));                                    // [0,[0, ] ]
-    cert_cbor.addBytesArray(blake224, 28);                               // [0,[0, addr_keyhash ] ]
+    case Credential::RawAddressKeyHash:{
+    cert_cbor.addUint(static_cast<uint64_t>(0));                       // [0,[0, ] ]
+    cert_cbor.addBytesArray(stake_credential, 28);                             // [0,[0, addr_keyhash ] ]
 
     };break;
-    case Credential::ScriptHash:{
-    cert_cbor.addUint(static_cast<uint64_t>(1));                                    // [0,[1, ] ]
-    cert_cbor.addBytesArray(blake224, 28);                             // [0,[1, scripthash ] ]
+    case Credential::RawScriptHash:{
+    cert_cbor.addUint(static_cast<uint64_t>(1));                       // [0,[1, ] ]
+    cert_cbor.addBytesArray(stake_credential, 28);                             // [0,[1, scripthash ] ]
     };break;
     }
 
@@ -50,22 +50,22 @@ void Certificates::addStakeRegistration(Cardano::Credential const ckey, std::uin
 
 }
 
-void Certificates::addStakeDeregistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk){
+void Certificates::addStakeDeregistration(Cardano::Credential const ckey, std::uint8_t const *const stake_credential){
     // stake_credential_vk(28bytes)
-    crypto_generichash_blake2b(blake224, 28, stake_credential_vk, 32, nullptr, 0);
+    //crypto_generichash_blake2b(blake224, 28, stake_credential_vk, 32, nullptr, 0);
     cert_cbor.clearCbor();
     cert_cbor.createArray(2);                                                       // [ , ]
     cert_cbor.addUint(1);                                                           // [1,   ]
     cert_cbor.createArray(2);                                                       // [1,[ ] ]
     switch(ckey){
-    case Credential::KeyHash:{
+    case Credential::RawAddressKeyHash:{
     cert_cbor.addUint(static_cast<uint64_t>(0));                                    // [1,[0, ] ]
-    cert_cbor.addBytesArray(blake224, 28);                             // [1,[0, addr_keyhash ] ]
+    cert_cbor.addBytesArray(stake_credential, 28);                                  // [1,[0, addr_keyhash ] ]
 
     };break;
-    case Credential::ScriptHash:{
+    case Credential::RawScriptHash:{
     cert_cbor.addUint(static_cast<uint64_t>(1));                                    // [1,[1, ] ]
-    cert_cbor.addBytesArray(blake224, 28);                             // [1,[1, scripthash ] ]
+    cert_cbor.addBytesArray(stake_credential, 28);                                  // [1,[1, scripthash ] ]
     };break;
     }
 
@@ -76,22 +76,22 @@ void Certificates::addStakeDeregistration(Cardano::Credential const ckey, std::u
     bodymap_countbit = 0x10;
 }
 
-void Certificates::addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk, std::uint8_t const *const pool_keyhash){
+void Certificates::addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential, std::uint8_t const *const pool_keyhash){
     // stake_credential_vk(28bytes) + addr_poolkeyhash(28bytes) = 56
-    crypto_generichash_blake2b(blake224, 28, stake_credential_vk, 32, nullptr, 0);
+    //crypto_generichash_blake2b(blake224, 28, stake_credential_vk, 32, nullptr, 0);
     cert_cbor.clearCbor();
     cert_cbor.createArray(3);                                                       // [ , , ]
     cert_cbor.addUint(2);                                                           // [2, , ]
     cert_cbor.createArray(2);                                                       // [2,[ , ], ]
     switch(ckey){
-    case Credential::KeyHash:{
+    case Credential::RawAddressKeyHash:{
     cert_cbor.addUint(static_cast<uint64_t>(0));                                    // [2,[0, ] ]
-    cert_cbor.addBytesArray(blake224, 28);                             // [2,[0, addr_keyhash ] ]
+    cert_cbor.addBytesArray(stake_credential, 28);                                  // [2,[0, addr_keyhash ] ]
 
     };break;
-    case Credential::ScriptHash:{
+    case Credential::RawScriptHash:{
     cert_cbor.addUint(static_cast<uint64_t>(1));                                    // [2,[1, ] ]
-    cert_cbor.addBytesArray(blake224, 28);                             // [2,[1, scripthash ] ]
+    cert_cbor.addBytesArray(stake_credential, 28);                                  // [2,[1, scripthash ] ]
     };break;
     }
     cert_cbor.addBytesArray(pool_keyhash, 28);                                      // [2,[ 0/1, keyhash/scripthash ], poolkeyhash ]
@@ -103,13 +103,13 @@ void Certificates::addStakeDelegation(Cardano::Credential const ckey, std::uint8
     bodymap_countbit = 0x10;
 }
 
-void Certificates::addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential_vk, std::string const & pool_bech32){
-std::uint8_t bech32_buff[BECH32_MAX_LENGTH]{};
-std::uint16_t bech32_buff_len = 0;
-if(!Hash::bech32_decode(pool_bech32.data(),bech32_buff,&bech32_buff_len) && bech32_buff_len != 28){
-    throw std::invalid_argument("addStakeDelegation error, pool_bech32 is not a valid bech32");
+void Certificates::addStakeDelegation(Cardano::Credential const ckey, std::uint8_t const *const stake_credential, std::string const & poolID_bech32){
+std::uint8_t pool_keyhash[BECH32_MAX_LENGTH]{};
+std::uint16_t pool_keyhash_len = 0;
+if(!Hash::bech32_decode(poolID_bech32.data(),pool_keyhash,&pool_keyhash_len) && pool_keyhash_len != 28){
+    throw std::invalid_argument("addStakeDelegation error, poolID_bech32 is not a valid bech32");
 }
-addStakeDelegation(ckey, stake_credential_vk, bech32_buff);
+addStakeDelegation(ckey, stake_credential, pool_keyhash);
 }
 // redeemer = [ tag: redeemer_tag, index: uint, data: plutus_data, ex_units: ex_units ]
 void Certificates::addRedeemer(std::string & json_redeemer, std::uint64_t const cpusteps, std::uint64_t const memoryunits ){
@@ -140,6 +140,7 @@ void Certificates::addRedeemer(std::string & json_redeemer, std::uint64_t const 
     redeemer_cert.insert(redeemer_cert.end(),cbor_units.begin(),cbor_units.end());            // cbor_ex_units
 
     ++redeemer_cert_count;
+    bodymap_countbit |= 0x800;
     witnessmap_countbit |= 0x20;
 
 }
