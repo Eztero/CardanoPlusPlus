@@ -24,7 +24,7 @@ Withdrawals::Withdrawals(){
 
     withdrawals_count = 0; //maximo 65534
     redeemer_withdrawals_count = 0;
-    bodymapcountbit = 0;
+    bodymap_countbit = 0;
     witnessmap_countbit = 0;
     buff_sizet = 0;
 
@@ -48,7 +48,7 @@ Withdrawals & Withdrawals::addWithdrawals(std::uint8_t const * const raw_stake_a
         withdrawals.insert(withdrawals.end(), raw_stake_address, raw_stake_address + 29);
         Utils::addUint64toVector(withdrawals, amount);
 
-        bodymapcountbit |= 0x0020;
+        bodymap_countbit |= 0x0020;
         ++withdrawals_count;
 
     }
@@ -99,6 +99,7 @@ void Withdrawals::addRedeemer( std::string & json_redeemer, std::uint64_t const 
 
     ++redeemer_withdrawals_count;
     witnessmap_countbit |= 0x20;
+    bodymap_countbit |= 0x800;
 }
 
 void Withdrawals::alphanumeric_organization(){
@@ -192,7 +193,7 @@ std::uint16_t const & Withdrawals::getWithdrawalRedeemersCount() const{
 }
 
 std::uint32_t const & Withdrawals::getBodyMapcountbit() const{
-    return bodymapcountbit;
+    return bodymap_countbit;
 }
 
 std::uint16_t const & Withdrawals::getWitnessMapcountbit() const{
