@@ -61,10 +61,10 @@ Mainnet
 };
 
 enum class Address : std::uint8_t{
-Base,
-Base_Change,
-Enterprise,
-Enterprise_Change,
+Base_Extern,  // normal
+Base_Intern,  //change
+Enterprise_Extern, //normal
+Enterprise_Intern, //change
 Stake
 };
 
@@ -87,8 +87,8 @@ Withdrawal
 };
 
 enum class Credential{
-KeyHash = 0,
-ScriptHash
+RawAddressKeyHash = 0,
+RawScriptHash
 };
 
 }
