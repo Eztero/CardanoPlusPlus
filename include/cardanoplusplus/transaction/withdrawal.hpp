@@ -55,7 +55,7 @@ std::vector<std::uint8_t> const & getWithdrawalRedeemers() const;
 
 private:
 std::size_t buff_sizet;
-std::uint32_t bodymapcountbit;
+std::uint32_t bodymap_countbit;
 std::uint16_t  witnessmap_countbit;
 std::uint16_t withdrawals_count; //maximo 65534
 std::uint16_t redeemer_withdrawals_count;
