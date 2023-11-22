@@ -232,7 +232,7 @@ static bool from_accountkey(std::uint8_t const * const account_key, InputKey con
 }
 
 
-bool getRawKey(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+bool getRawKey( Cardano::InputKey input_key_type, std::uint8_t const * const input_key, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
                     std::uint32_t const account_path, Cardano::Role role_path, std::uint32_t const address_index_path,
                     std::uint8_t * const output_key) noexcept {
 
@@ -276,7 +276,7 @@ bool getRawKey(std::uint8_t const * const input_key, Cardano::InputKey input_key
 }
 
 //for generate only account
-bool getRawKey(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+bool getRawKey( Cardano::InputKey input_key_type, std::uint8_t const * const input_key, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
                    std::uint32_t const account_path, Cardano::Role role_path, std::uint8_t * const output_key) noexcept {
 
     sodium_memzero(output_key, XVK_LENGTH); //se deja a cero los primeros 64 bytes, asi en caso de un error su sk o xvk seran cero
@@ -322,7 +322,7 @@ bool getRawKey(std::uint8_t const * const input_key, Cardano::InputKey input_key
 }
 
 
-bool getBech32key(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+bool getBech32key( Cardano::InputKey input_key_type, std::uint8_t const * const input_key, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
                     std::uint32_t const account_path, Cardano::Role role_path, std::uint32_t const address_index_path,
                     std::string & bech32_output_key) noexcept{
 
@@ -385,7 +385,7 @@ bool getBech32key(std::uint8_t const * const input_key, Cardano::InputKey input_
 }
 
 //for generate only account
-bool getBech32key(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+bool getBech32key( Cardano::InputKey input_key_type, std::uint8_t const * const input_key, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
                std::uint32_t const account_path, Cardano::Role role_path, std::string & bech32_output_key) noexcept{
 
     bech32_output_key.clear(); //se deja en cero el string

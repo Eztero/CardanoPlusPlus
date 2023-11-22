@@ -80,24 +80,24 @@ raw_derivekey(input_key, InputKey::ExtendedMasterKey, Wallet::HD, OutputKey::Pri
 namespace Cardano{
 
 //for generate all key
-bool getRawKey(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
-                    std::uint32_t const account_path, Cardano::Role role_path, std::uint32_t const address_index_path,
-                    std::uint8_t * const output_key) noexcept;
+bool getRawKey( Cardano::InputKey input_key_type, std::uint8_t const * const input_key, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+                std::uint32_t const account_path, Cardano::Role role_path, std::uint32_t const address_index_path,
+                std::uint8_t * const output_key) noexcept;
 
 //for generate only key account
 //mandatory, role_path = Cardano::Role::OnlyAccount
-bool getRawKey(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
-                   std::uint32_t const account_path, Cardano::Role role_path, std::uint8_t * const output_key) noexcept;
+bool getRawKey( Cardano::InputKey input_key_type, std::uint8_t const * const input_key, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+                std::uint32_t const account_path, Cardano::Role role_path, std::uint8_t * const output_key) noexcept;
 
 //for generate all key
-bool getBech32key(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
-                    std::uint32_t const account_path, Cardano::Role role_path, std::uint32_t const address_index_path,
-                    std::string & bech32_output_key) noexcept;
+bool getBech32key( Cardano::InputKey input_key_type, std::uint8_t const * const input_key, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+                   std::uint32_t const account_path, Cardano::Role role_path, std::uint32_t const address_index_path,
+                   std::string & bech32_output_key) noexcept;
 
 //for generate only key account
 //mandatory, role_path = Cardano::Role::OnlyAccount
-bool getBech32key(std::uint8_t const * const input_key, Cardano::InputKey input_key_type, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
-               std::uint32_t const account_path, Cardano::Role role_path, std::string & bech32_output_key) noexcept;
+bool getBech32key( Cardano::InputKey input_key_type, std::uint8_t const * const input_key, Cardano::Wallet wallet_type, Cardano::OutputKey output_key_type,
+                   std::uint32_t const account_path, Cardano::Role role_path, std::string & bech32_output_key) noexcept;
 
 }
 
