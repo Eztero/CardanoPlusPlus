@@ -85,6 +85,8 @@ TransactionsOutputs &TransactionsOutputs::addOutput(std::string const payment_ad
 
     if(Hash::bech32_decode(payment_address.c_str(), addr_keyhash_buffer, &addr_keyhash_buffer_len)){
         addOutput(addr_keyhash_buffer, addr_keyhash_buffer_len, amount);
+    }else{
+        throw std::invalid_argument("addOutput error, It is not a valid address");
     }
 
     return *this;

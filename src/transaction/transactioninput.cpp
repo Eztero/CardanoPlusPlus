@@ -109,6 +109,9 @@ TransactionsInputs &TransactionsInputs::addInlineScript(Cardano::ScriptType cons
     std::uint8_t const * const TxHash_uint8t = Utils::hexchararray2uint8array(TxHash, &txhash_len);
     if(txhash_len == 32){
         addUtxoInput(1, TxHash_uint8t ,TxIx);
+    }else{
+        delete[] TxHash_uint8t;
+        throw std::invalid_argument("Error in addInlineScript: TXHash length is incorrect ");
     }
     delete[] TxHash_uint8t;
     if(script_type == ScriptType::Plutus_Script_V2 ){
