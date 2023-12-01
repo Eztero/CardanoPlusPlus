@@ -368,7 +368,7 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                     std::uint16_t const & datum_data_count = TransactionInput.getDatumsCount();
                     std::uint16_t const & spendredeemer_data_count = TransactionInput.getSpendingRedeemersCount();
                     std::uint16_t const & certredeemer_data_count = Certificate.getCertificateRedeemersCount();
-                    std::uint16_t const & rewardredeemer_data_count = Withdrawal.getWithdrawalRedeemersCount();
+                    std::uint16_t const & withdrawalredeemer_data_count = Withdrawal.getWithdrawalRedeemersCount();
 
                     switch((witnessmapcountbit & 0x30)){
                     case 0x10:{
@@ -388,7 +388,7 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
                     };break;
                     case 0x30:
                     case 0x20:{
-                        std::uint16_t const redeemer_data_count = spendredeemer_data_count + certredeemer_data_count + rewardredeemer_data_count;
+                        std::uint16_t const redeemer_data_count = spendredeemer_data_count + certredeemer_data_count + withdrawalredeemer_data_count;
 
                         script_data->createArray(static_cast<std::uint64_t>(redeemer_data_count));                // [ ]
 
@@ -420,9 +420,9 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
 
                         }
 
-                        if(rewardredeemer_data_count){
+                        if(withdrawalredeemer_data_count){
                             ptrvec = Withdrawal.getWithdrawalRedeemers().data();
-                            for(std::uint16_t t = 0; t < certredeemer_data_count;t++){
+                            for(std::uint16_t t = 0; t < withdrawalredeemer_data_count;t++){
                                 script_data->createArray(4);                                                           // [ , , , ]
                                 script_data->addUint( *( ptrvec + 2 ) );                                               // tag
                                 script_data->addUint(Utils::extract2bytestoUint16( ptrvec ));                                 // index
@@ -463,16 +463,6 @@ std::vector<std::uint8_t> const &TransactionBody::Build(){
 
                     std::vector<std::uint8_t> const  & cbor_script_data = script_data->getCbor();
                     std::uint8_t script_data_hash[32];
-
-                    /**
-                    std::cout <<"\n cbor_script_data: ";
-                    for (std::uint8_t i : cbor_script_data){
-                        std::cout << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(i);
-                    }
-                    std::cout <<std::endl;
-                    **/
-
-
 
                     crypto_generichash_blake2b(script_data_hash, 32, cbor_script_data.data(), cbor_script_data.size(), nullptr, 0); //blake2b256(cbor_script_data)
                     cbor.addIndexMap(11);                         /// 11:
