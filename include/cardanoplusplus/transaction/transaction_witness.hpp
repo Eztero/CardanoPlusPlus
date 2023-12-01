@@ -50,7 +50,7 @@ public:
     std::vector<std::uint8_t> const & Build();
 
 private:
-    std::uint8_t * ptrvec;
+    std::uint8_t * ptrvec{nullptr};
     std::size_t buff_sizet;
     std::uint8_t witnessmapcountbit;
     std::uint16_t vkeywitness_count; //maximo 65534

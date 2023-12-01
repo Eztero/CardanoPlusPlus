@@ -38,7 +38,7 @@ void addMetadata(std::uint64_t const keytag, std::vector<std::uint8_t> const &Cb
 bool arethereMetadatas() const;
 std::vector<std::uint8_t> const &getCborMetadatas();
 private:
-std::uint8_t * ptrvec;
+std::uint8_t * ptrvec{nullptr};
 std::uint16_t metadata_count;
 std::vector <std::uint8_t> metadata;
 Utils::CborSerialize cbor;

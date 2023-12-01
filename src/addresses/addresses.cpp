@@ -445,7 +445,7 @@ void getBech32AddressfromAddresses( std::string const &payment_address, std::str
     }
 
     // Se crea el nuevo header a partir de las dos direcciones pago y stake
-    payload[0] |= ( payload_payment[0] & 0x10 );
+    payload[0] |= ( payload_payment[0] & 0x10 ); // payload_payment[0] & b0001_0000
     payload[0] |= ( (payload_stake[0] & 0x10) << 1 );
 
     for(std::uint8_t i = 0; i < 28; i++){

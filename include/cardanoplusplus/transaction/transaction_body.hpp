@@ -64,7 +64,7 @@ public:
 
 private:
 
-    std::uint8_t const *ptrvec;
+    std::uint8_t const *ptrvec{nullptr};
     std::size_t buff_sizet;
     std::uint32_t buff_uint32t;
     std::uint8_t addr_keyhash_buffer[BECH32_MAX_LENGTH]{};
