@@ -192,7 +192,7 @@ TransactionsInputs &TransactionsInputs::addRedeemer(std::string & json_redeemer,
     std::vector<std::uint8_t> const & cbor_units = unitscbor->getCbor();
     std::vector<std::uint8_t> const & cbor_plutusdata = Json_p->getCborSchemaJson();
 
-    std::uint16_t numero_txin = tx_input_count - 1;
+    int numero_txin = tx_input_count - 1;
     if(numero_txin < 0){
       throw std::invalid_argument("Error in addRedeemer: no previous Tx Inputs found");
     }

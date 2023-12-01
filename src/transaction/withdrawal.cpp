@@ -85,7 +85,7 @@ void Withdrawals::addRedeemer( std::string & json_redeemer, std::uint64_t const 
     std::vector<std::uint8_t> const & cbor_units = unitscbor->getCbor();
     std::vector<std::uint8_t> const & cbor_plutusdata = Json_p->getCborSchemaJson();
 
-    std::uint16_t numero_wdrls = withdrawals_count - 1;
+    int numero_wdrls = withdrawals_count - 1;
     if(numero_wdrls < 0){
       throw std::invalid_argument("Error in addRedeemer: no previous Withdrawals found");
     }
